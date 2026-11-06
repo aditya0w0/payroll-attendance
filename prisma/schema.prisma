@@ -1,0 +1,253 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String   @unique
+  passwordHash String
+  role         String   @default("EMPLOYEE") // "OWNER" | "EMPLOYEE"
+  status       String   @default("ACTIVE")   // "ACTIVE" | "INACTIVE" | "SUSPENDED"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  employeeProfile    EmployeeProfile?
+  deviceRegistration DeviceRegistration?
+  sessions           Session[]
+  unlockRequests     DeviceUnlockRequest[]
+  auditLogs          AuditLog[]
+}
+
+model EmployeeProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  employeeId       String   @unique // e.g. "EMP-001"
+  fullName         String
+  dailySalary      Int      // In IDR, e.g. 150000
+  shiftId          String
+  employmentStatus String   @default("PERMANENT") // "PERMANENT" | "CONTRACT" | "PROBATION"
+  joinedAt         DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user              User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shift             Shift                   @relation(fields: [shiftId], references: [id])
+  salaryHistory     EmployeeSalaryHistory[]
+  attendanceRecords AttendanceRecord[]
+  payrollRecords    PayrollRecord[]
+}
+
+model EmployeeSalaryHistory {
+  id              String   @id @default(cuid())
+  employeeId      String
+  previousSalary  Int
+  newSalary       Int
+  effectiveDate   DateTime @default(now())
+  reason          String?
+  changedByUserId String
+  createdAt       DateTime @default(now())
+
+  employee EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+model Shift {
+  id                 String   @id @default(cuid())
+  name               String   // e.g. "Morning Shift (08:00 - 17:00)"
+  startTime          String   // "08:00"
+  endTime            String   // "17:00"
+  isOvernight        Boolean  @default(false) // e.g. 22:00 - 06:00
+  gracePeriodMinutes Int      @default(10)
+  applicableDays     String   @default("1,2,3,4,5") // Comma-separated 0-6 (Sun-Sat) or 1-5 (Mon-Fri)
+  deductionPolicyId  String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  deductionPolicy   DeductionPolicy    @relation(fields: [deductionPolicyId], references: [id])
+  employees         EmployeeProfile[]
+  attendanceRecords AttendanceRecord[]
+}
+
+model DeductionPolicy {
+  id                  String   @id @default(cuid())
+  name                String   // e.g. "Standard Per Minute (Rp500/min)"
+  mode                String   @default("PER_MINUTE") // "PER_MINUTE" | "PER_HOUR"
+  rate                Int      @default(500) // In IDR
+  hourlyRounding      String   @default("EXACT") // "EXACT" | "ROUND_UP" | "ROUND_DOWN" | "ROUND_NEAREST"
+  gracePeriodMinutes  Int      @default(10)
+  maxDeductionPercent Int      @default(100) // Capped at daily salary
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  shifts Shift[]
+}
+
+model DeviceRegistration {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  deviceFingerprint String
+  publicKey         String?  // Web Crypto exported public key
+  deviceName        String
+  platform          String   @default("Browser")
+  registeredAt      DateTime @default(now())
+  lastSeenAt        DateTime @default(now())
+  isActive          Boolean  @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model DeviceUnlockRequest {
+  id                   String    @id @default(cuid())
+  requestCode          String    @unique // e.g. "REQ-94218"
+  unlockCode           String    // 6-digit random code, e.g. "482915"
+  userId               String
+  requestedFingerprint String
+  requestedDeviceName  String
+  previousDeviceName   String?
+  status               String    @default("PENDING") // "PENDING" | "APPROVED" | "USED" | "EXPIRED" | "REJECTED"
+  ipAddress            String?
+  userAgent            String?
+  expiresAt            DateTime
+  createdAt            DateTime  @default(now())
+  resolvedAt           DateTime?
+  resolvedByUserId     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model QRChallenge {
+  id               String    @id @default(cuid())
+  token            String    @unique
+  issuedAt         DateTime  @default(now())
+  expiresAt        DateTime
+  isActive         Boolean   @default(true)
+  consumedAt       DateTime?
+  consumedByUserId String?
+
+  scans QRScanLog[]
+}
+
+model QRScanLog {
+  id          String   @id @default(cuid())
+  challengeId String
+  userId      String
+  action      String   // "CHECK_IN" | "CHECK_OUT"
+  scannedAt   DateTime @default(now())
+
+  challenge QRChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, userId])
+}
+
+model AttendanceRecord {
+  id                       String    @id @default(cuid())
+  employeeId               String
+  shiftId                  String
+  shiftDate                String    // "YYYY-MM-DD" authoritative shift start date
+  checkInTime              DateTime
+  checkOutTime             DateTime?
+  scheduledStartTime       DateTime
+  scheduledEndTime         DateTime
+  status                   String    @default("CHECKED_IN") // "CHECKED_IN" | "COMPLETED" | "LATE_COMPLETED" | "EXCEPTION"
+  lateMinutes              Int       @default(0)
+  dailySalarySnapshot      Int       // IDR daily salary snapshot at check-in
+  deductionPolicySnapshot  String    // JSON snapshot of deduction rate and mode
+  lateDeduction            Int       @default(0) // IDR deducted
+  netDailyEarnings         Int       @default(0) // IDR earned for this day
+  checkInDeviceFingerprint String?
+  checkOutDeviceFingerprint String?
+  manualCorrectionNote     String?
+  correctedByUserId        String?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  employee EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  shift    Shift           @relation(fields: [shiftId], references: [id])
+
+  @@unique([employeeId, shiftDate])
+}
+
+model PayrollPeriod {
+  id                String    @id @default(cuid())
+  year              Int
+  month             Int
+  startDate         DateTime
+  endDate           DateTime
+  status            String    @default("DRAFT") // "DRAFT" | "FINALIZED"
+  finalizedAt       DateTime?
+  finalizedByUserId String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  records     PayrollRecord[]
+  adjustments PayrollAdjustment[]
+
+  @@unique([year, month])
+}
+
+model PayrollRecord {
+  id                  String   @id @default(cuid())
+  payrollPeriodId     String
+  employeeId          String
+  completedDays       Int      @default(0)
+  dailySalary         Int      // Snapshot daily salary
+  totalLateMinutes    Int      @default(0)
+  lateArrivalCount    Int      @default(0)
+  totalLateDeductions Int      @default(0)
+  adjustmentsTotal    Int      @default(0)
+  grossEarnings       Int      @default(0)
+  netEarnings         Int      @default(0)
+  isFinalized         Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  period   PayrollPeriod   @relation(fields: [payrollPeriodId], references: [id], onDelete: Cascade)
+  employee EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([payrollPeriodId, employeeId])
+}
+
+model PayrollAdjustment {
+  id              String   @id @default(cuid())
+  payrollPeriodId String
+  employeeId      String
+  amount          Int      // Positive bonus or negative deduction
+  reason          String
+  createdAt       DateTime @default(now())
+
+  period PayrollPeriod @relation(fields: [payrollPeriodId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  timestamp      DateTime @default(now())
+  actorId        String?
+  actorRole      String   @default("SYSTEM") // "OWNER" | "EMPLOYEE" | "SYSTEM"
+  actorName      String   @default("System")
+  action         String   // e.g. "SALARY_UPDATED", "CHECK_IN", "DEVICE_RESET"
+  targetEntity   String   // e.g. "EMPLOYEE", "SHIFT", "ATTENDANCE"
+  targetId       String?
+  previousValues String?  // JSON
+  newValues      String?  // JSON
+  ipAddress      String?
+  userAgent      String?
+  reason         String?
+
+  user User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+}
+
+model Session {
+  id                String   @id @default(cuid())
+  sessionToken      String   @unique
+  userId            String
+  deviceFingerprint String?
+  expiresAt         DateTime
+  createdAt         DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
