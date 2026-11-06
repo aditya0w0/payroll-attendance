@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberGuard Zero-Trust Payroll & Attendance</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">🛡️</div>
+      <div>
+        <h1>CyberGuard Payroll</h1>
+        <p>Zero-Trust Single-Device Attendance Engine</p>
+      </div>
+    </div>
+
+    <div class="header-status">
+      <!-- Cryptographic Ledger Status Pill -->
+      <div id="chain-badge" class="badge-chain" onclick="app.showAuditVerificationModal()" title="Click to verify cryptographic SHA-256 chain integrity">
+        <span class="pulse-dot"></span>
+        <span id="chain-status-text">Ledger: SHA-256 Verified</span>
+      </div>
+
+      <!-- Current Client Device Fingerprint -->
+      <div class="device-chip" id="current-device-display" title="Detected client device fingerprint">
+        💻 <span id="current-device-name">Detecting...</span>
+      </div>
+
+      <!-- User Profile / Session Control -->
+      <div id="user-profile-section" class="user-profile" style="display: none;">
+        <span id="header-user-badge" class="user-role-badge">Role</span>
+        <span id="header-user-name" style="font-size: 0.85rem; font-weight: 600;">User</span>
+        <button class="btn btn-secondary btn-sm" onclick="app.logout()">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Application Body -->
+  <main id="app-container">
+
+    <!-- ======================================================== -->
+    <!-- 1. LOGIN & AUTHENTICATION VIEW -->
+    <!-- ======================================================== -->
+    <section id="view-login" style="max-width: 520px; margin: 2.5rem auto 0;">
+      <div class="glass-card">
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+          <h2 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 0.35rem;">Secure Access Portal</h2>
+          <p style="font-size: 0.85rem; color: var(--text-muted);">
+            Enforcing Zero-Trust Audit Logs & Single-Device Authentication
+          </p>
+        </div>
+
+        <!-- Demo Quick-Logins for Instant Testing -->
+        <div style="background: rgba(17, 24, 39, 0.7); border: 1px dashed rgba(59, 130, 246, 0.4); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+          <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: #60a5fa; margin-bottom: 0.6rem; letter-spacing: 0.05em;">
+            ⚡ Quick Demo Accounts & Test Scenarios:
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+            <button class="btn btn-secondary btn-sm" onclick="app.fillDemoLogin('owner')">
+              👑 Owner / HR Admin
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="app.fillDemoLogin('alice_authorized')">
+              👩 Alice (Authorized Mac)
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="app.fillDemoLogin('bob_unbound')">
+              👨 Bob (New/Auto-bind)
+            </button>
+            <button class="btn btn-rose btn-sm" onclick="app.fillDemoLogin('alice_unauthorized')">
+              ⚠️ Alice (Simulate Rogue Device)
+            </button>
+          </div>
+        </div>
+
+        <form id="login-form" onsubmit="app.handleLogin(event)">
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" id="login-email" class="form-input" placeholder="e.g. owner@company.com" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" id="login-password" class="form-input" placeholder="••••••••" required>
+          </div>
+
+          <!-- Hardware Device Identity Simulator -->
+          <div class="form-group">
+            <label class="form-label" style="display: flex; justify-content: space-between;">
+              <span>Simulated Device Terminal</span>
+              <span style="font-size: 0.7rem; color: var(--text-dim);">Single-Device Policy</span>
+            </label>
+            <select id="login-device-select" class="form-select" onchange="app.onDevicePresetChange()">
+              <option value="this_browser">💻 This Current Browser / Device</option>
+              <option value="device_alice_macbook_pro_01">🍎 Alice's Authorized MacBook Pro</option>
+              <option value="device_charlie_iphone_15">📱 Charlie's Authorized iPhone 15 Pro</option>
+              <option value="rogue_unauthorized_device">🚫 Rogue / Unauthorized Phone (Will Trigger Lockout)</option>
+            </select>
+            <div class="form-help">Single-device binding blocks employees who switch browsers or try buddy-punching.</div>
+          </div>
+
+          <button type="submit" id="login-submit-btn" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem; padding: 0.75rem;">
+            Authenticate & Proceed
+          </button>
+        </form>
+      </div>
+    </section>
+
+
+    <!-- ======================================================== -->
+    <!-- 2. OWNER DASHBOARD VIEW -->
+    <!-- ======================================================== -->
+    <section id="view-owner" style="display: none;">
+      
+      <!-- Owner Navigation Tabs -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="app.switchOwnerTab('overview')">
+          📊 Attendance & Live Board
+        </button>
+        <button class="tab-btn" onclick="app.switchOwnerTab('employees')">
+          👥 Employees & Salary Setting
+        </button>
+        <button class="tab-btn" onclick="app.switchOwnerTab('payroll')">
+          💰 Monthly Payroll & Late Deductions
+        </button>
+        <button class="tab-btn" onclick="app.switchOwnerTab('audit')">
+          🛡️ Zero Trust Audit Logs <span id="audit-log-badge" class="tab-count" style="background: rgba(59, 130, 246, 0.2); color: #93c5fd; border-color: rgba(59, 130, 246, 0.4);">0</span>
+        </button>
+        <button class="tab-btn" onclick="app.switchOwnerTab('unlocks')">
+          🔑 Device Unlock Requests <span id="unlock-req-badge" class="tab-count">0</span>
+        </button>
+      </div>
+
+      <!-- TAB 1: OVERVIEW & LIVE ATTENDANCE -->
+      <div id="owner-tab-overview">
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">Active Employees</div>
+            <div class="kpi-value" id="kpi-total-employees">0</div>
+            <div class="kpi-sub">Total staff registered</div>
+          </div>
+          <div class="kpi-card emerald">
+            <div class="kpi-label">Today's Present</div>
+            <div class="kpi-value" id="kpi-present-count">0</div>
+            <div class="kpi-sub" id="kpi-on-time-count">0 on-time</div>
+          </div>
+          <div class="kpi-card rose">
+            <div class="kpi-label">Late Arrivals Today</div>
+            <div class="kpi-value" id="kpi-late-count">0</div>
+            <div class="kpi-sub" id="kpi-late-deductions">Daily salary deductions triggered</div>
+          </div>
+          <div class="kpi-card amber">
+            <div class="kpi-label">Pending Device Unlocks</div>
+            <div class="kpi-value" id="kpi-pending-unlocks">0</div>
+            <div class="kpi-sub">Requires Owner code authorization</div>
+          </div>
+        </div>
+
+        <!-- Live Attendance Punch Table -->
+        <div class="glass-card" style="margin-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+              <h3 style="font-size: 1.1rem; font-weight: 700;">Today's Attendance Status</h3>
+              <p style="font-size: 0.78rem; color: var(--text-muted);">Real-time clock-in logs with late penalty deductions</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn btn-secondary btn-sm" onclick="app.loadOwnerData()">🔄 Refresh</button>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Shift Time</th>
+                  <th>Clock In</th>
+                  <th>Clock Out</th>
+                  <th>Status</th>
+                  <th>Late Minutes</th>
+                  <th>Daily Rate</th>
+                  <th>Late Deduction</th>
+                  <th>Net Earned</th>
+                  <th>Device Used</th>
+                </tr>
+              </thead>
+              <tbody id="owner-today-attendance-table">
+                <tr><td colspan="10" style="text-align: center; color: var(--text-dim); padding: 2rem;">Loading attendance records...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Owner Attendance Simulator & Fast-Testing Console -->
+        <div class="glass-card">
+          <h4 style="font-size: 0.95rem; font-weight: 700; color: #93c5fd; margin-bottom: 0.5rem;">
+            🧪 Test Punch Simulator (For Demo & Verification)
+          </h4>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+            Simulate an employee clock-in at a specific time (e.g. 08:50 on-time vs 09:35 late) to test daily salary deductions:
+          </p>
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: flex-end;">
+            <div style="flex: 1; min-width: 180px;">
+              <label class="form-label">Select Employee</label>
+              <select id="sim-employee-select" class="form-select"></select>
+            </div>
+            <div style="flex: 1; min-width: 180px;">
+              <label class="form-label">Simulated Punch Time</label>
+              <input type="datetime-local" id="sim-clockin-time" class="form-input">
+            </div>
+            <div>
+              <button class="btn btn-emerald" onclick="app.simulatePunch('ontime')">Simulate On-Time (08:55)</button>
+              <button class="btn btn-rose" onclick="app.simulatePunch('late')">Simulate Late (09:32, -Daily Pay)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: EMPLOYEES & SALARY SETTING -->
+      <div id="owner-tab-employees" style="display: none;">
+        <div class="glass-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+            <div>
+              <h3 style="font-size: 1.15rem; font-weight: 700;">Employee Directory & Salary Configuration</h3>
+              <p style="font-size: 0.8rem; color: var(--text-muted);">
+                Set monthly salaries, scheduled shift hours, grace periods, and manage single-device bindings.
+              </p>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="app.openAddEmployeeModal()">
+              ➕ Add New Employee
+            </button>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Employee Details</th>
+                  <th>Monthly Salary</th>
+                  <th>Work Days</th>
+                  <th>Computed Daily Rate</th>
+                  <th>Shift & Grace Period</th>
+                  <th>Late Deduction Mode</th>
+                  <th>Bound Device</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="owner-employees-table">
+                <tr><td colspan="8" style="text-align: center; padding: 2rem;">Loading employees...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: PAYROLL & DEDUCTIONS LEDGER -->
+      <div id="owner-tab-payroll" style="display: none;">
+        <div class="glass-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+            <div>
+              <h3 style="font-size: 1.15rem; font-weight: 700;">Monthly Payroll & Late Deductions Ledger</h3>
+              <p style="font-size: 0.8rem; color: var(--text-muted);">
+                Detailed breakdown of Base Salary, Days Present, Late Penalties deducted, and Net Payout.
+              </p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <input type="month" id="payroll-month-select" class="form-input" style="width: auto; padding: 0.4rem 0.7rem;" onchange="app.loadPayrollData()">
+              <button class="btn btn-secondary btn-sm" onclick="app.exportPayrollCSV()">📥 Export CSV</button>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Base Monthly Salary</th>
+                  <th>Daily Rate</th>
+                  <th>Standard Days</th>
+                  <th>Days Present</th>
+                  <th>Days Late</th>
+                  <th>Total Late Deductions</th>
+                  <th>Unworked Days Deductions</th>
+                  <th>Net Salary to Pay</th>
+                  <th>Payslip</th>
+                </tr>
+              </thead>
+              <tbody id="owner-payroll-table">
+                <tr><td colspan="10" style="text-align: center; padding: 2rem;">Loading payroll summary...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: ZERO TRUST AUDIT TRAIL -->
+      <div id="owner-tab-audit" style="display: none;">
+        <div class="glass-card">
+          
+          <!-- Zero Trust Chain Verification Card -->
+          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                <span class="badge badge-green" style="font-size: 0.8rem;">🔒 CRYPTOGRAPHIC CHAIN VALID</span>
+                <span style="font-size: 0.85rem; font-weight: 600;">Zero-Trust Merkle Hash Audit Trail</span>
+              </div>
+              <p style="font-size: 0.78rem; color: #a7f3d0;">
+                Every salary change, punch-in, device lock, and owner action is mathematically chained using SHA-256. Tamper-evident and immutable.
+              </p>
+            </div>
+            <button class="btn btn-emerald" onclick="app.verifyAuditChainNow()">
+              🔍 Run Cryptographic Verification Now
+            </button>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+            <h3 style="font-size: 1.1rem; font-weight: 700;">Immutable System Audit Logs</h3>
+            <div style="display: flex; gap: 0.5rem;">
+              <select id="audit-filter-action" class="form-select" style="font-size: 0.75rem; width: auto; padding: 0.35rem 0.65rem;" onchange="app.loadAuditLogs()">
+                <option value="">All Actions (Full Ledger)</option>
+                <option value="SALARY_MODIFIED">Salary Changes</option>
+                <option value="CLOCK_IN_LATE_DEDUCTION_APPLIED">Late Deductions</option>
+                <option value="SECURITY_LOGIN_DEVICE_BLOCKED">Device Bypass Blocked</option>
+                <option value="DEVICE_UNLOCKED_AND_REBOUND">Device Unlocked</option>
+                <option value="OWNER_RESET_DEVICE_BINDING">Owner Device Resets</option>
+              </select>
+              <button class="btn btn-secondary btn-sm" onclick="app.loadAuditLogs()">🔄 Refresh Logs</button>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Timestamp (UTC)</th>
+                  <th>Actor</th>
+                  <th>Action Type</th>
+                  <th>Target Resource</th>
+                  <th>IP Address</th>
+                  <th>Cryptographic SHA-256 Hash</th>
+                  <th>Diff / Details</th>
+                </tr>
+              </thead>
+              <tbody id="owner-audit-table">
+                <tr><td colspan="7" style="text-align: center; padding: 2rem;">Loading audit records...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 5: DEVICE SECURITY & UNLOCK REQUESTS -->
+      <div id="owner-tab-unlocks" style="display: none;">
+        <div class="glass-card">
+          <div style="margin-bottom: 1.25rem;">
+            <h3 style="font-size: 1.15rem; font-weight: 700;">Single-Device Security & Unlock Codes</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">
+              When an employee logs in on an unrecognized device, they are locked out. You can generate or provide the 6-digit Unlock Code below to authorize them.
+            </p>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Request ID</th>
+                  <th>Employee</th>
+                  <th>Authorized Device</th>
+                  <th>New Device Attempting Access</th>
+                  <th>One-Time Unlock Code</th>
+                  <th>Status</th>
+                  <th>Expires In</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="owner-unlock-table">
+                <tr><td colspan="8" style="text-align: center; padding: 2rem;">Loading device unlock requests...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ======================================================== -->
+    <!-- 3. EMPLOYEE PORTAL VIEW -->
+    <!-- ======================================================== -->
+    <section id="view-employee" style="display: none;">
+      
+      <!-- Big Clock & Daily Punch Station -->
+      <div class="glass-card" style="margin-bottom: 1.5rem; text-align: center; padding: 2rem 1.5rem;">
+        <div style="font-size: 0.8rem; text-transform: uppercase; font-weight: 700; color: #60a5fa; letter-spacing: 0.08em; margin-bottom: 0.4rem;">
+          Attendance Punch Station
+        </div>
+        
+        <div class="clock-display" id="emp-live-clock">00:00:00</div>
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;" id="emp-current-date">--</div>
+
+        <!-- Shift & Daily Rate Rules Card -->
+        <div style="display: inline-flex; gap: 1.5rem; background: rgba(17, 24, 39, 0.8); border: 1px solid var(--border-color); border-radius: 9999px; padding: 0.45rem 1.5rem; font-size: 0.8rem; margin-bottom: 1.25rem; flex-wrap: wrap; justify-content: center;">
+          <span>⏰ Shift: <strong id="emp-shift-hours">09:00 - 17:00</strong></span>
+          <span>⏳ Grace Period: <strong id="emp-grace-period">10 mins</strong></span>
+          <span>💵 Daily Rate: <strong id="emp-daily-rate" style="color: #34d399;">$0.00 / day</strong></span>
+        </div>
+
+        <!-- Dynamic Late Warning Banner -->
+        <div id="emp-punch-alert-box" class="ontime-alert-box" style="display: none; max-width: 650px; margin: 0 auto 1.25rem; text-align: left;">
+          <div style="font-size: 1.3rem;">ℹ️</div>
+          <div>
+            <div style="font-weight: 700; font-size: 0.88rem;" id="emp-alert-title">Clock-in Status</div>
+            <div style="font-size: 0.8rem;" id="emp-alert-desc">You are within standard working hours.</div>
+          </div>
+        </div>
+
+        <!-- Punch Buttons -->
+        <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+          <button id="btn-clock-in" class="btn btn-emerald" style="padding: 0.85rem 2rem; font-size: 1rem;" onclick="app.handleClockIn()">
+            🟢 Clock In Now
+          </button>
+          <button id="btn-clock-out" class="btn btn-rose" style="padding: 0.85rem 2rem; font-size: 1rem;" onclick="app.handleClockOut()" disabled>
+            🔴 Clock Out
+          </button>
+        </div>
+
+        <!-- Simulated clock time option for testing -->
+        <div style="margin-top: 1.25rem; font-size: 0.75rem; color: var(--text-dim); display: flex; justify-content: center; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+          <span>Demo Time Simulator:</span>
+          <button class="btn btn-secondary btn-sm" onclick="app.setEmployeeTestPunch('ontime')">Test On-Time (08:55)</button>
+          <button class="btn btn-rose btn-sm" onclick="app.setEmployeeTestPunch('late')">Test Late Punch (09:28, Deducts Pay)</button>
+          <button class="btn btn-secondary btn-sm" onclick="app.setEmployeeTestPunch('real')">Reset to Real Time</button>
+        </div>
+      </div>
+
+      <!-- Employee Monthly Salary & Deductions Summary -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Base Monthly Salary</div>
+          <div class="kpi-value" id="emp-base-salary">$0.00</div>
+          <div class="kpi-sub">Set by Owner</div>
+        </div>
+        <div class="kpi-card emerald">
+          <div class="kpi-label">Days Present This Month</div>
+          <div class="kpi-value" id="emp-days-present">0</div>
+          <div class="kpi-sub" id="emp-days-ontime-sub">0 on-time</div>
+        </div>
+        <div class="kpi-card rose">
+          <div class="kpi-label">Late Days & Deductions</div>
+          <div class="kpi-value" id="emp-late-deductions">-$0.00</div>
+          <div class="kpi-sub" id="emp-late-days-sub">0 late arrivals</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Estimated Net Payout</div>
+          <div class="kpi-value" id="emp-net-payout" style="color: #34d399;">$0.00</div>
+          <div class="kpi-sub">After late penalties</div>
+        </div>
+      </div>
+
+      <!-- My Attendance History -->
+      <div class="glass-card">
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem;">My Attendance & Salary History</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Clock In</th>
+                <th>Clock Out</th>
+                <th>Status</th>
+                <th>Late Minutes</th>
+                <th>Daily Rate</th>
+                <th>Deduction</th>
+                <th>Net Earned</th>
+                <th>Notes / Policy Applied</th>
+              </tr>
+            </thead>
+            <tbody id="emp-attendance-table">
+              <tr><td colspan="9" style="text-align: center; padding: 2rem;">Loading attendance records...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ======================================================== -->
+  <!-- MODAL 1: UNAUTHORIZED DEVICE LOCKOUT (Anti-Bypass Screen) -->
+  <!-- ======================================================== -->
+  <div id="modal-device-locked" class="modal-overlay" style="display: none;">
+    <div class="modal" style="max-width: 500px;">
+      <div class="lockout-box">
+        <div class="lockout-icon">🚨</div>
+        <h2 style="font-size: 1.4rem; font-weight: 800; color: #fb7185; margin-bottom: 0.5rem;">
+          Device Not Authorized!
+        </h2>
+        <p style="font-size: 0.85rem; color: #fecdd3; margin-bottom: 1rem;">
+          Single-Device Policy Enforced. Your account is strictly bound to another authorized terminal.
+        </p>
+
+        <div style="background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(244, 63, 94, 0.3); border-radius: 8px; padding: 0.85rem; font-size: 0.8rem; text-align: left; margin-bottom: 1.25rem;">
+          <div style="margin-bottom: 0.3rem;">📱 <strong>Authorized Device:</strong> <span id="lockout-bound-device" style="color: #93c5fd;">--</span></div>
+          <div style="margin-bottom: 0.3rem;">⚠️ <strong>Attempted Device:</strong> <span id="lockout-attempted-device" style="color: #fb7185;">--</span></div>
+          <div>🎫 <strong>Your Request ID:</strong> <span id="lockout-request-code" class="hash-pill" style="font-weight: 700; font-size: 0.85rem; color: #fbbf24;">REQ-XXXX</span></div>
+        </div>
+
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+          Please tell your <strong>Owner</strong> your Request ID to receive your 6-digit Unlock Code:
+        </p>
+
+        <!-- 6-Digit Code Input -->
+        <div style="margin-bottom: 1.25rem;">
+          <input type="text" id="unlock-code-input" class="form-input" placeholder="Enter 6-digit Unlock Code (e.g. 481920)" maxlength="6" style="text-align: center; font-size: 1.3rem; font-weight: 700; letter-spacing: 0.2em; font-family: var(--font-mono);">
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; justify-content: center;">
+          <button class="btn btn-secondary" onclick="app.closeLockoutModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="app.submitUnlockCode()">Verify & Bind Device</button>
+        </div>
+
+        <!-- Demo helper for easy testing -->
+        <div style="margin-top: 1rem; font-size: 0.72rem; color: var(--text-dim); border-top: 1px solid rgba(255,255,255,0.1); padding-top: 0.75rem;">
+          💡 <em>Demo Tip: Log in as <strong>Owner</strong> to see/approve this request in the "Device Security" tab, or check the system logs.</em>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ======================================================== -->
+  <!-- MODAL 2: EDIT EMPLOYEE SALARY & WORKING DAYS -->
+  <!-- ======================================================== -->
+  <div id="modal-edit-salary" class="modal-overlay" style="display: none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Edit Monthly Salary</h3>
+        <button class="btn btn-secondary btn-sm" onclick="app.closeModal('modal-edit-salary')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="edit-salary-emp-id">
+        <div class="form-group">
+          <label class="form-label">Employee</label>
+          <input type="text" id="edit-salary-emp-name" class="form-input" disabled>
+        </div>
+        <div class="form-group">
+          <label class="form-label">New Monthly Base Salary ($)</label>
+          <input type="number" step="0.01" id="edit-salary-amount" class="form-input" oninput="app.updateDailyRatePreview()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Standard Working Days Per Month</label>
+          <input type="number" id="edit-salary-work-days" class="form-input" value="22" oninput="app.updateDailyRatePreview()">
+        </div>
+        <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 8px; padding: 0.75rem; font-size: 0.85rem; margin-bottom: 1rem;">
+          Computed Daily Rate: <strong id="edit-salary-daily-preview" style="color: #60a5fa;">$0.00 / day</strong>
+          <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 0.2rem;">
+            Formula: Monthly Salary ÷ Working Days = Daily Salary Rate
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reason for Modification (Logged to Zero-Trust Ledger)</label>
+          <input type="text" id="edit-salary-reason" class="form-input" value="Annual performance salary adjustment" placeholder="Reason for salary change">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="app.closeModal('modal-edit-salary')">Cancel</button>
+        <button class="btn btn-primary" onclick="app.saveSalaryChange()">Save & Log to Ledger</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ======================================================== -->
+  <!-- MODAL 3: EDIT ATTENDANCE & DEDUCTION RULES -->
+  <!-- ======================================================== -->
+  <div id="modal-edit-rules" class="modal-overlay" style="display: none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Configure Shift & Late Deduction Rules</h3>
+        <button class="btn btn-secondary btn-sm" onclick="app.closeModal('modal-edit-rules')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="edit-rules-emp-id">
+        <div class="form-group">
+          <label class="form-label">Employee</label>
+          <input type="text" id="edit-rules-emp-name" class="form-input" disabled>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div class="form-group">
+            <label class="form-label">Shift Start Time</label>
+            <input type="time" id="edit-rules-start" class="form-input" value="09:00">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Shift End Time</label>
+            <input type="time" id="edit-rules-end" class="form-input" value="17:00">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Grace Period (Minutes)</label>
+          <input type="number" id="edit-rules-grace" class="form-input" value="10">
+          <div class="form-help">Arrivals within grace period are marked On-Time with 0 deduction.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Late Penalty Deduction Mode</label>
+          <select id="edit-rules-mode" class="form-select">
+            <option value="FULL_DAILY">Full Daily Salary (100% Forfeited if Late)</option>
+            <option value="HALF_DAILY">Half Daily Salary (50% Deducted if Late)</option>
+            <option value="PERCENTAGE">Custom Percentage of Daily Salary</option>
+            <option value="PRO_RATED_HOURLY">Pro-rated Hourly Deduction (8h Day)</option>
+            <option value="TIERED">Tiered (1-15m: 25%, 16-60m: 50%, >60m: 100%)</option>
+          </select>
+        </div>
+        <div class="form-group" id="group-rules-custom-pct" style="display: none;">
+          <label class="form-label">Custom Deduction Percentage (%)</label>
+          <input type="number" id="edit-rules-custom-pct" class="form-input" value="100">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="app.closeModal('modal-edit-rules')">Cancel</button>
+        <button class="btn btn-primary" onclick="app.saveRulesChange()">Update Policy Rules</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ======================================================== -->
+  <!-- MODAL 4: ADD NEW EMPLOYEE -->
+  <!-- ======================================================== -->
+  <div id="modal-add-employee" class="modal-overlay" style="display: none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Register New Employee</h3>
+        <button class="btn btn-secondary btn-sm" onclick="app.closeModal('modal-add-employee')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" id="add-emp-name" class="form-input" placeholder="e.g. David Miller" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" id="add-emp-email" class="form-input" placeholder="e.g. david@company.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Initial Password</label>
+          <input type="password" id="add-emp-password" class="form-input" value="employee123">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div class="form-group">
+            <label class="form-label">Monthly Salary ($)</label>
+            <input type="number" step="0.01" id="add-emp-salary" class="form-input" value="3000.00">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Working Days / Mo</label>
+            <input type="number" id="add-emp-days" class="form-input" value="22">
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div class="form-group">
+            <label class="form-label">Start Time</label>
+            <input type="time" id="add-emp-start" class="form-input" value="09:00">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Grace Period (Mins)</label>
+            <input type="number" id="add-emp-grace" class="form-input" value="10">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Late Deduction Policy</label>
+          <select id="add-emp-mode" class="form-select">
+            <option value="FULL_DAILY">Full Daily Salary (100% Forfeited)</option>
+            <option value="HALF_DAILY">Half Daily Salary (50% Deducted)</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="app.closeModal('modal-add-employee')">Cancel</button>
+        <button class="btn btn-primary" onclick="app.submitAddEmployee()">Create & Bind</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ======================================================== -->
+  <!-- MODAL 5: ZERO TRUST CHAIN VERIFICATION REPORT -->
+  <!-- ======================================================== -->
+  <div id="modal-chain-verification" class="modal-overlay" style="display: none;">
+    <div class="modal" style="max-width: 620px;">
+      <div class="modal-header">
+        <h3>🛡️ Zero-Trust Cryptographic Ledger Audit</h3>
+        <button class="btn btn-secondary btn-sm" onclick="app.closeModal('modal-chain-verification')">✕</button>
+      </div>
+      <div class="modal-body" id="chain-verification-content">
+        <div style="text-align: center; padding: 2rem;">Validating SHA-256 block hash integrity...</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="app.closeModal('modal-chain-verification')">Close Audit Report</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ======================================================== -->
+  <!-- MODAL 6: DETAILED PAYSLIP BREAKDOWN -->
+  <!-- ======================================================== -->
+  <div id="modal-payslip" class="modal-overlay" style="display: none;">
+    <div class="modal" style="max-width: 720px;">
+      <div class="modal-header">
+        <h3 id="payslip-title">Itemized Payslip</h3>
+        <button class="btn btn-secondary btn-sm" onclick="app.closeModal('modal-payslip')">✕</button>
+      </div>
+      <div class="modal-body" id="payslip-content">
+        <!-- Injected via app.js -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="window.print()">🖨️ Print Payslip</button>
+        <button class="btn btn-primary" onclick="app.closeModal('modal-payslip')">Done</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="/static/app.js"></script>
+</body>
+</html>
