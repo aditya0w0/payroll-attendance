@@ -1,5 +1,5 @@
 
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2800 1950" width="100%" height="100%" class="flow-svg">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2800 2250" width="100%" height="100%" class="flow-svg">
       
     <defs>
       <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -48,8 +48,8 @@
     </defs>
       
     <!-- Canvas Background -->
-    <rect width="2800" height="1950" fill="#0a0e17" />
-    <rect width="2800" height="1950" fill="url(#grid)" />
+    <rect width="2800" height="2250" fill="#0a0e17" />
+    <rect width="2800" height="2250" fill="url(#grid)" />
 
     <!-- Top Master Header -->
     <g id="master-header">
@@ -60,7 +60,7 @@
         SYSTEM SCHEME &amp; RUNTIME ARCHITECTURE FLOW
       </text>
       <text x="70" y="94" fill="#94a3b8" font-size="13" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif">
-        Zero-Trust Payroll Attendance: 14 Prisma Data Models, WebAuthn Passkeys, Anti-Cheat Dual Geofence (Haversine + WiFi IP), 15s QR Tokens &amp; Ed25519 Audit Chain
+        Zero-Trust Payroll Attendance: 18 Prisma Data Models, WebAuthn Passkeys, Anti-Cheat Dual Geofence (Haversine + WiFi IP), 15s QR Tokens &amp; Ed25519 Audit Chain
       </text>
 
       <!-- Architecture Badges -->
@@ -89,7 +89,7 @@
     <!-- Column 1 Header -->
     <rect x="40" y="145" width="840" height="36" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1"/>
     <text x="55" y="168" fill="#22d3ee" font-size="13" font-weight="800" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">
-      ZONE 1: PRISMA SCHEMA &amp; DATABASE DOMAINS (14 ENTITIES)
+      ZONE 1: PRISMA SCHEMA &amp; DATABASE DOMAINS (18 ENTITIES)
     </text>
 
     <!-- Column 2 Header -->
@@ -634,7 +634,7 @@
     </g>
   
     <g id="model-attendance" class="diagram-node model-node" data-id="model-attendance" style="cursor: pointer;">
-      <rect x="50" y="1430" width="810" height="240" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
+      <rect x="50" y="1430" width="810" height="250" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
       <path d="M 50 1438 A 8 8 0 0 1 58 1430 L 852 1430 A 8 8 0 0 1 860 1438 L 860 1464 L 50 1464 Z" fill="#1e293b" />
       <line x1="58" y1="1430" x2="852" y2="1430" stroke="#34d399" stroke-width="3" stroke-linecap="round"/>
       <line x1="50" y1="1464" x2="860" y2="1464" stroke="#334155" stroke-width="1" />
@@ -689,115 +689,246 @@
     
       <text x="64" y="1682" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
       <text x="98" y="1682" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">checkInLatitude / checkInLongitude / checkInDistanceMeters / checkInClientIp</text>
-      <text x="846" y="1682" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">GPS &amp; Telemetry</text>
-    <line x1="62" y1="1696" x2="848" y2="1696" stroke="#334155" stroke-dasharray="2,2" stroke-width="1"/>
-        <text x="64" y="1712" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
-        <text x="98" y="1712" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">N:1 EmployeeProfile</text>
+      <text x="846" y="1682" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">In-Telemetry</text>
+    
+      <text x="64" y="1700" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="1700" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">checkOutLatitude / checkOutLongitude / checkOutDistanceMeters / checkOutClientIp</text>
+      <text x="846" y="1700" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Out-Telemetry</text>
+    <line x1="62" y1="1714" x2="848" y2="1714" stroke="#334155" stroke-dasharray="2,2" stroke-width="1"/>
+        <text x="64" y="1730" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="98" y="1730" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">N:1 EmployeeProfile</text>
       
-        <text x="64" y="1728" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
-        <text x="98" y="1728" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">N:1 Shift</text>
+        <text x="64" y="1746" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="98" y="1746" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">N:1 Shift</text>
       
-        <text x="64" y="1744" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
-        <text x="98" y="1744" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">@@unique([employeeId, shiftDate])</text>
+        <text x="64" y="1762" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="98" y="1762" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">@@unique([employeeId, shiftDate])</text>
       
     </g>
   
     <g id="model-payroll-period" class="diagram-node model-node" data-id="model-payroll-period" style="cursor: pointer;">
-      <rect x="50" y="1690" width="385" height="210" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
-      <path d="M 50 1698 A 8 8 0 0 1 58 1690 L 427 1690 A 8 8 0 0 1 435 1698 L 435 1724 L 50 1724 Z" fill="#1e293b" />
-      <line x1="58" y1="1690" x2="427" y2="1690" stroke="#c084fc" stroke-width="3" stroke-linecap="round"/>
-      <line x1="50" y1="1724" x2="435" y2="1724" stroke="#334155" stroke-width="1" />
+      <rect x="50" y="1700" width="385" height="210" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
+      <path d="M 50 1708 A 8 8 0 0 1 58 1700 L 427 1700 A 8 8 0 0 1 435 1708 L 435 1734 L 50 1734 Z" fill="#1e293b" />
+      <line x1="58" y1="1700" x2="427" y2="1700" stroke="#c084fc" stroke-width="3" stroke-linecap="round"/>
+      <line x1="50" y1="1734" x2="435" y2="1734" stroke="#334155" stroke-width="1" />
       
-      <text x="64" y="1712" fill="#f8fafc" font-size="13" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">PayrollPeriod</text>
-      <rect x="351" y="1698" width="72" height="18" rx="4" fill="rgba(255,255,255,0.06)" stroke="#c084fc" stroke-width="0.8"/>
-      <text x="387" y="1711" text-anchor="middle" fill="#c084fc" font-size="9.5" font-weight="700" font-family="ui-monospace, monospace">PAYROLL</text>
+      <text x="64" y="1722" fill="#f8fafc" font-size="13" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">PayrollPeriod</text>
+      <rect x="351" y="1708" width="72" height="18" rx="4" fill="rgba(255,255,255,0.06)" stroke="#c084fc" stroke-width="0.8"/>
+      <text x="387" y="1721" text-anchor="middle" fill="#c084fc" font-size="9.5" font-weight="700" font-family="ui-monospace, monospace">PAYROLL</text>
       
-      <text x="64" y="1744" fill="#fbbf24" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[PK]</text>
-      <text x="98" y="1744" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">id</text>
-      <text x="421" y="1744" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (CUID)</text>
+      <text x="64" y="1754" fill="#fbbf24" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[PK]</text>
+      <text x="98" y="1754" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">id</text>
+      <text x="421" y="1754" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (CUID)</text>
     
-      <text x="64" y="1762" fill="#c084fc" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[UQ]</text>
-      <text x="98" y="1762" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">year / month</text>
-      <text x="421" y="1762" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int</text>
+      <text x="64" y="1772" fill="#c084fc" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[UQ]</text>
+      <text x="98" y="1772" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">year / month</text>
+      <text x="421" y="1772" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int</text>
     
-      <text x="64" y="1780" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
-      <text x="98" y="1780" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">startDate / endDate</text>
-      <text x="421" y="1780" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">DateTime</text>
+      <text x="64" y="1790" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="1790" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">startDate / endDate</text>
+      <text x="421" y="1790" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">DateTime</text>
     
-      <text x="64" y="1798" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
-      <text x="98" y="1798" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">status</text>
-      <text x="421" y="1798" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (&quot;DRAFT&quot;|&quot;FINALIZED&quot;)</text>
+      <text x="64" y="1808" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="1808" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">status</text>
+      <text x="421" y="1808" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (&quot;DRAFT&quot;|&quot;FINALIZED&quot;)</text>
     
-      <text x="64" y="1816" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
-      <text x="98" y="1816" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">finalizedAt</text>
-      <text x="421" y="1816" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">DateTime?</text>
+      <text x="64" y="1826" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="1826" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">finalizedAt</text>
+      <text x="421" y="1826" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">DateTime?</text>
     
-      <text x="64" y="1834" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
-      <text x="98" y="1834" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">finalizedByUserId</text>
-      <text x="421" y="1834" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String?</text>
-    <line x1="62" y1="1848" x2="423" y2="1848" stroke="#334155" stroke-dasharray="2,2" stroke-width="1"/>
-        <text x="64" y="1864" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
-        <text x="98" y="1864" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">1:N PayrollRecord</text>
+      <text x="64" y="1844" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="1844" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">finalizedByUserId</text>
+      <text x="421" y="1844" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String?</text>
+    <line x1="62" y1="1858" x2="423" y2="1858" stroke="#334155" stroke-dasharray="2,2" stroke-width="1"/>
+        <text x="64" y="1874" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="98" y="1874" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">1:N PayrollRecord</text>
       
-        <text x="64" y="1880" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
-        <text x="98" y="1880" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">1:N PayrollAdjustment</text>
+        <text x="64" y="1890" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="98" y="1890" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">1:N PayrollAdjustment</text>
       
     </g>
   
     <g id="model-payroll-record" class="diagram-node model-node" data-id="model-payroll-record" style="cursor: pointer;">
-      <rect x="475" y="1690" width="385" height="210" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
-      <path d="M 475 1698 A 8 8 0 0 1 483 1690 L 852 1690 A 8 8 0 0 1 860 1698 L 860 1724 L 475 1724 Z" fill="#1e293b" />
-      <line x1="483" y1="1690" x2="852" y2="1690" stroke="#c084fc" stroke-width="3" stroke-linecap="round"/>
-      <line x1="475" y1="1724" x2="860" y2="1724" stroke="#334155" stroke-width="1" />
+      <rect x="475" y="1700" width="385" height="210" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
+      <path d="M 475 1708 A 8 8 0 0 1 483 1700 L 852 1700 A 8 8 0 0 1 860 1708 L 860 1734 L 475 1734 Z" fill="#1e293b" />
+      <line x1="483" y1="1700" x2="852" y2="1700" stroke="#c084fc" stroke-width="3" stroke-linecap="round"/>
+      <line x1="475" y1="1734" x2="860" y2="1734" stroke="#334155" stroke-width="1" />
       
-      <text x="489" y="1712" fill="#f8fafc" font-size="13" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">PayrollRecord</text>
-      <rect x="776" y="1698" width="72" height="18" rx="4" fill="rgba(255,255,255,0.06)" stroke="#c084fc" stroke-width="0.8"/>
-      <text x="812" y="1711" text-anchor="middle" fill="#c084fc" font-size="9.5" font-weight="700" font-family="ui-monospace, monospace">PAYROLL_SNAPSHOT</text>
+      <text x="489" y="1722" fill="#f8fafc" font-size="13" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">PayrollRecord</text>
+      <rect x="776" y="1708" width="72" height="18" rx="4" fill="rgba(255,255,255,0.06)" stroke="#c084fc" stroke-width="0.8"/>
+      <text x="812" y="1721" text-anchor="middle" fill="#c084fc" font-size="9.5" font-weight="700" font-family="ui-monospace, monospace">PAYROLL_SNAPSHOT</text>
       
-      <text x="489" y="1744" fill="#fbbf24" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[PK]</text>
-      <text x="523" y="1744" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">id</text>
-      <text x="846" y="1744" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (CUID)</text>
+      <text x="489" y="1754" fill="#fbbf24" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[PK]</text>
+      <text x="523" y="1754" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">id</text>
+      <text x="846" y="1754" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (CUID)</text>
     
-      <text x="489" y="1762" fill="#22d3ee" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[FK]</text>
-      <text x="523" y="1762" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">payrollPeriodId</text>
-      <text x="846" y="1762" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String</text>
+      <text x="489" y="1772" fill="#22d3ee" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[FK]</text>
+      <text x="523" y="1772" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">payrollPeriodId</text>
+      <text x="846" y="1772" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String</text>
     
-      <text x="489" y="1780" fill="#22d3ee" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[FK]</text>
-      <text x="523" y="1780" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">employeeId</text>
-      <text x="846" y="1780" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String</text>
+      <text x="489" y="1790" fill="#22d3ee" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[FK]</text>
+      <text x="523" y="1790" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">employeeId</text>
+      <text x="846" y="1790" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String</text>
     
-      <text x="489" y="1798" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
-      <text x="523" y="1798" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">completedDays</text>
-      <text x="846" y="1798" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int</text>
+      <text x="489" y="1808" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="1808" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">completedDays</text>
+      <text x="846" y="1808" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int</text>
     
-      <text x="489" y="1816" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
-      <text x="523" y="1816" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">dailySalary</text>
-      <text x="846" y="1816" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int (Locked Snapshot)</text>
+      <text x="489" y="1826" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="1826" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">dailySalary</text>
+      <text x="846" y="1826" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int (Locked Snapshot)</text>
     
-      <text x="489" y="1834" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
-      <text x="523" y="1834" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">lateArrivalCount / totalLateMinutes</text>
-      <text x="846" y="1834" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int</text>
+      <text x="489" y="1844" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="1844" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">lateArrivalCount / totalLateMinutes</text>
+      <text x="846" y="1844" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int</text>
     
-      <text x="489" y="1852" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
-      <text x="523" y="1852" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">totalLateDeductions</text>
-      <text x="846" y="1852" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int (IDR)</text>
+      <text x="489" y="1862" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="1862" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">totalLateDeductions</text>
+      <text x="846" y="1862" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int (IDR)</text>
     
-      <text x="489" y="1870" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
-      <text x="523" y="1870" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">grossEarnings / netEarnings</text>
-      <text x="846" y="1870" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int (IDR Final Pay)</text>
+      <text x="489" y="1880" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="1880" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">grossEarnings / netEarnings</text>
+      <text x="846" y="1880" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int (IDR Final Pay)</text>
     
-      <text x="489" y="1888" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
-      <text x="523" y="1888" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">isFinalized</text>
-      <text x="846" y="1888" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Boolean</text>
-    <line x1="487" y1="1902" x2="848" y2="1902" stroke="#334155" stroke-dasharray="2,2" stroke-width="1"/>
-        <text x="489" y="1918" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
-        <text x="523" y="1918" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">N:1 PayrollPeriod</text>
+      <text x="489" y="1898" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="1898" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">isFinalized</text>
+      <text x="846" y="1898" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Boolean</text>
+    <line x1="487" y1="1912" x2="848" y2="1912" stroke="#334155" stroke-dasharray="2,2" stroke-width="1"/>
+        <text x="489" y="1928" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="523" y="1928" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">N:1 PayrollPeriod</text>
       
-        <text x="489" y="1934" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
-        <text x="523" y="1934" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">N:1 EmployeeProfile</text>
+        <text x="489" y="1944" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="523" y="1944" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">N:1 EmployeeProfile</text>
       
-        <text x="489" y="1950" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
-        <text x="523" y="1950" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">@@unique([periodId, employeeId])</text>
+        <text x="489" y="1960" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="523" y="1960" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">@@unique([periodId, employeeId])</text>
+      
+    </g>
+  
+    <g id="model-payroll-adj" class="diagram-node model-node" data-id="model-payroll-adj" style="cursor: pointer;">
+      <rect x="50" y="1930" width="385" height="160" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
+      <path d="M 50 1938 A 8 8 0 0 1 58 1930 L 427 1930 A 8 8 0 0 1 435 1938 L 435 1964 L 50 1964 Z" fill="#1e293b" />
+      <line x1="58" y1="1930" x2="427" y2="1930" stroke="#c084fc" stroke-width="3" stroke-linecap="round"/>
+      <line x1="50" y1="1964" x2="435" y2="1964" stroke="#334155" stroke-width="1" />
+      
+      <text x="64" y="1952" fill="#f8fafc" font-size="13" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">PayrollAdjustment</text>
+      <rect x="351" y="1938" width="72" height="18" rx="4" fill="rgba(255,255,255,0.06)" stroke="#c084fc" stroke-width="0.8"/>
+      <text x="387" y="1951" text-anchor="middle" fill="#c084fc" font-size="9.5" font-weight="700" font-family="ui-monospace, monospace">PAYROLL_ADJ</text>
+      
+      <text x="64" y="1984" fill="#fbbf24" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[PK]</text>
+      <text x="98" y="1984" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">id</text>
+      <text x="421" y="1984" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (CUID)</text>
+    
+      <text x="64" y="2002" fill="#22d3ee" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[FK]</text>
+      <text x="98" y="2002" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">payrollPeriodId</text>
+      <text x="421" y="2002" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String</text>
+    
+      <text x="64" y="2020" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="2020" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">employeeId</text>
+      <text x="421" y="2020" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String</text>
+    
+      <text x="64" y="2038" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="2038" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">amount</text>
+      <text x="421" y="2038" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int (Bonus [+] / Penalty [-])</text>
+    
+      <text x="64" y="2056" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="2056" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">reason</text>
+      <text x="421" y="2056" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String</text>
+    
+      <text x="64" y="2074" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="2074" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">createdAt</text>
+      <text x="421" y="2074" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">DateTime</text>
+    <line x1="62" y1="2088" x2="423" y2="2088" stroke="#334155" stroke-dasharray="2,2" stroke-width="1"/>
+        <text x="64" y="2104" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="98" y="2104" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">N:1 PayrollPeriod</text>
+      
+    </g>
+  
+    <g id="model-audit-log" class="diagram-node model-node" data-id="model-audit-log" style="cursor: pointer;">
+      <rect x="475" y="1930" width="385" height="220" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
+      <path d="M 475 1938 A 8 8 0 0 1 483 1930 L 852 1930 A 8 8 0 0 1 860 1938 L 860 1964 L 475 1964 Z" fill="#1e293b" />
+      <line x1="483" y1="1930" x2="852" y2="1930" stroke="#fb923c" stroke-width="3" stroke-linecap="round"/>
+      <line x1="475" y1="1964" x2="860" y2="1964" stroke="#334155" stroke-width="1" />
+      
+      <text x="489" y="1952" fill="#f8fafc" font-size="13" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">AuditLog</text>
+      <rect x="776" y="1938" width="72" height="18" rx="4" fill="rgba(255,255,255,0.06)" stroke="#fb923c" stroke-width="0.8"/>
+      <text x="812" y="1951" text-anchor="middle" fill="#fb923c" font-size="9.5" font-weight="700" font-family="ui-monospace, monospace">CRYPTO_AUDIT</text>
+      
+      <text x="489" y="1984" fill="#fbbf24" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[PK]</text>
+      <text x="523" y="1984" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">id</text>
+      <text x="846" y="1984" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (CUID)</text>
+    
+      <text x="489" y="2002" fill="#c084fc" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[UQ]</text>
+      <text x="523" y="2002" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">sequenceNumber</text>
+      <text x="846" y="2002" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int</text>
+    
+      <text x="489" y="2020" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="2020" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">schemaVersion</text>
+      <text x="846" y="2020" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int (Version 2)</text>
+    
+      <text x="489" y="2038" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="2038" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">timestamp</text>
+      <text x="846" y="2038" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">DateTime</text>
+    
+      <text x="489" y="2056" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="2056" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">actorRole / actorName</text>
+      <text x="846" y="2056" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String</text>
+    
+      <text x="489" y="2074" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="2074" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">action / targetEntity</text>
+      <text x="846" y="2074" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String</text>
+    
+      <text x="489" y="2092" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="2092" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">previousHash / currentHash</text>
+      <text x="846" y="2092" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (SHA-256)</text>
+    
+      <text x="489" y="2110" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="2110" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">signature</text>
+      <text x="846" y="2110" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (Ed25519)</text>
+    <line x1="487" y1="2124" x2="848" y2="2124" stroke="#334155" stroke-dasharray="2,2" stroke-width="1"/>
+        <text x="489" y="2140" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="523" y="2140" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">1:1 AuditOutbox</text>
+      
+        <text x="489" y="2156" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="523" y="2156" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Immutable Trigger Protected</text>
+      
+    </g>
+  
+    <g id="model-audit-outbox" class="diagram-node model-node" data-id="model-audit-outbox" style="cursor: pointer;">
+      <rect x="50" y="2110" width="385" height="130" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
+      <path d="M 50 2118 A 8 8 0 0 1 58 2110 L 427 2110 A 8 8 0 0 1 435 2118 L 435 2144 L 50 2144 Z" fill="#1e293b" />
+      <line x1="58" y1="2110" x2="427" y2="2110" stroke="#fb923c" stroke-width="3" stroke-linecap="round"/>
+      <line x1="50" y1="2144" x2="435" y2="2144" stroke="#334155" stroke-width="1" />
+      
+      <text x="64" y="2132" fill="#f8fafc" font-size="13" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">AuditOutbox</text>
+      <rect x="351" y="2118" width="72" height="18" rx="4" fill="rgba(255,255,255,0.06)" stroke="#fb923c" stroke-width="0.8"/>
+      <text x="387" y="2131" text-anchor="middle" fill="#fb923c" font-size="9.5" font-weight="700" font-family="ui-monospace, monospace">AUDIT_OUTBOX</text>
+      
+      <text x="64" y="2164" fill="#fbbf24" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[PK]</text>
+      <text x="98" y="2164" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">id</text>
+      <text x="421" y="2164" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (CUID)</text>
+    
+      <text x="64" y="2182" fill="#22d3ee" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[FK]</text>
+      <text x="98" y="2182" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">auditLogId</text>
+      <text x="421" y="2182" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String</text>
+    
+      <text x="64" y="2200" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="2200" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">status</text>
+      <text x="421" y="2200" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (&quot;PENDING&quot;|&quot;DELIVERED&quot;)</text>
+    
+      <text x="64" y="2218" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="2218" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">retryCount</text>
+      <text x="421" y="2218" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int</text>
+    
+      <text x="64" y="2236" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="2236" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">nextAttemptAt</text>
+      <text x="421" y="2236" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">DateTime</text>
+    <line x1="62" y1="2250" x2="423" y2="2250" stroke="#334155" stroke-dasharray="2,2" stroke-width="1"/>
+        <text x="64" y="2266" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="98" y="2266" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">1:1 AuditLog</text>
+      
+        <text x="64" y="2282" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="98" y="2282" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">@@index([status, nextAttemptAt])</text>
       
     </g>
   
@@ -843,22 +974,22 @@
     </g>
   
     <g id="flow-qr-kiosk" class="diagram-node flow-node" data-id="flow-qr-kiosk" style="cursor: pointer;">
-      <rect x="925" y="530" width="910" height="280" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
+      <rect x="925" y="530" width="910" height="300" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
       <path d="M 925 538 A 8 8 0 0 1 933 530 L 1827 530 A 8 8 0 0 1 1835 538 L 1835 564 L 925 564 Z" fill="#1e293b" />
       <line x1="933" y1="530" x2="1827" y2="530" stroke="#f43f5e" stroke-width="3" stroke-linecap="round"/>
       <line x1="925" y1="564" x2="1835" y2="564" stroke="#334155" stroke-width="1" />
       
-      <text x="939" y="552" fill="#f8fafc" font-size="13" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">SCHEME B: 15-SECOND DYNAMIC QR KIOSK &amp; SINGLE-USE TOKEN BURN</text>
+      <text x="939" y="552" fill="#f8fafc" font-size="13" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">SCHEME B: 15s DYNAMIC QR KIOSK, FAST-POLL &amp; QUEUE ANTI-COLLISION</text>
       <rect x="1741" y="538" width="82" height="18" rx="4" fill="rgba(255,255,255,0.06)" stroke="#f43f5e" stroke-width="0.8"/>
       <text x="1782" y="551" text-anchor="middle" fill="#f43f5e" font-size="9.5" font-weight="700" font-family="ui-monospace, monospace">ANTI_REPLAY</text>
       
         <rect x="937" y="572" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
-        <text x="945" y="588" fill="#f43f5e" font-size="11" font-weight="600" font-family="ui-monospace, monospace">1. /api/qr/active (Owner Kiosk Screen)</text>
-        <text x="1815" y="588" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Generates secure cryptographic challenge token; rotates every 15 seconds</text>
+        <text x="945" y="588" fill="#f43f5e" font-size="11" font-weight="600" font-family="ui-monospace, monospace">1. /api/qr/active (Kiosk Heartbeat &amp; Auto-Sync IP)</text>
+        <text x="1815" y="588" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Rotates token every 15s; auto-syncs dynamic office WAN IP from kiosk header</text>
       
         <rect x="937" y="600" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
-        <text x="945" y="616" fill="#cbd5e1" font-size="11" font-weight="600" font-family="ui-monospace, monospace">2. Kiosk Countdown Display</text>
-        <text x="1815" y="616" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Client renders SVG QR with synchronized 15-second radial progress timer</text>
+        <text x="945" y="616" fill="#cbd5e1" font-size="11" font-weight="600" font-family="ui-monospace, monospace">2. Kiosk 1.5s Fast-Polling (/owner/qr)</text>
+        <text x="1815" y="616" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Polls every 1500ms; instantly rotates QR on screen when employee burns token</text>
       
         <rect x="937" y="628" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
         <text x="945" y="644" fill="#22d3ee" font-size="11" font-weight="600" font-family="ui-monospace, monospace">3. Employee Mobile Scan (/employee/scan)</text>
@@ -869,52 +1000,52 @@
         <text x="1815" y="672" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Atomic DB write: isActive = false, consumedAt = now(), consumedBy = employeeId</text>
       
         <rect x="937" y="684" width="886" height="24" rx="4" fill="rgba(244,63,94,0.1)" stroke="#f43f5e" stroke-width="1" stroke-dasharray="2,2"/>
-        <text x="945" y="700" fill="#f43f5e" font-size="10.5" font-weight="700" font-family="ui-monospace, monospace">REUSE / PHOTO SHARING REJECTED</text>
-        <text x="1815" y="700" text-anchor="end" fill="#cbd5e1" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">HTTP 400 QR_ALREADY_USED -&gt; Flags CHEATING_ALERT_QR_SHARING_REUSE in Audit Trail</text>
+        <text x="945" y="700" fill="#f43f5e" font-size="10.5" font-weight="700" font-family="ui-monospace, monospace">QUEUE COLLISION GRACE (&lt;= 4s)</text>
+        <text x="1815" y="700" text-anchor="end" fill="#cbd5e1" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Scanned within 4s of consumption in office -&gt; HTTP 409 QR_QUEUE_ROTATING (no cheat alert)</text>
       
         <rect x="937" y="712" width="886" height="24" rx="4" fill="rgba(244,63,94,0.1)" stroke="#f43f5e" stroke-width="1" stroke-dasharray="2,2"/>
-        <text x="945" y="728" fill="#f43f5e" font-size="10.5" font-weight="700" font-family="ui-monospace, monospace">EXPIRED TOKEN REJECTED</text>
-        <text x="1815" y="728" text-anchor="end" fill="#cbd5e1" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">If scannedAt &gt; expiresAt (TTL + 5s grace) -&gt; HTTP 400 QR_EXPIRED denied</text>
+        <text x="945" y="728" fill="#f43f5e" font-size="10.5" font-weight="700" font-family="ui-monospace, monospace">MALICIOUS REUSE / PHOTO SHARING</text>
+        <text x="1815" y="728" text-anchor="end" fill="#cbd5e1" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Scanned &gt; 4s or out-of-bounds -&gt; HTTP 409 QR_ALREADY_USED + Flags CHEATING_ALERT</text>
       
     </g>
   
     <g id="flow-anti-cheat" class="diagram-node flow-node" data-id="flow-anti-cheat" style="cursor: pointer;">
-      <rect x="925" y="830" width="910" height="350" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
-      <path d="M 925 838 A 8 8 0 0 1 933 830 L 1827 830 A 8 8 0 0 1 1835 838 L 1835 864 L 925 864 Z" fill="#1e293b" />
-      <line x1="933" y1="830" x2="1827" y2="830" stroke="#fbbf24" stroke-width="3" stroke-linecap="round"/>
-      <line x1="925" y1="864" x2="1835" y2="864" stroke="#334155" stroke-width="1" />
+      <rect x="925" y="850" width="910" height="350" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
+      <path d="M 925 858 A 8 8 0 0 1 933 850 L 1827 850 A 8 8 0 0 1 1835 858 L 1835 884 L 925 884 Z" fill="#1e293b" />
+      <line x1="933" y1="850" x2="1827" y2="850" stroke="#fbbf24" stroke-width="3" stroke-linecap="round"/>
+      <line x1="925" y1="884" x2="1835" y2="884" stroke="#334155" stroke-width="1" />
       
-      <text x="939" y="852" fill="#f8fafc" font-size="13" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">SCHEME C: ANTI-CHEAT DUAL LOCATION VERIFICATION (GEOFENCE + WIFI IP)</text>
-      <rect x="1741" y="838" width="82" height="18" rx="4" fill="rgba(255,255,255,0.06)" stroke="#fbbf24" stroke-width="0.8"/>
-      <text x="1782" y="851" text-anchor="middle" fill="#fbbf24" font-size="9.5" font-weight="700" font-family="ui-monospace, monospace">LOCATION_SEC</text>
+      <text x="939" y="872" fill="#f8fafc" font-size="13" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">SCHEME C: ANTI-CHEAT DUAL LOCATION VERIFICATION &amp; CHECK-OUT TELEMETRY</text>
+      <rect x="1741" y="858" width="82" height="18" rx="4" fill="rgba(255,255,255,0.06)" stroke="#fbbf24" stroke-width="0.8"/>
+      <text x="1782" y="871" text-anchor="middle" fill="#fbbf24" font-size="9.5" font-weight="700" font-family="ui-monospace, monospace">LOCATION_SEC</text>
       
-        <rect x="937" y="872" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
-        <text x="945" y="888" fill="#fbbf24" font-size="11" font-weight="600" font-family="ui-monospace, monospace">1. Client Geolocation &amp; IP Capture</text>
-        <text x="1815" y="888" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Acquires high-accuracy GPS coordinates (lat, lng, accuracy) &amp; WAN IP from request headers</text>
+        <rect x="937" y="892" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
+        <text x="945" y="908" fill="#fbbf24" font-size="11" font-weight="600" font-family="ui-monospace, monospace">1. Client Geolocation &amp; IP Capture</text>
+        <text x="1815" y="908" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Acquires high-accuracy GPS coordinates (lat, lng, accuracy) &amp; WAN IP from request headers</text>
       
-        <rect x="937" y="900" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
-        <text x="945" y="916" fill="#fbbf24" font-size="11" font-weight="600" font-family="ui-monospace, monospace">2. GPS Accuracy Validation Check</text>
-        <text x="1815" y="916" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">If gpsAccuracy &gt; OfficeConfig.maxGpsAccuracy (80m) -&gt; HTTP 403 GPS_LOW_ACCURACY</text>
+        <rect x="937" y="920" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
+        <text x="945" y="936" fill="#fbbf24" font-size="11" font-weight="600" font-family="ui-monospace, monospace">2. GPS Accuracy Validation Check</text>
+        <text x="1815" y="936" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">If gpsAccuracy &gt; OfficeConfig.maxGpsAccuracy (80m) -&gt; HTTP 403 GPS_LOW_ACCURACY</text>
       
-        <rect x="937" y="928" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
-        <text x="945" y="944" fill="#22d3ee" font-size="11" font-weight="600" font-family="ui-monospace, monospace">3. Haversine Distance Calculation</text>
-        <text x="1815" y="944" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Computes spherical distance (d = 2R * asin(sqrt(...))) between scanner &amp; OfficeConfig</text>
+        <rect x="937" y="948" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
+        <text x="945" y="964" fill="#22d3ee" font-size="11" font-weight="600" font-family="ui-monospace, monospace">3. Haversine Distance Calculation</text>
+        <text x="1815" y="964" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Computes spherical distance (d = 2R * asin(sqrt(...))) between scanner &amp; OfficeConfig</text>
       
-        <rect x="937" y="956" width="886" height="24" rx="4" fill="rgba(244,63,94,0.1)" stroke="#f43f5e" stroke-width="1" stroke-dasharray="2,2"/>
-        <text x="945" y="972" fill="#f43f5e" font-size="10.5" font-weight="700" font-family="ui-monospace, monospace">GEOFENCE DISTANCE CHECK</text>
-        <text x="1815" y="972" text-anchor="end" fill="#cbd5e1" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">If distanceMeters &gt; radiusMeters (50m) -&gt; HTTP 403 GEO_OUT_OF_BOUNDS + Audit Cheating Alert</text>
+        <rect x="937" y="976" width="886" height="24" rx="4" fill="rgba(244,63,94,0.1)" stroke="#f43f5e" stroke-width="1" stroke-dasharray="2,2"/>
+        <text x="945" y="992" fill="#f43f5e" font-size="10.5" font-weight="700" font-family="ui-monospace, monospace">GEOFENCE DISTANCE CHECK</text>
+        <text x="1815" y="992" text-anchor="end" fill="#cbd5e1" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">If distanceMeters &gt; radiusMeters (50m) -&gt; HTTP 403 GEO_OUT_OF_BOUNDS + Audit Cheating Alert</text>
       
-        <rect x="937" y="984" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
-        <text x="945" y="1000" fill="#c084fc" font-size="11" font-weight="600" font-family="ui-monospace, monospace">4. Office WiFi Public IP Matching (Optional)</text>
-        <text x="1815" y="1000" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">If enforceWifiIp: compares client WAN IP with OfficeConfig.officePublicIp</text>
+        <rect x="937" y="1004" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
+        <text x="945" y="1020" fill="#c084fc" font-size="11" font-weight="600" font-family="ui-monospace, monospace">4. Office WiFi Public IP Matching (Optional)</text>
+        <text x="1815" y="1020" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">If enforceWifiIp: compares client WAN IP with OfficeConfig.officePublicIp</text>
       
-        <rect x="937" y="1012" width="886" height="24" rx="4" fill="rgba(244,63,94,0.1)" stroke="#f43f5e" stroke-width="1" stroke-dasharray="2,2"/>
-        <text x="945" y="1028" fill="#f43f5e" font-size="10.5" font-weight="700" font-family="ui-monospace, monospace">WIFI WAN MISMATCH CHECK</text>
-        <text x="1815" y="1028" text-anchor="end" fill="#cbd5e1" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">If clientIp !== officePublicIp -&gt; HTTP 403 WIFI_IP_MISMATCH + Transactional Rollback</text>
+        <rect x="937" y="1032" width="886" height="24" rx="4" fill="rgba(244,63,94,0.1)" stroke="#f43f5e" stroke-width="1" stroke-dasharray="2,2"/>
+        <text x="945" y="1048" fill="#f43f5e" font-size="10.5" font-weight="700" font-family="ui-monospace, monospace">DOUBLE-SCAN COOLDOWN (60s)</text>
+        <text x="1815" y="1048" text-anchor="end" fill="#cbd5e1" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">If check-out attempted &lt; 60s after check-in -&gt; HTTP 429 SCAN_COOLDOWN_ACTIVE (token spared)</text>
       
-        <rect x="937" y="1040" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
-        <text x="945" y="1056" fill="#34d399" font-size="11" font-weight="600" font-family="ui-monospace, monospace">5. Verified Telemetry Persistence</text>
-        <text x="1815" y="1056" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Logs checkInLatitude, checkInLongitude, checkInDistanceMeters, checkInClientIp to AttendanceRecord</text>
+        <rect x="937" y="1060" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
+        <text x="945" y="1076" fill="#34d399" font-size="11" font-weight="600" font-family="ui-monospace, monospace">5. Complete Punch Telemetry Persistence</text>
+        <text x="1815" y="1076" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Persists checkIn* and checkOut* (Latitude, Longitude, Distance, IP) in AttendanceRecord</text>
       
     </g>
   

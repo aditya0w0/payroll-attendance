@@ -69,7 +69,7 @@
         PAYROLL ATTENDANCE SCHEME FLOW INSPECTOR
       </h1>
       <span class="text-xs px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 font-mono">
-        14 PRISMA MODELS &bull; 8 RUNTIME SCHEMES
+        18 PRISMA MODELS &bull; 8 RUNTIME SCHEMES
       </span>
     </div>
 
@@ -102,7 +102,7 @@
     <div id="viewport-container" class="flex-1 h-full w-full relative overflow-hidden bg-[#090d16]">
       <div id="svg-transform-layer" style="transform: matrix(0.6, 0, 0, 0.6, 20, 20); transform-origin: 0 0;">
         
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2800 1950" width="100%" height="100%" class="flow-svg">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2800 2250" width="100%" height="100%" class="flow-svg">
       
     <defs>
       <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -151,8 +151,8 @@
     </defs>
       
     <!-- Canvas Background -->
-    <rect width="2800" height="1950" fill="#0a0e17" />
-    <rect width="2800" height="1950" fill="url(#grid)" />
+    <rect width="2800" height="2250" fill="#0a0e17" />
+    <rect width="2800" height="2250" fill="url(#grid)" />
 
     <!-- Top Master Header -->
     <g id="master-header">
@@ -163,7 +163,7 @@
         SYSTEM SCHEME &amp; RUNTIME ARCHITECTURE FLOW
       </text>
       <text x="70" y="94" fill="#94a3b8" font-size="13" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif">
-        Zero-Trust Payroll Attendance: 14 Prisma Data Models, WebAuthn Passkeys, Anti-Cheat Dual Geofence (Haversine + WiFi IP), 15s QR Tokens &amp; Ed25519 Audit Chain
+        Zero-Trust Payroll Attendance: 18 Prisma Data Models, WebAuthn Passkeys, Anti-Cheat Dual Geofence (Haversine + WiFi IP), 15s QR Tokens &amp; Ed25519 Audit Chain
       </text>
 
       <!-- Architecture Badges -->
@@ -192,7 +192,7 @@
     <!-- Column 1 Header -->
     <rect x="40" y="145" width="840" height="36" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1"/>
     <text x="55" y="168" fill="#22d3ee" font-size="13" font-weight="800" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">
-      ZONE 1: PRISMA SCHEMA &amp; DATABASE DOMAINS (14 ENTITIES)
+      ZONE 1: PRISMA SCHEMA &amp; DATABASE DOMAINS (18 ENTITIES)
     </text>
 
     <!-- Column 2 Header -->
@@ -737,7 +737,7 @@
     </g>
   
     <g id="model-attendance" class="diagram-node model-node" data-id="model-attendance" style="cursor: pointer;">
-      <rect x="50" y="1430" width="810" height="240" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
+      <rect x="50" y="1430" width="810" height="250" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
       <path d="M 50 1438 A 8 8 0 0 1 58 1430 L 852 1430 A 8 8 0 0 1 860 1438 L 860 1464 L 50 1464 Z" fill="#1e293b" />
       <line x1="58" y1="1430" x2="852" y2="1430" stroke="#34d399" stroke-width="3" stroke-linecap="round"/>
       <line x1="50" y1="1464" x2="860" y2="1464" stroke="#334155" stroke-width="1" />
@@ -792,115 +792,246 @@
     
       <text x="64" y="1682" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
       <text x="98" y="1682" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">checkInLatitude / checkInLongitude / checkInDistanceMeters / checkInClientIp</text>
-      <text x="846" y="1682" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">GPS &amp; Telemetry</text>
-    <line x1="62" y1="1696" x2="848" y2="1696" stroke="#334155" stroke-dasharray="2,2" stroke-width="1"/>
-        <text x="64" y="1712" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
-        <text x="98" y="1712" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">N:1 EmployeeProfile</text>
+      <text x="846" y="1682" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">In-Telemetry</text>
+    
+      <text x="64" y="1700" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="1700" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">checkOutLatitude / checkOutLongitude / checkOutDistanceMeters / checkOutClientIp</text>
+      <text x="846" y="1700" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Out-Telemetry</text>
+    <line x1="62" y1="1714" x2="848" y2="1714" stroke="#334155" stroke-dasharray="2,2" stroke-width="1"/>
+        <text x="64" y="1730" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="98" y="1730" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">N:1 EmployeeProfile</text>
       
-        <text x="64" y="1728" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
-        <text x="98" y="1728" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">N:1 Shift</text>
+        <text x="64" y="1746" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="98" y="1746" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">N:1 Shift</text>
       
-        <text x="64" y="1744" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
-        <text x="98" y="1744" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">@@unique([employeeId, shiftDate])</text>
+        <text x="64" y="1762" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="98" y="1762" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">@@unique([employeeId, shiftDate])</text>
       
     </g>
   
     <g id="model-payroll-period" class="diagram-node model-node" data-id="model-payroll-period" style="cursor: pointer;">
-      <rect x="50" y="1690" width="385" height="210" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
-      <path d="M 50 1698 A 8 8 0 0 1 58 1690 L 427 1690 A 8 8 0 0 1 435 1698 L 435 1724 L 50 1724 Z" fill="#1e293b" />
-      <line x1="58" y1="1690" x2="427" y2="1690" stroke="#c084fc" stroke-width="3" stroke-linecap="round"/>
-      <line x1="50" y1="1724" x2="435" y2="1724" stroke="#334155" stroke-width="1" />
+      <rect x="50" y="1700" width="385" height="210" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
+      <path d="M 50 1708 A 8 8 0 0 1 58 1700 L 427 1700 A 8 8 0 0 1 435 1708 L 435 1734 L 50 1734 Z" fill="#1e293b" />
+      <line x1="58" y1="1700" x2="427" y2="1700" stroke="#c084fc" stroke-width="3" stroke-linecap="round"/>
+      <line x1="50" y1="1734" x2="435" y2="1734" stroke="#334155" stroke-width="1" />
       
-      <text x="64" y="1712" fill="#f8fafc" font-size="13" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">PayrollPeriod</text>
-      <rect x="351" y="1698" width="72" height="18" rx="4" fill="rgba(255,255,255,0.06)" stroke="#c084fc" stroke-width="0.8"/>
-      <text x="387" y="1711" text-anchor="middle" fill="#c084fc" font-size="9.5" font-weight="700" font-family="ui-monospace, monospace">PAYROLL</text>
+      <text x="64" y="1722" fill="#f8fafc" font-size="13" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">PayrollPeriod</text>
+      <rect x="351" y="1708" width="72" height="18" rx="4" fill="rgba(255,255,255,0.06)" stroke="#c084fc" stroke-width="0.8"/>
+      <text x="387" y="1721" text-anchor="middle" fill="#c084fc" font-size="9.5" font-weight="700" font-family="ui-monospace, monospace">PAYROLL</text>
       
-      <text x="64" y="1744" fill="#fbbf24" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[PK]</text>
-      <text x="98" y="1744" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">id</text>
-      <text x="421" y="1744" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (CUID)</text>
+      <text x="64" y="1754" fill="#fbbf24" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[PK]</text>
+      <text x="98" y="1754" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">id</text>
+      <text x="421" y="1754" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (CUID)</text>
     
-      <text x="64" y="1762" fill="#c084fc" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[UQ]</text>
-      <text x="98" y="1762" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">year / month</text>
-      <text x="421" y="1762" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int</text>
+      <text x="64" y="1772" fill="#c084fc" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[UQ]</text>
+      <text x="98" y="1772" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">year / month</text>
+      <text x="421" y="1772" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int</text>
     
-      <text x="64" y="1780" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
-      <text x="98" y="1780" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">startDate / endDate</text>
-      <text x="421" y="1780" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">DateTime</text>
+      <text x="64" y="1790" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="1790" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">startDate / endDate</text>
+      <text x="421" y="1790" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">DateTime</text>
     
-      <text x="64" y="1798" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
-      <text x="98" y="1798" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">status</text>
-      <text x="421" y="1798" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (&quot;DRAFT&quot;|&quot;FINALIZED&quot;)</text>
+      <text x="64" y="1808" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="1808" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">status</text>
+      <text x="421" y="1808" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (&quot;DRAFT&quot;|&quot;FINALIZED&quot;)</text>
     
-      <text x="64" y="1816" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
-      <text x="98" y="1816" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">finalizedAt</text>
-      <text x="421" y="1816" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">DateTime?</text>
+      <text x="64" y="1826" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="1826" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">finalizedAt</text>
+      <text x="421" y="1826" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">DateTime?</text>
     
-      <text x="64" y="1834" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
-      <text x="98" y="1834" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">finalizedByUserId</text>
-      <text x="421" y="1834" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String?</text>
-    <line x1="62" y1="1848" x2="423" y2="1848" stroke="#334155" stroke-dasharray="2,2" stroke-width="1"/>
-        <text x="64" y="1864" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
-        <text x="98" y="1864" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">1:N PayrollRecord</text>
+      <text x="64" y="1844" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="1844" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">finalizedByUserId</text>
+      <text x="421" y="1844" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String?</text>
+    <line x1="62" y1="1858" x2="423" y2="1858" stroke="#334155" stroke-dasharray="2,2" stroke-width="1"/>
+        <text x="64" y="1874" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="98" y="1874" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">1:N PayrollRecord</text>
       
-        <text x="64" y="1880" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
-        <text x="98" y="1880" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">1:N PayrollAdjustment</text>
+        <text x="64" y="1890" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="98" y="1890" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">1:N PayrollAdjustment</text>
       
     </g>
   
     <g id="model-payroll-record" class="diagram-node model-node" data-id="model-payroll-record" style="cursor: pointer;">
-      <rect x="475" y="1690" width="385" height="210" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
-      <path d="M 475 1698 A 8 8 0 0 1 483 1690 L 852 1690 A 8 8 0 0 1 860 1698 L 860 1724 L 475 1724 Z" fill="#1e293b" />
-      <line x1="483" y1="1690" x2="852" y2="1690" stroke="#c084fc" stroke-width="3" stroke-linecap="round"/>
-      <line x1="475" y1="1724" x2="860" y2="1724" stroke="#334155" stroke-width="1" />
+      <rect x="475" y="1700" width="385" height="210" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
+      <path d="M 475 1708 A 8 8 0 0 1 483 1700 L 852 1700 A 8 8 0 0 1 860 1708 L 860 1734 L 475 1734 Z" fill="#1e293b" />
+      <line x1="483" y1="1700" x2="852" y2="1700" stroke="#c084fc" stroke-width="3" stroke-linecap="round"/>
+      <line x1="475" y1="1734" x2="860" y2="1734" stroke="#334155" stroke-width="1" />
       
-      <text x="489" y="1712" fill="#f8fafc" font-size="13" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">PayrollRecord</text>
-      <rect x="776" y="1698" width="72" height="18" rx="4" fill="rgba(255,255,255,0.06)" stroke="#c084fc" stroke-width="0.8"/>
-      <text x="812" y="1711" text-anchor="middle" fill="#c084fc" font-size="9.5" font-weight="700" font-family="ui-monospace, monospace">PAYROLL_SNAPSHOT</text>
+      <text x="489" y="1722" fill="#f8fafc" font-size="13" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">PayrollRecord</text>
+      <rect x="776" y="1708" width="72" height="18" rx="4" fill="rgba(255,255,255,0.06)" stroke="#c084fc" stroke-width="0.8"/>
+      <text x="812" y="1721" text-anchor="middle" fill="#c084fc" font-size="9.5" font-weight="700" font-family="ui-monospace, monospace">PAYROLL_SNAPSHOT</text>
       
-      <text x="489" y="1744" fill="#fbbf24" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[PK]</text>
-      <text x="523" y="1744" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">id</text>
-      <text x="846" y="1744" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (CUID)</text>
+      <text x="489" y="1754" fill="#fbbf24" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[PK]</text>
+      <text x="523" y="1754" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">id</text>
+      <text x="846" y="1754" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (CUID)</text>
     
-      <text x="489" y="1762" fill="#22d3ee" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[FK]</text>
-      <text x="523" y="1762" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">payrollPeriodId</text>
-      <text x="846" y="1762" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String</text>
+      <text x="489" y="1772" fill="#22d3ee" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[FK]</text>
+      <text x="523" y="1772" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">payrollPeriodId</text>
+      <text x="846" y="1772" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String</text>
     
-      <text x="489" y="1780" fill="#22d3ee" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[FK]</text>
-      <text x="523" y="1780" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">employeeId</text>
-      <text x="846" y="1780" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String</text>
+      <text x="489" y="1790" fill="#22d3ee" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[FK]</text>
+      <text x="523" y="1790" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">employeeId</text>
+      <text x="846" y="1790" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String</text>
     
-      <text x="489" y="1798" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
-      <text x="523" y="1798" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">completedDays</text>
-      <text x="846" y="1798" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int</text>
+      <text x="489" y="1808" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="1808" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">completedDays</text>
+      <text x="846" y="1808" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int</text>
     
-      <text x="489" y="1816" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
-      <text x="523" y="1816" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">dailySalary</text>
-      <text x="846" y="1816" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int (Locked Snapshot)</text>
+      <text x="489" y="1826" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="1826" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">dailySalary</text>
+      <text x="846" y="1826" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int (Locked Snapshot)</text>
     
-      <text x="489" y="1834" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
-      <text x="523" y="1834" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">lateArrivalCount / totalLateMinutes</text>
-      <text x="846" y="1834" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int</text>
+      <text x="489" y="1844" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="1844" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">lateArrivalCount / totalLateMinutes</text>
+      <text x="846" y="1844" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int</text>
     
-      <text x="489" y="1852" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
-      <text x="523" y="1852" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">totalLateDeductions</text>
-      <text x="846" y="1852" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int (IDR)</text>
+      <text x="489" y="1862" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="1862" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">totalLateDeductions</text>
+      <text x="846" y="1862" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int (IDR)</text>
     
-      <text x="489" y="1870" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
-      <text x="523" y="1870" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">grossEarnings / netEarnings</text>
-      <text x="846" y="1870" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int (IDR Final Pay)</text>
+      <text x="489" y="1880" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="1880" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">grossEarnings / netEarnings</text>
+      <text x="846" y="1880" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int (IDR Final Pay)</text>
     
-      <text x="489" y="1888" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
-      <text x="523" y="1888" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">isFinalized</text>
-      <text x="846" y="1888" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Boolean</text>
-    <line x1="487" y1="1902" x2="848" y2="1902" stroke="#334155" stroke-dasharray="2,2" stroke-width="1"/>
-        <text x="489" y="1918" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
-        <text x="523" y="1918" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">N:1 PayrollPeriod</text>
+      <text x="489" y="1898" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="1898" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">isFinalized</text>
+      <text x="846" y="1898" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Boolean</text>
+    <line x1="487" y1="1912" x2="848" y2="1912" stroke="#334155" stroke-dasharray="2,2" stroke-width="1"/>
+        <text x="489" y="1928" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="523" y="1928" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">N:1 PayrollPeriod</text>
       
-        <text x="489" y="1934" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
-        <text x="523" y="1934" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">N:1 EmployeeProfile</text>
+        <text x="489" y="1944" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="523" y="1944" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">N:1 EmployeeProfile</text>
       
-        <text x="489" y="1950" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
-        <text x="523" y="1950" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">@@unique([periodId, employeeId])</text>
+        <text x="489" y="1960" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="523" y="1960" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">@@unique([periodId, employeeId])</text>
+      
+    </g>
+  
+    <g id="model-payroll-adj" class="diagram-node model-node" data-id="model-payroll-adj" style="cursor: pointer;">
+      <rect x="50" y="1930" width="385" height="160" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
+      <path d="M 50 1938 A 8 8 0 0 1 58 1930 L 427 1930 A 8 8 0 0 1 435 1938 L 435 1964 L 50 1964 Z" fill="#1e293b" />
+      <line x1="58" y1="1930" x2="427" y2="1930" stroke="#c084fc" stroke-width="3" stroke-linecap="round"/>
+      <line x1="50" y1="1964" x2="435" y2="1964" stroke="#334155" stroke-width="1" />
+      
+      <text x="64" y="1952" fill="#f8fafc" font-size="13" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">PayrollAdjustment</text>
+      <rect x="351" y="1938" width="72" height="18" rx="4" fill="rgba(255,255,255,0.06)" stroke="#c084fc" stroke-width="0.8"/>
+      <text x="387" y="1951" text-anchor="middle" fill="#c084fc" font-size="9.5" font-weight="700" font-family="ui-monospace, monospace">PAYROLL_ADJ</text>
+      
+      <text x="64" y="1984" fill="#fbbf24" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[PK]</text>
+      <text x="98" y="1984" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">id</text>
+      <text x="421" y="1984" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (CUID)</text>
+    
+      <text x="64" y="2002" fill="#22d3ee" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[FK]</text>
+      <text x="98" y="2002" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">payrollPeriodId</text>
+      <text x="421" y="2002" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String</text>
+    
+      <text x="64" y="2020" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="2020" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">employeeId</text>
+      <text x="421" y="2020" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String</text>
+    
+      <text x="64" y="2038" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="2038" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">amount</text>
+      <text x="421" y="2038" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int (Bonus [+] / Penalty [-])</text>
+    
+      <text x="64" y="2056" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="2056" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">reason</text>
+      <text x="421" y="2056" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String</text>
+    
+      <text x="64" y="2074" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="2074" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">createdAt</text>
+      <text x="421" y="2074" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">DateTime</text>
+    <line x1="62" y1="2088" x2="423" y2="2088" stroke="#334155" stroke-dasharray="2,2" stroke-width="1"/>
+        <text x="64" y="2104" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="98" y="2104" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">N:1 PayrollPeriod</text>
+      
+    </g>
+  
+    <g id="model-audit-log" class="diagram-node model-node" data-id="model-audit-log" style="cursor: pointer;">
+      <rect x="475" y="1930" width="385" height="220" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
+      <path d="M 475 1938 A 8 8 0 0 1 483 1930 L 852 1930 A 8 8 0 0 1 860 1938 L 860 1964 L 475 1964 Z" fill="#1e293b" />
+      <line x1="483" y1="1930" x2="852" y2="1930" stroke="#fb923c" stroke-width="3" stroke-linecap="round"/>
+      <line x1="475" y1="1964" x2="860" y2="1964" stroke="#334155" stroke-width="1" />
+      
+      <text x="489" y="1952" fill="#f8fafc" font-size="13" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">AuditLog</text>
+      <rect x="776" y="1938" width="72" height="18" rx="4" fill="rgba(255,255,255,0.06)" stroke="#fb923c" stroke-width="0.8"/>
+      <text x="812" y="1951" text-anchor="middle" fill="#fb923c" font-size="9.5" font-weight="700" font-family="ui-monospace, monospace">CRYPTO_AUDIT</text>
+      
+      <text x="489" y="1984" fill="#fbbf24" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[PK]</text>
+      <text x="523" y="1984" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">id</text>
+      <text x="846" y="1984" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (CUID)</text>
+    
+      <text x="489" y="2002" fill="#c084fc" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[UQ]</text>
+      <text x="523" y="2002" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">sequenceNumber</text>
+      <text x="846" y="2002" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int</text>
+    
+      <text x="489" y="2020" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="2020" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">schemaVersion</text>
+      <text x="846" y="2020" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int (Version 2)</text>
+    
+      <text x="489" y="2038" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="2038" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">timestamp</text>
+      <text x="846" y="2038" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">DateTime</text>
+    
+      <text x="489" y="2056" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="2056" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">actorRole / actorName</text>
+      <text x="846" y="2056" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String</text>
+    
+      <text x="489" y="2074" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="2074" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">action / targetEntity</text>
+      <text x="846" y="2074" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String</text>
+    
+      <text x="489" y="2092" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="2092" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">previousHash / currentHash</text>
+      <text x="846" y="2092" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (SHA-256)</text>
+    
+      <text x="489" y="2110" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="523" y="2110" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">signature</text>
+      <text x="846" y="2110" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (Ed25519)</text>
+    <line x1="487" y1="2124" x2="848" y2="2124" stroke="#334155" stroke-dasharray="2,2" stroke-width="1"/>
+        <text x="489" y="2140" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="523" y="2140" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">1:1 AuditOutbox</text>
+      
+        <text x="489" y="2156" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="523" y="2156" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Immutable Trigger Protected</text>
+      
+    </g>
+  
+    <g id="model-audit-outbox" class="diagram-node model-node" data-id="model-audit-outbox" style="cursor: pointer;">
+      <rect x="50" y="2110" width="385" height="130" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
+      <path d="M 50 2118 A 8 8 0 0 1 58 2110 L 427 2110 A 8 8 0 0 1 435 2118 L 435 2144 L 50 2144 Z" fill="#1e293b" />
+      <line x1="58" y1="2110" x2="427" y2="2110" stroke="#fb923c" stroke-width="3" stroke-linecap="round"/>
+      <line x1="50" y1="2144" x2="435" y2="2144" stroke="#334155" stroke-width="1" />
+      
+      <text x="64" y="2132" fill="#f8fafc" font-size="13" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">AuditOutbox</text>
+      <rect x="351" y="2118" width="72" height="18" rx="4" fill="rgba(255,255,255,0.06)" stroke="#fb923c" stroke-width="0.8"/>
+      <text x="387" y="2131" text-anchor="middle" fill="#fb923c" font-size="9.5" font-weight="700" font-family="ui-monospace, monospace">AUDIT_OUTBOX</text>
+      
+      <text x="64" y="2164" fill="#fbbf24" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[PK]</text>
+      <text x="98" y="2164" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">id</text>
+      <text x="421" y="2164" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (CUID)</text>
+    
+      <text x="64" y="2182" fill="#22d3ee" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">[FK]</text>
+      <text x="98" y="2182" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">auditLogId</text>
+      <text x="421" y="2182" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String</text>
+    
+      <text x="64" y="2200" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="2200" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">status</text>
+      <text x="421" y="2200" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">String (&quot;PENDING&quot;|&quot;DELIVERED&quot;)</text>
+    
+      <text x="64" y="2218" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="2218" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">retryCount</text>
+      <text x="421" y="2218" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">Int</text>
+    
+      <text x="64" y="2236" fill="#94a3b8" font-size="10.5" font-family="ui-monospace, SFMono-Regular, monospace" font-weight="700">    </text>
+      <text x="98" y="2236" fill="#f8fafc" font-size="11.5" font-family="ui-monospace, SFMono-Regular, monospace">nextAttemptAt</text>
+      <text x="421" y="2236" text-anchor="end" fill="#94a3b8" font-size="11" font-family="ui-monospace, SFMono-Regular, monospace">DateTime</text>
+    <line x1="62" y1="2250" x2="423" y2="2250" stroke="#334155" stroke-dasharray="2,2" stroke-width="1"/>
+        <text x="64" y="2266" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="98" y="2266" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">1:1 AuditLog</text>
+      
+        <text x="64" y="2282" fill="#94a3b8" font-size="10" font-family="ui-monospace, monospace">REL</text>
+        <text x="98" y="2282" fill="#22d3ee" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">@@index([status, nextAttemptAt])</text>
       
     </g>
   
@@ -946,22 +1077,22 @@
     </g>
   
     <g id="flow-qr-kiosk" class="diagram-node flow-node" data-id="flow-qr-kiosk" style="cursor: pointer;">
-      <rect x="925" y="530" width="910" height="280" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
+      <rect x="925" y="530" width="910" height="300" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
       <path d="M 925 538 A 8 8 0 0 1 933 530 L 1827 530 A 8 8 0 0 1 1835 538 L 1835 564 L 925 564 Z" fill="#1e293b" />
       <line x1="933" y1="530" x2="1827" y2="530" stroke="#f43f5e" stroke-width="3" stroke-linecap="round"/>
       <line x1="925" y1="564" x2="1835" y2="564" stroke="#334155" stroke-width="1" />
       
-      <text x="939" y="552" fill="#f8fafc" font-size="13" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">SCHEME B: 15-SECOND DYNAMIC QR KIOSK &amp; SINGLE-USE TOKEN BURN</text>
+      <text x="939" y="552" fill="#f8fafc" font-size="13" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">SCHEME B: 15s DYNAMIC QR KIOSK, FAST-POLL &amp; QUEUE ANTI-COLLISION</text>
       <rect x="1741" y="538" width="82" height="18" rx="4" fill="rgba(255,255,255,0.06)" stroke="#f43f5e" stroke-width="0.8"/>
       <text x="1782" y="551" text-anchor="middle" fill="#f43f5e" font-size="9.5" font-weight="700" font-family="ui-monospace, monospace">ANTI_REPLAY</text>
       
         <rect x="937" y="572" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
-        <text x="945" y="588" fill="#f43f5e" font-size="11" font-weight="600" font-family="ui-monospace, monospace">1. /api/qr/active (Owner Kiosk Screen)</text>
-        <text x="1815" y="588" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Generates secure cryptographic challenge token; rotates every 15 seconds</text>
+        <text x="945" y="588" fill="#f43f5e" font-size="11" font-weight="600" font-family="ui-monospace, monospace">1. /api/qr/active (Kiosk Heartbeat &amp; Auto-Sync IP)</text>
+        <text x="1815" y="588" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Rotates token every 15s; auto-syncs dynamic office WAN IP from kiosk header</text>
       
         <rect x="937" y="600" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
-        <text x="945" y="616" fill="#cbd5e1" font-size="11" font-weight="600" font-family="ui-monospace, monospace">2. Kiosk Countdown Display</text>
-        <text x="1815" y="616" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Client renders SVG QR with synchronized 15-second radial progress timer</text>
+        <text x="945" y="616" fill="#cbd5e1" font-size="11" font-weight="600" font-family="ui-monospace, monospace">2. Kiosk 1.5s Fast-Polling (/owner/qr)</text>
+        <text x="1815" y="616" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Polls every 1500ms; instantly rotates QR on screen when employee burns token</text>
       
         <rect x="937" y="628" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
         <text x="945" y="644" fill="#22d3ee" font-size="11" font-weight="600" font-family="ui-monospace, monospace">3. Employee Mobile Scan (/employee/scan)</text>
@@ -972,52 +1103,52 @@
         <text x="1815" y="672" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Atomic DB write: isActive = false, consumedAt = now(), consumedBy = employeeId</text>
       
         <rect x="937" y="684" width="886" height="24" rx="4" fill="rgba(244,63,94,0.1)" stroke="#f43f5e" stroke-width="1" stroke-dasharray="2,2"/>
-        <text x="945" y="700" fill="#f43f5e" font-size="10.5" font-weight="700" font-family="ui-monospace, monospace">REUSE / PHOTO SHARING REJECTED</text>
-        <text x="1815" y="700" text-anchor="end" fill="#cbd5e1" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">HTTP 400 QR_ALREADY_USED -&gt; Flags CHEATING_ALERT_QR_SHARING_REUSE in Audit Trail</text>
+        <text x="945" y="700" fill="#f43f5e" font-size="10.5" font-weight="700" font-family="ui-monospace, monospace">QUEUE COLLISION GRACE (&lt;= 4s)</text>
+        <text x="1815" y="700" text-anchor="end" fill="#cbd5e1" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Scanned within 4s of consumption in office -&gt; HTTP 409 QR_QUEUE_ROTATING (no cheat alert)</text>
       
         <rect x="937" y="712" width="886" height="24" rx="4" fill="rgba(244,63,94,0.1)" stroke="#f43f5e" stroke-width="1" stroke-dasharray="2,2"/>
-        <text x="945" y="728" fill="#f43f5e" font-size="10.5" font-weight="700" font-family="ui-monospace, monospace">EXPIRED TOKEN REJECTED</text>
-        <text x="1815" y="728" text-anchor="end" fill="#cbd5e1" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">If scannedAt &gt; expiresAt (TTL + 5s grace) -&gt; HTTP 400 QR_EXPIRED denied</text>
+        <text x="945" y="728" fill="#f43f5e" font-size="10.5" font-weight="700" font-family="ui-monospace, monospace">MALICIOUS REUSE / PHOTO SHARING</text>
+        <text x="1815" y="728" text-anchor="end" fill="#cbd5e1" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Scanned &gt; 4s or out-of-bounds -&gt; HTTP 409 QR_ALREADY_USED + Flags CHEATING_ALERT</text>
       
     </g>
   
     <g id="flow-anti-cheat" class="diagram-node flow-node" data-id="flow-anti-cheat" style="cursor: pointer;">
-      <rect x="925" y="830" width="910" height="350" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
-      <path d="M 925 838 A 8 8 0 0 1 933 830 L 1827 830 A 8 8 0 0 1 1835 838 L 1835 864 L 925 864 Z" fill="#1e293b" />
-      <line x1="933" y1="830" x2="1827" y2="830" stroke="#fbbf24" stroke-width="3" stroke-linecap="round"/>
-      <line x1="925" y1="864" x2="1835" y2="864" stroke="#334155" stroke-width="1" />
+      <rect x="925" y="850" width="910" height="350" rx="8" fill="#111827" stroke="#334155" stroke-width="1.5" />
+      <path d="M 925 858 A 8 8 0 0 1 933 850 L 1827 850 A 8 8 0 0 1 1835 858 L 1835 884 L 925 884 Z" fill="#1e293b" />
+      <line x1="933" y1="850" x2="1827" y2="850" stroke="#fbbf24" stroke-width="3" stroke-linecap="round"/>
+      <line x1="925" y1="884" x2="1835" y2="884" stroke="#334155" stroke-width="1" />
       
-      <text x="939" y="852" fill="#f8fafc" font-size="13" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">SCHEME C: ANTI-CHEAT DUAL LOCATION VERIFICATION (GEOFENCE + WIFI IP)</text>
-      <rect x="1741" y="838" width="82" height="18" rx="4" fill="rgba(255,255,255,0.06)" stroke="#fbbf24" stroke-width="0.8"/>
-      <text x="1782" y="851" text-anchor="middle" fill="#fbbf24" font-size="9.5" font-weight="700" font-family="ui-monospace, monospace">LOCATION_SEC</text>
+      <text x="939" y="872" fill="#f8fafc" font-size="13" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">SCHEME C: ANTI-CHEAT DUAL LOCATION VERIFICATION &amp; CHECK-OUT TELEMETRY</text>
+      <rect x="1741" y="858" width="82" height="18" rx="4" fill="rgba(255,255,255,0.06)" stroke="#fbbf24" stroke-width="0.8"/>
+      <text x="1782" y="871" text-anchor="middle" fill="#fbbf24" font-size="9.5" font-weight="700" font-family="ui-monospace, monospace">LOCATION_SEC</text>
       
-        <rect x="937" y="872" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
-        <text x="945" y="888" fill="#fbbf24" font-size="11" font-weight="600" font-family="ui-monospace, monospace">1. Client Geolocation &amp; IP Capture</text>
-        <text x="1815" y="888" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Acquires high-accuracy GPS coordinates (lat, lng, accuracy) &amp; WAN IP from request headers</text>
+        <rect x="937" y="892" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
+        <text x="945" y="908" fill="#fbbf24" font-size="11" font-weight="600" font-family="ui-monospace, monospace">1. Client Geolocation &amp; IP Capture</text>
+        <text x="1815" y="908" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Acquires high-accuracy GPS coordinates (lat, lng, accuracy) &amp; WAN IP from request headers</text>
       
-        <rect x="937" y="900" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
-        <text x="945" y="916" fill="#fbbf24" font-size="11" font-weight="600" font-family="ui-monospace, monospace">2. GPS Accuracy Validation Check</text>
-        <text x="1815" y="916" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">If gpsAccuracy &gt; OfficeConfig.maxGpsAccuracy (80m) -&gt; HTTP 403 GPS_LOW_ACCURACY</text>
+        <rect x="937" y="920" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
+        <text x="945" y="936" fill="#fbbf24" font-size="11" font-weight="600" font-family="ui-monospace, monospace">2. GPS Accuracy Validation Check</text>
+        <text x="1815" y="936" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">If gpsAccuracy &gt; OfficeConfig.maxGpsAccuracy (80m) -&gt; HTTP 403 GPS_LOW_ACCURACY</text>
       
-        <rect x="937" y="928" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
-        <text x="945" y="944" fill="#22d3ee" font-size="11" font-weight="600" font-family="ui-monospace, monospace">3. Haversine Distance Calculation</text>
-        <text x="1815" y="944" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Computes spherical distance (d = 2R * asin(sqrt(...))) between scanner &amp; OfficeConfig</text>
+        <rect x="937" y="948" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
+        <text x="945" y="964" fill="#22d3ee" font-size="11" font-weight="600" font-family="ui-monospace, monospace">3. Haversine Distance Calculation</text>
+        <text x="1815" y="964" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Computes spherical distance (d = 2R * asin(sqrt(...))) between scanner &amp; OfficeConfig</text>
       
-        <rect x="937" y="956" width="886" height="24" rx="4" fill="rgba(244,63,94,0.1)" stroke="#f43f5e" stroke-width="1" stroke-dasharray="2,2"/>
-        <text x="945" y="972" fill="#f43f5e" font-size="10.5" font-weight="700" font-family="ui-monospace, monospace">GEOFENCE DISTANCE CHECK</text>
-        <text x="1815" y="972" text-anchor="end" fill="#cbd5e1" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">If distanceMeters &gt; radiusMeters (50m) -&gt; HTTP 403 GEO_OUT_OF_BOUNDS + Audit Cheating Alert</text>
+        <rect x="937" y="976" width="886" height="24" rx="4" fill="rgba(244,63,94,0.1)" stroke="#f43f5e" stroke-width="1" stroke-dasharray="2,2"/>
+        <text x="945" y="992" fill="#f43f5e" font-size="10.5" font-weight="700" font-family="ui-monospace, monospace">GEOFENCE DISTANCE CHECK</text>
+        <text x="1815" y="992" text-anchor="end" fill="#cbd5e1" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">If distanceMeters &gt; radiusMeters (50m) -&gt; HTTP 403 GEO_OUT_OF_BOUNDS + Audit Cheating Alert</text>
       
-        <rect x="937" y="984" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
-        <text x="945" y="1000" fill="#c084fc" font-size="11" font-weight="600" font-family="ui-monospace, monospace">4. Office WiFi Public IP Matching (Optional)</text>
-        <text x="1815" y="1000" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">If enforceWifiIp: compares client WAN IP with OfficeConfig.officePublicIp</text>
+        <rect x="937" y="1004" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
+        <text x="945" y="1020" fill="#c084fc" font-size="11" font-weight="600" font-family="ui-monospace, monospace">4. Office WiFi Public IP Matching (Optional)</text>
+        <text x="1815" y="1020" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">If enforceWifiIp: compares client WAN IP with OfficeConfig.officePublicIp</text>
       
-        <rect x="937" y="1012" width="886" height="24" rx="4" fill="rgba(244,63,94,0.1)" stroke="#f43f5e" stroke-width="1" stroke-dasharray="2,2"/>
-        <text x="945" y="1028" fill="#f43f5e" font-size="10.5" font-weight="700" font-family="ui-monospace, monospace">WIFI WAN MISMATCH CHECK</text>
-        <text x="1815" y="1028" text-anchor="end" fill="#cbd5e1" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">If clientIp !== officePublicIp -&gt; HTTP 403 WIFI_IP_MISMATCH + Transactional Rollback</text>
+        <rect x="937" y="1032" width="886" height="24" rx="4" fill="rgba(244,63,94,0.1)" stroke="#f43f5e" stroke-width="1" stroke-dasharray="2,2"/>
+        <text x="945" y="1048" fill="#f43f5e" font-size="10.5" font-weight="700" font-family="ui-monospace, monospace">DOUBLE-SCAN COOLDOWN (60s)</text>
+        <text x="1815" y="1048" text-anchor="end" fill="#cbd5e1" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">If check-out attempted &lt; 60s after check-in -&gt; HTTP 429 SCAN_COOLDOWN_ACTIVE (token spared)</text>
       
-        <rect x="937" y="1040" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
-        <text x="945" y="1056" fill="#34d399" font-size="11" font-weight="600" font-family="ui-monospace, monospace">5. Verified Telemetry Persistence</text>
-        <text x="1815" y="1056" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Logs checkInLatitude, checkInLongitude, checkInDistanceMeters, checkInClientIp to AttendanceRecord</text>
+        <rect x="937" y="1060" width="886" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="1"/>
+        <text x="945" y="1076" fill="#34d399" font-size="11" font-weight="600" font-family="ui-monospace, monospace">5. Complete Punch Telemetry Persistence</text>
+        <text x="1815" y="1076" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Persists checkIn* and checkOut* (Latitude, Longitude, Distance, IP) in AttendanceRecord</text>
       
     </g>
   
@@ -1337,7 +1468,7 @@
   </div>
 
   <script>
-    const nodeMeta = {"model-user":{"type":"PRISMA_MODEL","name":"User","domain":"AUTH","accentColor":"#38bdf8","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"email","type":"String","unique":true},{"name":"username","type":"String","unique":true},{"name":"passwordHash","type":"String (Argon2/bcrypt)"},{"name":"role","type":"String (\"OWNER\"|\"EMPLOYEE\")"},{"name":"status","type":"String (\"ACTIVE\"|\"SUSPENDED\")"},{"name":"createdAt / updatedAt","type":"DateTime"}],"relations":["1:1 EmployeeProfile","1:1 DeviceRegistration","1:N Sessions","1:N AuditLogs"],"securityNotes":"Primary principal entity. Enforces strict role-based route guards and credential storage."},"model-session":{"type":"PRISMA_MODEL","name":"Session","domain":"AUTH","accentColor":"#38bdf8","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"sessionToken","type":"String (HMAC/UUID)","unique":true},{"name":"userId","type":"String","fk":true},{"name":"deviceFingerprint","type":"String?"},{"name":"expiresAt / createdAt","type":"DateTime"}],"relations":["N:1 User"],"securityNotes":"HTTP-only session cookie store (payroll_auth_token). Preserved during WebAuthn passkey binding."},"model-device-reg":{"type":"PRISMA_MODEL","name":"DeviceRegistration","domain":"HARDWARE","accentColor":"#c084fc","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"userId","type":"String","fk":true,"unique":true},{"name":"credentialId","type":"String (Base64URL)","unique":true},{"name":"credentialPublicKey","type":"String (COSE Base64URL)"},{"name":"counter","type":"Int (Clone detection)"},{"name":"transports","type":"String? (JSON array)"},{"name":"assuranceTier","type":"String (\"HIGH_HARDWARE_BOUND\")"},{"name":"status","type":"String (\"ACTIVE\"|\"REVOKED\")"},{"name":"deviceName / platform","type":"String (UA-derived)"}],"relations":["1:1 User"],"securityNotes":"Stores WebAuthn FIDO2 public keys. Tied to physical Touch ID/Face ID platform authenticator."},"model-webauthn-challenge":{"type":"PRISMA_MODEL","name":"WebAuthnChallenge","domain":"FIDO2","accentColor":"#c084fc","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"challenge","type":"String (Cryptographic Nonce)","unique":true},{"name":"userId","type":"String?"},{"name":"purpose","type":"String (\"REGISTRATION\"|\"AUTH\")"},{"name":"expiresAt","type":"DateTime (5-min TTL)"}],"relations":["Transient Nonce Table"],"securityNotes":"Prevents WebAuthn replay attacks. Strictly single-use with timestamp expiration."},"model-unlock-request":{"type":"PRISMA_MODEL","name":"DeviceUnlockRequest","domain":"SEC_OVERRIDE","accentColor":"#f43f5e","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"requestCode","type":"String (\"REQ-XXXXX\")","unique":true},{"name":"unlockCode","type":"String (6-Digit OTP)"},{"name":"userId","type":"String","fk":true},{"name":"requestedDeviceName","type":"String"},{"name":"status","type":"String (\"PENDING\"|\"APPROVED\"|\"USED\")"},{"name":"expiresAt","type":"DateTime (5-min TTL)"}],"relations":["N:1 User"],"securityNotes":"Generated when an employee attempts to log in or scan from an unregistered secondary device."},"model-employee":{"type":"PRISMA_MODEL","name":"EmployeeProfile","domain":"WORKFORCE","accentColor":"#34d399","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"userId","type":"String","fk":true,"unique":true},{"name":"employeeId","type":"String (\"EMP-XXX\")","unique":true},{"name":"fullName","type":"String"},{"name":"dailySalary","type":"Int (IDR, e.g. 150000)"},{"name":"shiftId","type":"String","fk":true},{"name":"employmentStatus","type":"String (\"PERMANENT\"|...)"},{"name":"joinedAt","type":"DateTime"}],"relations":["1:1 User","N:1 Shift","1:N AttendanceRecord","1:N SalaryHistory"],"securityNotes":"Core business employee model. Maintains daily rate and assigned operational work shift."},"model-salary-hist":{"type":"PRISMA_MODEL","name":"EmployeeSalaryHistory","domain":"AUDIT_RATE","accentColor":"#fbbf24","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"employeeId","type":"String","fk":true},{"name":"previousSalary","type":"Int (IDR)"},{"name":"newSalary","type":"Int (IDR)"},{"name":"effectiveDate","type":"DateTime"},{"name":"changedByUserId","type":"String"}],"relations":["N:1 EmployeeProfile"],"securityNotes":"Tracks base rate modifications so retroactive calculations never corrupt past finalized payrolls."},"model-shift":{"type":"PRISMA_MODEL","name":"Shift","domain":"WORK_SHIFT","accentColor":"#818cf8","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"name","type":"String (\"Morning 08:00-17:00\")"},{"name":"startTime","type":"String (\"08:00\")"},{"name":"endTime","type":"String (\"17:00\")"},{"name":"isOvernight","type":"Boolean (spans midnight)"},{"name":"gracePeriodMinutes","type":"Int (e.g. 10m)"},{"name":"applicableDays","type":"String (\"1,2,3,4,5\")"},{"name":"deductionPolicyId","type":"String","fk":true}],"relations":["N:1 DeductionPolicy","1:N EmployeeProfile","1:N AttendanceRecord"],"securityNotes":"Defines scheduled hours, overnight flags, and active weekdays for absence (alpa) projections."},"model-deduction":{"type":"PRISMA_MODEL","name":"DeductionPolicy","domain":"POLICY","accentColor":"#818cf8","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"name","type":"String (\"Per Minute Standard\")"},{"name":"mode","type":"String (\"PER_MINUTE\"|\"PER_HOUR\")"},{"name":"rate","type":"Int (e.g. Rp500/min or Rp10k/hr)"},{"name":"hourlyRounding","type":"String (\"EXACT\"|\"ROUND_UP\"|...)"},{"name":"gracePeriodMinutes","type":"Int"}],"relations":["1:N Shift"],"securityNotes":"Formula specification for automatic salary deductions on late punch events."},"model-office-config":{"type":"PRISMA_MODEL","name":"OfficeConfig","domain":"GEOFENCE","accentColor":"#fbbf24","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"officeName","type":"String (\"Kantor Utama\")"},{"name":"latitude","type":"Float (-6.2088)"},{"name":"longitude","type":"Float (106.8456)"},{"name":"radiusMeters","type":"Int (Default: 50m)"},{"name":"officePublicIp","type":"String? (WAN IP)"},{"name":"enforceWifiIp","type":"Boolean"},{"name":"maxGpsAccuracy","type":"Int (Default: 80m)"}],"relations":["Global Singleton / Multi-Tenant Store"],"securityNotes":"Source of truth for GPS Haversine boundaries, ISP WAN verification, and accuracy thresholds."},"model-qr-challenge":{"type":"PRISMA_MODEL","name":"QRChallenge","domain":"DYNAMIC_QR","accentColor":"#f43f5e","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"token","type":"String (Cryptographic Token)","unique":true},{"name":"issuedAt / expiresAt","type":"DateTime (15s Window)"},{"name":"isActive","type":"Boolean"},{"name":"consumedAt","type":"DateTime?"},{"name":"consumedByUserId","type":"String?"}],"relations":["1:N QRScanLog"],"securityNotes":"Dynamic kiosk token rotating every 15 seconds. Single-use burn prevents proxy photo sharing."},"model-qr-scanlog":{"type":"PRISMA_MODEL","name":"QRScanLog","domain":"AUDIT_SCAN","accentColor":"#f43f5e","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"challengeId","type":"String","fk":true},{"name":"userId","type":"String"},{"name":"action","type":"String (\"CHECK_IN\"|\"CHECK_OUT\")"},{"name":"scannedAt","type":"DateTime"}],"relations":["N:1 QRChallenge","@@unique([challengeId, userId])"],"securityNotes":"Enforces token exclusivity. Second scan attempt triggers CHEATING_ALERT_QR_SHARING_REUSE."},"model-attendance":{"type":"PRISMA_MODEL","name":"AttendanceRecord","domain":"CORE_RECORDS","accentColor":"#34d399","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"employeeId","type":"String","fk":true},{"name":"shiftId","type":"String","fk":true},{"name":"shiftDate","type":"String (\"YYYY-MM-DD\")","unique":true},{"name":"checkInTime / checkOutTime","type":"DateTime"},{"name":"scheduledStartTime / scheduledEndTime","type":"DateTime"},{"name":"status","type":"String (\"CHECKED_IN\"|\"COMPLETED\"|\"LATE_COMPLETED\")"},{"name":"lateMinutes","type":"Int"},{"name":"dailySalarySnapshot","type":"Int (Frozen IDR)"},{"name":"deductionPolicySnapshot","type":"String (Frozen JSON Formula)"},{"name":"lateDeduction / netDailyEarnings","type":"Int (IDR Accrued)"},{"name":"checkInLatitude / checkInLongitude / checkInDistanceMeters / checkInClientIp","type":"GPS & Telemetry"}],"relations":["N:1 EmployeeProfile","N:1 Shift","@@unique([employeeId, shiftDate])"],"securityNotes":"Authoritative daily punch event with immutable wage snapshots and audited GPS/IP verification."},"model-payroll-period":{"type":"PRISMA_MODEL","name":"PayrollPeriod","domain":"PAYROLL","accentColor":"#c084fc","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"year / month","type":"Int","unique":true},{"name":"startDate / endDate","type":"DateTime"},{"name":"status","type":"String (\"DRAFT\"|\"FINALIZED\")"},{"name":"finalizedAt","type":"DateTime?"},{"name":"finalizedByUserId","type":"String?"}],"relations":["1:N PayrollRecord","1:N PayrollAdjustment"],"securityNotes":"Period container. Locking to FINALIZED freezes all records against future wage adjustments."},"model-payroll-record":{"type":"PRISMA_MODEL","name":"PayrollRecord","domain":"PAYROLL_SNAPSHOT","accentColor":"#c084fc","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"payrollPeriodId","type":"String","fk":true},{"name":"employeeId","type":"String","fk":true},{"name":"completedDays","type":"Int"},{"name":"dailySalary","type":"Int (Locked Snapshot)"},{"name":"lateArrivalCount / totalLateMinutes","type":"Int"},{"name":"totalLateDeductions","type":"Int (IDR)"},{"name":"grossEarnings / netEarnings","type":"Int (IDR Final Pay)"},{"name":"isFinalized","type":"Boolean"}],"relations":["N:1 PayrollPeriod","N:1 EmployeeProfile","@@unique([periodId, employeeId])"],"securityNotes":"Monthly statement row. Historical pay cannot be rewritten once isFinalized is true."},"flow-webauthn":{"type":"RUNTIME_FLOW","title":"SCHEME A: WEBAUTHN PASSKEY & HARDWARE DEVICE BINDING FLOW","flowType":"FIDO2_SEC","accentColor":"#38bdf8","steps":[{"type":"step","label":"1. /api/auth/webauthn/register-options","sub":"Server creates challenge nonce with 5-minute TTL & user ID bound","color":"#38bdf8"},{"type":"step","label":"2. navigator.credentials.create()","sub":"Invokes Touch ID / Face ID hardware enclave (authenticatorAttachment: \"platform\")","color":"#38bdf8"},{"type":"step","label":"3. /api/auth/webauthn/register-verify","sub":"Verifies clientDataJSON signature & extracts COSE public key bytes","color":"#22d3ee"},{"type":"step","label":"4. DeviceRegistration Persistence","sub":"Saves Base64URL credentialID, deviceName parsed from UA, counter: 0","color":"#34d399"},{"type":"step","label":"5. Non-Destructive Session Preservation","sub":"Preserves active session token (payroll_auth_token) avoiding 401 unauth","color":"#34d399"},{"type":"condition","label":"UNREGISTERED DEVICE ATTEMPT DETECTED","sub":"HTTP 403 DEVICE_MISMATCH -> Generates 6-Digit Unlock Code -> Owner Approval Required"},{"type":"note","text":"Hardware-bound private key never leaves the secure enclave; clones rejected via WebAuthn counter validation."}],"routes":["/api/auth/webauthn/register-options","/api/auth/webauthn/register-verify","/api/auth/verify-device-unlock"],"securityGuarantees":"Zero credential export, immune to phishing, platform Touch ID prioritization without hybrid QR prompts."},"flow-qr-kiosk":{"type":"RUNTIME_FLOW","title":"SCHEME B: 15-SECOND DYNAMIC QR KIOSK & SINGLE-USE TOKEN BURN","flowType":"ANTI_REPLAY","accentColor":"#f43f5e","steps":[{"type":"step","label":"1. /api/qr/active (Owner Kiosk Screen)","sub":"Generates secure cryptographic challenge token; rotates every 15 seconds","color":"#f43f5e"},{"type":"step","label":"2. Kiosk Countdown Display","sub":"Client renders SVG QR with synchronized 15-second radial progress timer","color":"#cbd5e1"},{"type":"step","label":"3. Employee Mobile Scan (/employee/scan)","sub":"Captures challenge token via camera stream with soft facingMode constraints","color":"#22d3ee"},{"type":"step","label":"4. Immediate Token Consumption (Burn)","sub":"Atomic DB write: isActive = false, consumedAt = now(), consumedBy = employeeId","color":"#34d399"},{"type":"condition","label":"REUSE / PHOTO SHARING REJECTED","sub":"HTTP 400 QR_ALREADY_USED -> Flags CHEATING_ALERT_QR_SHARING_REUSE in Audit Trail"},{"type":"condition","label":"EXPIRED TOKEN REJECTED","sub":"If scannedAt > expiresAt (TTL + 5s grace) -> HTTP 400 QR_EXPIRED denied"}],"routes":["/api/qr/active","/api/qr/scan","/api/employee/attendance/scan-verify"],"antiCheatStrategy":"Permanently burns QR tokens upon first use to stop photo forwarding via WhatsApp/Telegram."},"flow-anti-cheat":{"type":"RUNTIME_FLOW","title":"SCHEME C: ANTI-CHEAT DUAL LOCATION VERIFICATION (GEOFENCE + WIFI IP)","flowType":"LOCATION_SEC","accentColor":"#fbbf24","steps":[{"type":"step","label":"1. Client Geolocation & IP Capture","sub":"Acquires high-accuracy GPS coordinates (lat, lng, accuracy) & WAN IP from request headers","color":"#fbbf24"},{"type":"step","label":"2. GPS Accuracy Validation Check","sub":"If gpsAccuracy > OfficeConfig.maxGpsAccuracy (80m) -> HTTP 403 GPS_LOW_ACCURACY","color":"#fbbf24"},{"type":"step","label":"3. Haversine Distance Calculation","sub":"Computes spherical distance (d = 2R * asin(sqrt(...))) between scanner & OfficeConfig","color":"#22d3ee"},{"type":"condition","label":"GEOFENCE DISTANCE CHECK","sub":"If distanceMeters > radiusMeters (50m) -> HTTP 403 GEO_OUT_OF_BOUNDS + Audit Cheating Alert"},{"type":"step","label":"4. Office WiFi Public IP Matching (Optional)","sub":"If enforceWifiIp: compares client WAN IP with OfficeConfig.officePublicIp","color":"#c084fc"},{"type":"condition","label":"WIFI WAN MISMATCH CHECK","sub":"If clientIp !== officePublicIp -> HTTP 403 WIFI_IP_MISMATCH + Transactional Rollback"},{"type":"step","label":"5. Verified Telemetry Persistence","sub":"Logs checkInLatitude, checkInLongitude, checkInDistanceMeters, checkInClientIp to AttendanceRecord","color":"#34d399"}],"routes":["src/lib/geo.ts","src/lib/attendance-scan-handler.ts"],"haversineFormula":"d = 2 * R * asin(sqrt(sin^2(dlat/2) + cos(lat1)*cos(lat2)*sin^2(dlng/2)))","accuracyGuarantee":"Rejects cell-tower spoofing and distant proxies outside 50m radius."},"flow-shift-engine":{"type":"RUNTIME_FLOW","title":"SCHEME D: SHIFT EVALUATION, OVERNIGHT BINDING & LATENESS CALCULATION","flowType":"CALC_ENGINE","accentColor":"#818cf8","steps":[{"type":"step","label":"1. Authoritative Shift Date Resolution","sub":"For overnight shifts (e.g. 22:00 - 06:00), binds check-in and next-day check-out to shiftDate","color":"#818cf8"},{"type":"step","label":"2. Grace Period Application","sub":"graceDeadline = scheduledStartTime + gracePeriodMinutes (e.g. 08:00 + 10m = 08:10)","color":"#cbd5e1"},{"type":"condition","label":"ON-TIME VS LATE DETERMINATION","sub":"If punchTime <= graceDeadline: lateMinutes = 0, status = \"CHECKED_IN\", netDaily = dailySalary"},{"type":"step","label":"3. Lateness Deduction Formula Evaluation","sub":"Evaluates DeductionPolicy: PER_MINUTE (lateMinutes * rate) or PER_HOUR (rounded hours * rate)","color":"#f43f5e"},{"type":"step","label":"4. Max Deduction Salary Cap","sub":"Deduction is strictly capped at (dailySalary * maxDeductionPercent / 100); netDaily >= 0","color":"#fbbf24"},{"type":"step","label":"5. Immutable Wage Snapshotting","sub":"Stores dailySalarySnapshot and deductionPolicySnapshot directly in AttendanceRecord row","color":"#34d399"}],"roundingModes":["EXACT","ROUND_UP","ROUND_DOWN","ROUND_NEAREST"],"snapshotGuarantee":"Historical salary adjustments never alter previously punched attendance records."},"flow-owner-analytics":{"type":"RUNTIME_FLOW","title":"SCHEME E: OWNER REAL-TIME ANALYTICS & ATTENDANCE BREAKDOWN (HADIR/TELAT/ALPA)","flowType":"DATA_VIZ","accentColor":"#34d399","steps":[{"type":"step","label":"1. /api/owner/analytics/attendance (GET)","sub":"Accepts query range: 7d, 14d, 30d, or current_period; verifies OWNER authorization","color":"#34d399"},{"type":"step","label":"2. Shift Schedule Matching Matrix","sub":"Checks employeeProfile.joinedAt & shift.applicableDays (0-6) for each calendar day","color":"#cbd5e1"},{"type":"step","label":"3. Virtual Absence (Alpa) Calculation","sub":"absentCount = assignedShiftCount - presentCount (no manual alpa entry needed)","color":"#f43f5e"},{"type":"step","label":"4. Recharts Stacked Visual Trend Graph","sub":"Renders dynamic Hadir (green), Terlambat (amber), Alpa (rose) bar chart with dark/light themes","color":"#22d3ee"},{"type":"step","label":"5. Performance Roster & Detail Modal","sub":"Lists employee punctuality rates, total late minutes, accrued daily wages, and raw audit logs","color":"#34d399"}],"routes":["src/app/api/owner/analytics/attendance/route.ts","src/components/owner/DashboardAnalytics.tsx","src/components/owner/EmployeeAttendanceRoster.tsx"],"kpiFormula":"Attendance Rate % = (Present Count / Assigned Shifts) * 100"},"flow-payroll-locking":{"type":"RUNTIME_FLOW","title":"SCHEME F: IMMUTABLE MONTHLY PAYROLL FINALIZATION & SNAPSHOT FREEZE","flowType":"PAYROLL_LOCK","accentColor":"#c084fc","steps":[{"type":"step","label":"1. Monthly Aggregation Pipeline","sub":"Queries all finalized AttendanceRecords + approved PayrollAdjustments for billing month","color":"#c084fc"},{"type":"step","label":"2. Gross & Net Wage Calculation","sub":"grossEarnings = completedDays * dailySalary; netEarnings = gross - lateDeductions + adjustments","color":"#22d3ee"},{"type":"step","label":"3. Draft State Review (/owner/payroll)","sub":"Owner inspects breakdowns, adds one-time bonuses or deductions (PayrollAdjustment)","color":"#cbd5e1"},{"type":"step","label":"4. Atomic Finalization (/api/owner/payroll)","sub":"Sets PayrollPeriod.status = \"FINALIZED\", finalizedAt = now(), isFinalized = true","color":"#34d399"},{"type":"condition","label":"RETROACTIVE TAMPER PROTECTION","sub":"Modifying EmployeeProfile.dailySalary afterward NEVER changes finalized PayrollRecord"},{"type":"step","label":"5. Signed Audit Trail Event","sub":"Creates tamper-proof AuditLog: PAYROLL_PERIOD_FINALIZED with cryptographic sequence","color":"#fb923c"}],"routes":["src/app/api/owner/payroll/route.ts","src/lib/payroll.ts"],"integrityGuarantee":"WORM (Write Once, Read Many) invariant ensures legal payroll reproducibility."},"flow-crypto-audit":{"type":"RUNTIME_FLOW","title":"SCHEME G: ZERO-TRUST Ed25519 CRYPTOGRAPHIC AUDIT CHAIN & OUTBOX","flowType":"TAMPER_PROOF","accentColor":"#fb923c","steps":[{"type":"step","label":"1. Canonical Event Normalization","sub":"Serializes actor, action, targetEntity, previousValues, newValues via deterministic JSON","color":"#fb923c"},{"type":"step","label":"2. Cryptographic Hash Chaining","sub":"currentHash = SHA-256(canonicalPayload + previousRecord.currentHash)","color":"#fb923c"},{"type":"step","label":"3. Asymmetric Ed25519 Signature","sub":"Signs currentHash using AUDIT_SIGNING_PRIVATE_KEY; verifiable with public key","color":"#22d3ee"},{"type":"step","label":"4. Monotonic Sequence Allocation","sub":"Strict sequenceNumber increment enforced; gaps immediately indicate deleted records","color":"#fbbf24"},{"type":"condition","label":"SQLITE IMMUTABILITY TRIGGER","sub":"prevent_audit_log_update trigger blocks all UPDATE and DELETE queries at DB level"},{"type":"step","label":"5. Transactional AuditOutbox Pattern","sub":"Inserts PENDING outbox item in same ACID transaction for reliable log forwarding","color":"#818cf8"},{"type":"step","label":"6. /api/cron/audit-flush Dispatcher","sub":"Delivers outbox logs to secondary cold storage; retries with exponential backoff","color":"#34d399"}],"routes":["src/lib/audit-crypto.ts","src/lib/audit-outbox.ts","src/lib/audit-verifier.ts"],"math":"currentHash = SHA256(canonical(event) || prevHash); Sig = Ed25519Sign(privKey, currentHash)","dbTrigger":"CREATE TRIGGER prevent_audit_log_update BEFORE UPDATE ON AuditLog BEGIN SELECT RAISE(FAIL, ...); END;"},"flow-owner-controls":{"type":"RUNTIME_FLOW","title":"SCHEME H: OWNER UNILATERAL DEVICE REVOCATION & REAL-TIME CONTROLS","flowType":"OWNER_ADMIN","accentColor":"#f43f5e","steps":[{"type":"step","label":"1. /owner/devices Management Dashboard","sub":"Displays all enrolled employee hardware passkeys, device names, and assurance tiers","color":"#f43f5e"},{"type":"step","label":"2. Unilateral \"Revoke Access\" Action","sub":"Owner can immediately disconnect any compromised employee terminal with a single click","color":"#f43f5e"},{"type":"step","label":"3. Atomic Invalidation Handler","sub":"Sets DeviceRegistration.isActive = false, status = \"REVOKED\", purges active Sessions","color":"#fbbf24"},{"type":"step","label":"4. Immediate Client Session Invalidation","sub":"Next employee request receives HTTP 401/403, forcing device re-registration","color":"#cbd5e1"},{"type":"step","label":"5. Owner Dynamic Geofence Configuration","sub":"Interactive map / input on /owner/settings updates OfficeConfig coordinates & WiFi IP","color":"#22d3ee"}],"routes":["/api/owner/devices/revoke","/api/owner/devices","/api/owner/office-config"],"securityCapability":"Zero downtime credential kill-switch for lost phones, terminated staff, or detected spoofing."}};
+    const nodeMeta = {"model-user":{"type":"PRISMA_MODEL","name":"User","domain":"AUTH","accentColor":"#38bdf8","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"email","type":"String","unique":true},{"name":"username","type":"String","unique":true},{"name":"passwordHash","type":"String (Argon2/bcrypt)"},{"name":"role","type":"String (\"OWNER\"|\"EMPLOYEE\")"},{"name":"status","type":"String (\"ACTIVE\"|\"SUSPENDED\")"},{"name":"createdAt / updatedAt","type":"DateTime"}],"relations":["1:1 EmployeeProfile","1:1 DeviceRegistration","1:N Sessions","1:N AuditLogs"],"securityNotes":"Primary principal entity. Enforces strict role-based route guards and credential storage."},"model-session":{"type":"PRISMA_MODEL","name":"Session","domain":"AUTH","accentColor":"#38bdf8","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"sessionToken","type":"String (HMAC/UUID)","unique":true},{"name":"userId","type":"String","fk":true},{"name":"deviceFingerprint","type":"String?"},{"name":"expiresAt / createdAt","type":"DateTime"}],"relations":["N:1 User"],"securityNotes":"HTTP-only session cookie store (payroll_auth_token). Preserved during WebAuthn passkey binding."},"model-device-reg":{"type":"PRISMA_MODEL","name":"DeviceRegistration","domain":"HARDWARE","accentColor":"#c084fc","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"userId","type":"String","fk":true,"unique":true},{"name":"credentialId","type":"String (Base64URL)","unique":true},{"name":"credentialPublicKey","type":"String (COSE Base64URL)"},{"name":"counter","type":"Int (Clone detection)"},{"name":"transports","type":"String? (JSON array)"},{"name":"assuranceTier","type":"String (\"HIGH_HARDWARE_BOUND\")"},{"name":"status","type":"String (\"ACTIVE\"|\"REVOKED\")"},{"name":"deviceName / platform","type":"String (UA-derived)"}],"relations":["1:1 User"],"securityNotes":"Stores WebAuthn FIDO2 public keys. Tied to physical Touch ID/Face ID platform authenticator."},"model-webauthn-challenge":{"type":"PRISMA_MODEL","name":"WebAuthnChallenge","domain":"FIDO2","accentColor":"#c084fc","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"challenge","type":"String (Cryptographic Nonce)","unique":true},{"name":"userId","type":"String?"},{"name":"purpose","type":"String (\"REGISTRATION\"|\"AUTH\")"},{"name":"expiresAt","type":"DateTime (5-min TTL)"}],"relations":["Transient Nonce Table"],"securityNotes":"Prevents WebAuthn replay attacks. Strictly single-use with timestamp expiration."},"model-unlock-request":{"type":"PRISMA_MODEL","name":"DeviceUnlockRequest","domain":"SEC_OVERRIDE","accentColor":"#f43f5e","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"requestCode","type":"String (\"REQ-XXXXX\")","unique":true},{"name":"unlockCode","type":"String (6-Digit OTP)"},{"name":"userId","type":"String","fk":true},{"name":"requestedDeviceName","type":"String"},{"name":"status","type":"String (\"PENDING\"|\"APPROVED\"|\"USED\")"},{"name":"expiresAt","type":"DateTime (5-min TTL)"}],"relations":["N:1 User"],"securityNotes":"Generated when an employee attempts to log in or scan from an unregistered secondary device."},"model-employee":{"type":"PRISMA_MODEL","name":"EmployeeProfile","domain":"WORKFORCE","accentColor":"#34d399","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"userId","type":"String","fk":true,"unique":true},{"name":"employeeId","type":"String (\"EMP-XXX\")","unique":true},{"name":"fullName","type":"String"},{"name":"dailySalary","type":"Int (IDR, e.g. 150000)"},{"name":"shiftId","type":"String","fk":true},{"name":"employmentStatus","type":"String (\"PERMANENT\"|...)"},{"name":"joinedAt","type":"DateTime"}],"relations":["1:1 User","N:1 Shift","1:N AttendanceRecord","1:N SalaryHistory"],"securityNotes":"Core business employee model. Maintains daily rate and assigned operational work shift."},"model-salary-hist":{"type":"PRISMA_MODEL","name":"EmployeeSalaryHistory","domain":"AUDIT_RATE","accentColor":"#fbbf24","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"employeeId","type":"String","fk":true},{"name":"previousSalary","type":"Int (IDR)"},{"name":"newSalary","type":"Int (IDR)"},{"name":"effectiveDate","type":"DateTime"},{"name":"changedByUserId","type":"String"}],"relations":["N:1 EmployeeProfile"],"securityNotes":"Tracks base rate modifications so retroactive calculations never corrupt past finalized payrolls."},"model-shift":{"type":"PRISMA_MODEL","name":"Shift","domain":"WORK_SHIFT","accentColor":"#818cf8","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"name","type":"String (\"Morning 08:00-17:00\")"},{"name":"startTime","type":"String (\"08:00\")"},{"name":"endTime","type":"String (\"17:00\")"},{"name":"isOvernight","type":"Boolean (spans midnight)"},{"name":"gracePeriodMinutes","type":"Int (e.g. 10m)"},{"name":"applicableDays","type":"String (\"1,2,3,4,5\")"},{"name":"deductionPolicyId","type":"String","fk":true}],"relations":["N:1 DeductionPolicy","1:N EmployeeProfile","1:N AttendanceRecord"],"securityNotes":"Defines scheduled hours, overnight flags, and active weekdays for absence (alpa) projections."},"model-deduction":{"type":"PRISMA_MODEL","name":"DeductionPolicy","domain":"POLICY","accentColor":"#818cf8","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"name","type":"String (\"Per Minute Standard\")"},{"name":"mode","type":"String (\"PER_MINUTE\"|\"PER_HOUR\")"},{"name":"rate","type":"Int (e.g. Rp500/min or Rp10k/hr)"},{"name":"hourlyRounding","type":"String (\"EXACT\"|\"ROUND_UP\"|...)"},{"name":"gracePeriodMinutes","type":"Int"}],"relations":["1:N Shift"],"securityNotes":"Formula specification for automatic salary deductions on late punch events."},"model-office-config":{"type":"PRISMA_MODEL","name":"OfficeConfig","domain":"GEOFENCE","accentColor":"#fbbf24","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"officeName","type":"String (\"Kantor Utama\")"},{"name":"latitude","type":"Float (-6.2088)"},{"name":"longitude","type":"Float (106.8456)"},{"name":"radiusMeters","type":"Int (Default: 50m)"},{"name":"officePublicIp","type":"String? (WAN IP)"},{"name":"enforceWifiIp","type":"Boolean"},{"name":"maxGpsAccuracy","type":"Int (Default: 80m)"}],"relations":["Global Singleton / Multi-Tenant Store"],"securityNotes":"Source of truth for GPS Haversine boundaries, ISP WAN verification, and accuracy thresholds."},"model-qr-challenge":{"type":"PRISMA_MODEL","name":"QRChallenge","domain":"DYNAMIC_QR","accentColor":"#f43f5e","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"token","type":"String (Cryptographic Token)","unique":true},{"name":"issuedAt / expiresAt","type":"DateTime (15s Window)"},{"name":"isActive","type":"Boolean"},{"name":"consumedAt","type":"DateTime?"},{"name":"consumedByUserId","type":"String?"}],"relations":["1:N QRScanLog"],"securityNotes":"Dynamic kiosk token rotating every 15 seconds. Single-use burn prevents proxy photo sharing."},"model-qr-scanlog":{"type":"PRISMA_MODEL","name":"QRScanLog","domain":"AUDIT_SCAN","accentColor":"#f43f5e","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"challengeId","type":"String","fk":true},{"name":"userId","type":"String"},{"name":"action","type":"String (\"CHECK_IN\"|\"CHECK_OUT\")"},{"name":"scannedAt","type":"DateTime"}],"relations":["N:1 QRChallenge","@@unique([challengeId, userId])"],"securityNotes":"Enforces token exclusivity. Second scan attempt triggers CHEATING_ALERT_QR_SHARING_REUSE."},"model-attendance":{"type":"PRISMA_MODEL","name":"AttendanceRecord","domain":"CORE_RECORDS","accentColor":"#34d399","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"employeeId","type":"String","fk":true},{"name":"shiftId","type":"String","fk":true},{"name":"shiftDate","type":"String (\"YYYY-MM-DD\")","unique":true},{"name":"checkInTime / checkOutTime","type":"DateTime"},{"name":"scheduledStartTime / scheduledEndTime","type":"DateTime"},{"name":"status","type":"String (\"CHECKED_IN\"|\"COMPLETED\"|\"LATE_COMPLETED\")"},{"name":"lateMinutes","type":"Int"},{"name":"dailySalarySnapshot","type":"Int (Frozen IDR)"},{"name":"deductionPolicySnapshot","type":"String (Frozen JSON Formula)"},{"name":"lateDeduction / netDailyEarnings","type":"Int (IDR Accrued)"},{"name":"checkInLatitude / checkInLongitude / checkInDistanceMeters / checkInClientIp","type":"In-Telemetry"},{"name":"checkOutLatitude / checkOutLongitude / checkOutDistanceMeters / checkOutClientIp","type":"Out-Telemetry"}],"relations":["N:1 EmployeeProfile","N:1 Shift","@@unique([employeeId, shiftDate])"],"securityNotes":"Authoritative daily punch event with immutable wage snapshots and audited GPS/IP verification."},"model-payroll-period":{"type":"PRISMA_MODEL","name":"PayrollPeriod","domain":"PAYROLL","accentColor":"#c084fc","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"year / month","type":"Int","unique":true},{"name":"startDate / endDate","type":"DateTime"},{"name":"status","type":"String (\"DRAFT\"|\"FINALIZED\")"},{"name":"finalizedAt","type":"DateTime?"},{"name":"finalizedByUserId","type":"String?"}],"relations":["1:N PayrollRecord","1:N PayrollAdjustment"],"securityNotes":"Period container. Locking to FINALIZED freezes all records against future wage adjustments."},"model-payroll-record":{"type":"PRISMA_MODEL","name":"PayrollRecord","domain":"PAYROLL_SNAPSHOT","accentColor":"#c084fc","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"payrollPeriodId","type":"String","fk":true},{"name":"employeeId","type":"String","fk":true},{"name":"completedDays","type":"Int"},{"name":"dailySalary","type":"Int (Locked Snapshot)"},{"name":"lateArrivalCount / totalLateMinutes","type":"Int"},{"name":"totalLateDeductions","type":"Int (IDR)"},{"name":"grossEarnings / netEarnings","type":"Int (IDR Final Pay)"},{"name":"isFinalized","type":"Boolean"}],"relations":["N:1 PayrollPeriod","N:1 EmployeeProfile","@@unique([periodId, employeeId])"],"securityNotes":"Monthly statement row. Historical pay cannot be rewritten once isFinalized is true."},"model-payroll-adj":{"type":"PRISMA_MODEL","name":"PayrollAdjustment","domain":"PAYROLL_ADJ","accentColor":"#c084fc","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"payrollPeriodId","type":"String","fk":true},{"name":"employeeId","type":"String"},{"name":"amount","type":"Int (Bonus [+] / Penalty [-])"},{"name":"reason","type":"String"},{"name":"createdAt","type":"DateTime"}],"relations":["N:1 PayrollPeriod"],"securityNotes":"Discretionary manager adjustments and bonuses tied to a specific payroll billing cycle."},"model-audit-log":{"type":"PRISMA_MODEL","name":"AuditLog","domain":"CRYPTO_AUDIT","accentColor":"#fb923c","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"sequenceNumber","type":"Int","unique":true},{"name":"schemaVersion","type":"Int (Version 2)"},{"name":"timestamp","type":"DateTime"},{"name":"actorRole / actorName","type":"String"},{"name":"action / targetEntity","type":"String"},{"name":"previousHash / currentHash","type":"String (SHA-256)"},{"name":"signature","type":"String (Ed25519)"}],"relations":["1:1 AuditOutbox","Immutable Trigger Protected"],"securityNotes":"Zero-Trust hash-chained audit record. SQLite trigger blocks UPDATE and DELETE queries."},"model-audit-outbox":{"type":"PRISMA_MODEL","name":"AuditOutbox","domain":"AUDIT_OUTBOX","accentColor":"#fb923c","fields":[{"name":"id","type":"String (CUID)","pk":true},{"name":"auditLogId","type":"String","fk":true,"unique":true},{"name":"status","type":"String (\"PENDING\"|\"DELIVERED\")"},{"name":"retryCount","type":"Int"},{"name":"nextAttemptAt","type":"DateTime"}],"relations":["1:1 AuditLog","@@index([status, nextAttemptAt])"],"securityNotes":"Reliable outbox queue for transactional log shipping to external enterprise SIEM systems."},"flow-webauthn":{"type":"RUNTIME_FLOW","title":"SCHEME A: WEBAUTHN PASSKEY & HARDWARE DEVICE BINDING FLOW","flowType":"FIDO2_SEC","accentColor":"#38bdf8","steps":[{"type":"step","label":"1. /api/auth/webauthn/register-options","sub":"Server creates challenge nonce with 5-minute TTL & user ID bound","color":"#38bdf8"},{"type":"step","label":"2. navigator.credentials.create()","sub":"Invokes Touch ID / Face ID hardware enclave (authenticatorAttachment: \"platform\")","color":"#38bdf8"},{"type":"step","label":"3. /api/auth/webauthn/register-verify","sub":"Verifies clientDataJSON signature & extracts COSE public key bytes","color":"#22d3ee"},{"type":"step","label":"4. DeviceRegistration Persistence","sub":"Saves Base64URL credentialID, deviceName parsed from UA, counter: 0","color":"#34d399"},{"type":"step","label":"5. Non-Destructive Session Preservation","sub":"Preserves active session token (payroll_auth_token) avoiding 401 unauth","color":"#34d399"},{"type":"condition","label":"UNREGISTERED DEVICE ATTEMPT DETECTED","sub":"HTTP 403 DEVICE_MISMATCH -> Generates 6-Digit Unlock Code -> Owner Approval Required"},{"type":"note","text":"Hardware-bound private key never leaves the secure enclave; clones rejected via WebAuthn counter validation."}],"routes":["/api/auth/webauthn/register-options","/api/auth/webauthn/register-verify","/api/auth/verify-device-unlock"],"securityGuarantees":"Zero credential export, immune to phishing, platform Touch ID prioritization without hybrid QR prompts."},"flow-qr-kiosk":{"type":"RUNTIME_FLOW","title":"SCHEME B: 15s DYNAMIC QR KIOSK, FAST-POLL & QUEUE ANTI-COLLISION","flowType":"ANTI_REPLAY","accentColor":"#f43f5e","steps":[{"type":"step","label":"1. /api/qr/active (Kiosk Heartbeat & Auto-Sync IP)","sub":"Rotates token every 15s; auto-syncs dynamic office WAN IP from kiosk header","color":"#f43f5e"},{"type":"step","label":"2. Kiosk 1.5s Fast-Polling (/owner/qr)","sub":"Polls every 1500ms; instantly rotates QR on screen when employee burns token","color":"#cbd5e1"},{"type":"step","label":"3. Employee Mobile Scan (/employee/scan)","sub":"Captures challenge token via camera stream with soft facingMode constraints","color":"#22d3ee"},{"type":"step","label":"4. Immediate Token Consumption (Burn)","sub":"Atomic DB write: isActive = false, consumedAt = now(), consumedBy = employeeId","color":"#34d399"},{"type":"condition","label":"QUEUE COLLISION GRACE (<= 4s)","sub":"Scanned within 4s of consumption in office -> HTTP 409 QR_QUEUE_ROTATING (no cheat alert)"},{"type":"condition","label":"MALICIOUS REUSE / PHOTO SHARING","sub":"Scanned > 4s or out-of-bounds -> HTTP 409 QR_ALREADY_USED + Flags CHEATING_ALERT"}],"routes":["/api/qr/active","/api/qr/scan","/api/employee/attendance/scan-verify"],"antiCheatStrategy":"Instantly burns QR upon scan; fast-polling flips screen within 1.5s while 4s grace protects employees in line."},"flow-anti-cheat":{"type":"RUNTIME_FLOW","title":"SCHEME C: ANTI-CHEAT DUAL LOCATION VERIFICATION & CHECK-OUT TELEMETRY","flowType":"LOCATION_SEC","accentColor":"#fbbf24","steps":[{"type":"step","label":"1. Client Geolocation & IP Capture","sub":"Acquires high-accuracy GPS coordinates (lat, lng, accuracy) & WAN IP from request headers","color":"#fbbf24"},{"type":"step","label":"2. GPS Accuracy Validation Check","sub":"If gpsAccuracy > OfficeConfig.maxGpsAccuracy (80m) -> HTTP 403 GPS_LOW_ACCURACY","color":"#fbbf24"},{"type":"step","label":"3. Haversine Distance Calculation","sub":"Computes spherical distance (d = 2R * asin(sqrt(...))) between scanner & OfficeConfig","color":"#22d3ee"},{"type":"condition","label":"GEOFENCE DISTANCE CHECK","sub":"If distanceMeters > radiusMeters (50m) -> HTTP 403 GEO_OUT_OF_BOUNDS + Audit Cheating Alert"},{"type":"step","label":"4. Office WiFi Public IP Matching (Optional)","sub":"If enforceWifiIp: compares client WAN IP with OfficeConfig.officePublicIp","color":"#c084fc"},{"type":"condition","label":"DOUBLE-SCAN COOLDOWN (60s)","sub":"If check-out attempted < 60s after check-in -> HTTP 429 SCAN_COOLDOWN_ACTIVE (token spared)"},{"type":"step","label":"5. Complete Punch Telemetry Persistence","sub":"Persists checkIn* and checkOut* (Latitude, Longitude, Distance, IP) in AttendanceRecord","color":"#34d399"}],"routes":["src/lib/geo.ts","src/lib/attendance-scan-handler.ts"],"haversineFormula":"d = 2 * R * asin(sqrt(sin^2(dlat/2) + cos(lat1)*cos(lat2)*sin^2(dlng/2)))","accuracyGuarantee":"Rejects cell-tower spoofing and distant proxies outside 50m radius."},"flow-shift-engine":{"type":"RUNTIME_FLOW","title":"SCHEME D: SHIFT EVALUATION, OVERNIGHT BINDING & LATENESS CALCULATION","flowType":"CALC_ENGINE","accentColor":"#818cf8","steps":[{"type":"step","label":"1. Authoritative Shift Date Resolution","sub":"For overnight shifts (e.g. 22:00 - 06:00), binds check-in and next-day check-out to shiftDate","color":"#818cf8"},{"type":"step","label":"2. Grace Period Application","sub":"graceDeadline = scheduledStartTime + gracePeriodMinutes (e.g. 08:00 + 10m = 08:10)","color":"#cbd5e1"},{"type":"condition","label":"ON-TIME VS LATE DETERMINATION","sub":"If punchTime <= graceDeadline: lateMinutes = 0, status = \"CHECKED_IN\", netDaily = dailySalary"},{"type":"step","label":"3. Lateness Deduction Formula Evaluation","sub":"Evaluates DeductionPolicy: PER_MINUTE (lateMinutes * rate) or PER_HOUR (rounded hours * rate)","color":"#f43f5e"},{"type":"step","label":"4. Max Deduction Salary Cap","sub":"Deduction is strictly capped at (dailySalary * maxDeductionPercent / 100); netDaily >= 0","color":"#fbbf24"},{"type":"step","label":"5. Immutable Wage Snapshotting","sub":"Stores dailySalarySnapshot and deductionPolicySnapshot directly in AttendanceRecord row","color":"#34d399"}],"roundingModes":["EXACT","ROUND_UP","ROUND_DOWN","ROUND_NEAREST"],"snapshotGuarantee":"Historical salary adjustments never alter previously punched attendance records."},"flow-owner-analytics":{"type":"RUNTIME_FLOW","title":"SCHEME E: OWNER REAL-TIME ANALYTICS & ATTENDANCE BREAKDOWN (HADIR/TELAT/ALPA)","flowType":"DATA_VIZ","accentColor":"#34d399","steps":[{"type":"step","label":"1. /api/owner/analytics/attendance (GET)","sub":"Accepts query range: 7d, 14d, 30d, or current_period; verifies OWNER authorization","color":"#34d399"},{"type":"step","label":"2. Shift Schedule Matching Matrix","sub":"Checks employeeProfile.joinedAt & shift.applicableDays (0-6) for each calendar day","color":"#cbd5e1"},{"type":"step","label":"3. Virtual Absence (Alpa) Calculation","sub":"absentCount = assignedShiftCount - presentCount (no manual alpa entry needed)","color":"#f43f5e"},{"type":"step","label":"4. Recharts Stacked Visual Trend Graph","sub":"Renders dynamic Hadir (green), Terlambat (amber), Alpa (rose) bar chart with dark/light themes","color":"#22d3ee"},{"type":"step","label":"5. Performance Roster & Detail Modal","sub":"Lists employee punctuality rates, total late minutes, accrued daily wages, and raw audit logs","color":"#34d399"}],"routes":["src/app/api/owner/analytics/attendance/route.ts","src/components/owner/DashboardAnalytics.tsx","src/components/owner/EmployeeAttendanceRoster.tsx"],"kpiFormula":"Attendance Rate % = (Present Count / Assigned Shifts) * 100"},"flow-payroll-locking":{"type":"RUNTIME_FLOW","title":"SCHEME F: IMMUTABLE MONTHLY PAYROLL FINALIZATION & SNAPSHOT FREEZE","flowType":"PAYROLL_LOCK","accentColor":"#c084fc","steps":[{"type":"step","label":"1. Monthly Aggregation Pipeline","sub":"Queries all finalized AttendanceRecords + approved PayrollAdjustments for billing month","color":"#c084fc"},{"type":"step","label":"2. Gross & Net Wage Calculation","sub":"grossEarnings = completedDays * dailySalary; netEarnings = gross - lateDeductions + adjustments","color":"#22d3ee"},{"type":"step","label":"3. Draft State Review (/owner/payroll)","sub":"Owner inspects breakdowns, adds one-time bonuses or deductions (PayrollAdjustment)","color":"#cbd5e1"},{"type":"step","label":"4. Atomic Finalization (/api/owner/payroll)","sub":"Sets PayrollPeriod.status = \"FINALIZED\", finalizedAt = now(), isFinalized = true","color":"#34d399"},{"type":"condition","label":"RETROACTIVE TAMPER PROTECTION","sub":"Modifying EmployeeProfile.dailySalary afterward NEVER changes finalized PayrollRecord"},{"type":"step","label":"5. Signed Audit Trail Event","sub":"Creates tamper-proof AuditLog: PAYROLL_PERIOD_FINALIZED with cryptographic sequence","color":"#fb923c"}],"routes":["src/app/api/owner/payroll/route.ts","src/lib/payroll.ts"],"integrityGuarantee":"WORM (Write Once, Read Many) invariant ensures legal payroll reproducibility."},"flow-crypto-audit":{"type":"RUNTIME_FLOW","title":"SCHEME G: ZERO-TRUST Ed25519 CRYPTOGRAPHIC AUDIT CHAIN & OUTBOX","flowType":"TAMPER_PROOF","accentColor":"#fb923c","steps":[{"type":"step","label":"1. Canonical Event Normalization","sub":"Serializes actor, action, targetEntity, previousValues, newValues via deterministic JSON","color":"#fb923c"},{"type":"step","label":"2. Cryptographic Hash Chaining","sub":"currentHash = SHA-256(canonicalPayload + previousRecord.currentHash)","color":"#fb923c"},{"type":"step","label":"3. Asymmetric Ed25519 Signature","sub":"Signs currentHash using AUDIT_SIGNING_PRIVATE_KEY; verifiable with public key","color":"#22d3ee"},{"type":"step","label":"4. Monotonic Sequence Allocation","sub":"Strict sequenceNumber increment enforced; gaps immediately indicate deleted records","color":"#fbbf24"},{"type":"condition","label":"SQLITE IMMUTABILITY TRIGGER","sub":"prevent_audit_log_update trigger blocks all UPDATE and DELETE queries at DB level"},{"type":"step","label":"5. Transactional AuditOutbox Pattern","sub":"Inserts PENDING outbox item in same ACID transaction for reliable log forwarding","color":"#818cf8"},{"type":"step","label":"6. /api/cron/audit-flush Dispatcher","sub":"Delivers outbox logs to secondary cold storage; retries with exponential backoff","color":"#34d399"}],"routes":["src/lib/audit-crypto.ts","src/lib/audit-outbox.ts","src/lib/audit-verifier.ts"],"math":"currentHash = SHA256(canonical(event) || prevHash); Sig = Ed25519Sign(privKey, currentHash)","dbTrigger":"CREATE TRIGGER prevent_audit_log_update BEFORE UPDATE ON AuditLog BEGIN SELECT RAISE(FAIL, ...); END;"},"flow-owner-controls":{"type":"RUNTIME_FLOW","title":"SCHEME H: OWNER UNILATERAL DEVICE REVOCATION & REAL-TIME CONTROLS","flowType":"OWNER_ADMIN","accentColor":"#f43f5e","steps":[{"type":"step","label":"1. /owner/devices Management Dashboard","sub":"Displays all enrolled employee hardware passkeys, device names, and assurance tiers","color":"#f43f5e"},{"type":"step","label":"2. Unilateral \"Revoke Access\" Action","sub":"Owner can immediately disconnect any compromised employee terminal with a single click","color":"#f43f5e"},{"type":"step","label":"3. Atomic Invalidation Handler","sub":"Sets DeviceRegistration.isActive = false, status = \"REVOKED\", purges active Sessions","color":"#fbbf24"},{"type":"step","label":"4. Immediate Client Session Invalidation","sub":"Next employee request receives HTTP 401/403, forcing device re-registration","color":"#cbd5e1"},{"type":"step","label":"5. Owner Dynamic Geofence Configuration","sub":"Interactive map / input on /owner/settings updates OfficeConfig coordinates & WiFi IP","color":"#22d3ee"}],"routes":["/api/owner/devices/revoke","/api/owner/devices","/api/owner/office-config"],"securityCapability":"Zero downtime credential kill-switch for lost phones, terminated staff, or detected spoofing."}};
 
     // Viewport Pan and Zoom
     let scale = 0.58;

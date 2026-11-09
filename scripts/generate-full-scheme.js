@@ -199,7 +199,7 @@ function buildConnector(id, x1, y1, x2, y2, color, label, style = {}) {
 // -------------------------------------------------------------
 function generateSvg() {
   const width = 2800;
-  const height = 1950;
+  const height = 2250;
 
   let markers = `
     <defs>
@@ -233,7 +233,7 @@ function generateSvg() {
         SYSTEM SCHEME &amp; RUNTIME ARCHITECTURE FLOW
       </text>
       <text x="70" y="94" fill="${C.textMuted}" font-size="13" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif">
-        Zero-Trust Payroll Attendance: 14 Prisma Data Models, WebAuthn Passkeys, Anti-Cheat Dual Geofence (Haversine + WiFi IP), 15s QR Tokens &amp; Ed25519 Audit Chain
+        Zero-Trust Payroll Attendance: 18 Prisma Data Models, WebAuthn Passkeys, Anti-Cheat Dual Geofence (Haversine + WiFi IP), 15s QR Tokens &amp; Ed25519 Audit Chain
       </text>
 
       <!-- Architecture Badges -->
@@ -266,7 +266,7 @@ function generateSvg() {
     <!-- Column 1 Header -->
     <rect x="40" y="145" width="840" height="36" rx="6" fill="${C.cardHeader}" stroke="${C.border}" stroke-width="1"/>
     <text x="55" y="168" fill="${C.cyan}" font-size="13" font-weight="800" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">
-      ZONE 1: PRISMA SCHEMA &amp; DATABASE DOMAINS (14 ENTITIES)
+      ZONE 1: PRISMA SCHEMA &amp; DATABASE DOMAINS (18 ENTITIES)
     </text>
 
     <!-- Column 2 Header -->
@@ -503,7 +503,7 @@ function generateSvg() {
   // 10. AttendanceRecord
   modelsMarkup += buildModelCard(
     'model-attendance',
-    col1X, 1430, 810, 240,
+    col1X, 1430, 810, 250,
     'AttendanceRecord', 'CORE_RECORDS', C.emerald,
     [
       { name: 'id', type: 'String (CUID)', pk: true },
@@ -517,7 +517,8 @@ function generateSvg() {
       { name: 'dailySalarySnapshot', type: 'Int (Frozen IDR)' },
       { name: 'deductionPolicySnapshot', type: 'String (Frozen JSON Formula)' },
       { name: 'lateDeduction / netDailyEarnings', type: 'Int (IDR Accrued)' },
-      { name: 'checkInLatitude / checkInLongitude / checkInDistanceMeters / checkInClientIp', type: 'GPS & Telemetry' }
+      { name: 'checkInLatitude / checkInLongitude / checkInDistanceMeters / checkInClientIp', type: 'In-Telemetry' },
+      { name: 'checkOutLatitude / checkOutLongitude / checkOutDistanceMeters / checkOutClientIp', type: 'Out-Telemetry' }
     ],
     ['N:1 EmployeeProfile', 'N:1 Shift', '@@unique([employeeId, shiftDate])'],
     'Authoritative daily punch event with immutable wage snapshots and audited GPS/IP verification.'
@@ -526,7 +527,7 @@ function generateSvg() {
   // 11. Payroll & Adjustments
   modelsMarkup += buildModelCard(
     'model-payroll-period',
-    col1X, 1690, cardW1, 210,
+    col1X, 1700, cardW1, 210,
     'PayrollPeriod', 'PAYROLL', C.purple,
     [
       { name: 'id', type: 'String (CUID)', pk: true },
@@ -542,7 +543,7 @@ function generateSvg() {
 
   modelsMarkup += buildModelCard(
     'model-payroll-record',
-    col1X_B, 1690, cardW1, 210,
+    col1X_B, 1700, cardW1, 210,
     'PayrollRecord', 'PAYROLL_SNAPSHOT', C.purple,
     [
       { name: 'id', type: 'String (CUID)', pk: true },
@@ -557,6 +558,58 @@ function generateSvg() {
     ],
     ['N:1 PayrollPeriod', 'N:1 EmployeeProfile', '@@unique([periodId, employeeId])'],
     'Monthly statement row. Historical pay cannot be rewritten once isFinalized is true.'
+  );
+
+  // 12. PayrollAdjustment
+  modelsMarkup += buildModelCard(
+    'model-payroll-adj',
+    col1X, 1930, cardW1, 160,
+    'PayrollAdjustment', 'PAYROLL_ADJ', C.purple,
+    [
+      { name: 'id', type: 'String (CUID)', pk: true },
+      { name: 'payrollPeriodId', type: 'String', fk: true },
+      { name: 'employeeId', type: 'String' },
+      { name: 'amount', type: 'Int (Bonus [+] / Penalty [-])' },
+      { name: 'reason', type: 'String' },
+      { name: 'createdAt', type: 'DateTime' }
+    ],
+    ['N:1 PayrollPeriod'],
+    'Discretionary manager adjustments and bonuses tied to a specific payroll billing cycle.'
+  );
+
+  // 13. AuditLog
+  modelsMarkup += buildModelCard(
+    'model-audit-log',
+    col1X_B, 1930, cardW1, 220,
+    'AuditLog', 'CRYPTO_AUDIT', C.orange,
+    [
+      { name: 'id', type: 'String (CUID)', pk: true },
+      { name: 'sequenceNumber', type: 'Int', unique: true },
+      { name: 'schemaVersion', type: 'Int (Version 2)' },
+      { name: 'timestamp', type: 'DateTime' },
+      { name: 'actorRole / actorName', type: 'String' },
+      { name: 'action / targetEntity', type: 'String' },
+      { name: 'previousHash / currentHash', type: 'String (SHA-256)' },
+      { name: 'signature', type: 'String (Ed25519)' }
+    ],
+    ['1:1 AuditOutbox', 'Immutable Trigger Protected'],
+    'Zero-Trust hash-chained audit record. SQLite trigger blocks UPDATE and DELETE queries.'
+  );
+
+  // 14. AuditOutbox
+  modelsMarkup += buildModelCard(
+    'model-audit-outbox',
+    col1X, 2110, cardW1, 130,
+    'AuditOutbox', 'AUDIT_OUTBOX', C.orange,
+    [
+      { name: 'id', type: 'String (CUID)', pk: true },
+      { name: 'auditLogId', type: 'String', fk: true, unique: true },
+      { name: 'status', type: 'String ("PENDING"|"DELIVERED")' },
+      { name: 'retryCount', type: 'Int' },
+      { name: 'nextAttemptAt', type: 'DateTime' }
+    ],
+    ['1:1 AuditLog', '@@index([status, nextAttemptAt])'],
+    'Reliable outbox queue for transactional log shipping to external enterprise SIEM systems.'
   );
 
   // -------------------------------------------------------------
@@ -587,31 +640,31 @@ function generateSvg() {
     }
   );
 
-  // Flow B: 15-Second Dynamic QR Token Burn
+  // Flow B: 15-Second Dynamic QR Token Burn & Queue Anti-Collision
   flowsMarkup += buildFlowNode(
     'flow-qr-kiosk',
-    col2X, 530, flowW, 280,
-    'SCHEME B: 15-SECOND DYNAMIC QR KIOSK & SINGLE-USE TOKEN BURN',
+    col2X, 530, flowW, 300,
+    'SCHEME B: 15s DYNAMIC QR KIOSK, FAST-POLL & QUEUE ANTI-COLLISION',
     'ANTI_REPLAY', C.rose,
     [
-      { type: 'step', label: '1. /api/qr/active (Owner Kiosk Screen)', sub: 'Generates secure cryptographic challenge token; rotates every 15 seconds', color: C.rose },
-      { type: 'step', label: '2. Kiosk Countdown Display', sub: 'Client renders SVG QR with synchronized 15-second radial progress timer', color: C.textSub },
+      { type: 'step', label: '1. /api/qr/active (Kiosk Heartbeat & Auto-Sync IP)', sub: 'Rotates token every 15s; auto-syncs dynamic office WAN IP from kiosk header', color: C.rose },
+      { type: 'step', label: '2. Kiosk 1.5s Fast-Polling (/owner/qr)', sub: 'Polls every 1500ms; instantly rotates QR on screen when employee burns token', color: C.textSub },
       { type: 'step', label: '3. Employee Mobile Scan (/employee/scan)', sub: 'Captures challenge token via camera stream with soft facingMode constraints', color: C.cyan },
       { type: 'step', label: '4. Immediate Token Consumption (Burn)', sub: 'Atomic DB write: isActive = false, consumedAt = now(), consumedBy = employeeId', color: C.emerald },
-      { type: 'condition', label: 'REUSE / PHOTO SHARING REJECTED', sub: 'HTTP 400 QR_ALREADY_USED -> Flags CHEATING_ALERT_QR_SHARING_REUSE in Audit Trail' },
-      { type: 'condition', label: 'EXPIRED TOKEN REJECTED', sub: 'If scannedAt > expiresAt (TTL + 5s grace) -> HTTP 400 QR_EXPIRED denied' }
+      { type: 'condition', label: 'QUEUE COLLISION GRACE (<= 4s)', sub: 'Scanned within 4s of consumption in office -> HTTP 409 QR_QUEUE_ROTATING (no cheat alert)' },
+      { type: 'condition', label: 'MALICIOUS REUSE / PHOTO SHARING', sub: 'Scanned > 4s or out-of-bounds -> HTTP 409 QR_ALREADY_USED + Flags CHEATING_ALERT' }
     ],
     {
       routes: ['/api/qr/active', '/api/qr/scan', '/api/employee/attendance/scan-verify'],
-      antiCheatStrategy: 'Permanently burns QR tokens upon first use to stop photo forwarding via WhatsApp/Telegram.'
+      antiCheatStrategy: 'Instantly burns QR upon scan; fast-polling flips screen within 1.5s while 4s grace protects employees in line.'
     }
   );
 
-  // Flow C: Anti-Cheat Dual Location Verification
+  // Flow C: Anti-Cheat Dual Location Verification & Check-Out Telemetry
   flowsMarkup += buildFlowNode(
     'flow-anti-cheat',
-    col2X, 830, flowW, 350,
-    'SCHEME C: ANTI-CHEAT DUAL LOCATION VERIFICATION (GEOFENCE + WIFI IP)',
+    col2X, 850, flowW, 350,
+    'SCHEME C: ANTI-CHEAT DUAL LOCATION VERIFICATION & CHECK-OUT TELEMETRY',
     'LOCATION_SEC', C.amber,
     [
       { type: 'step', label: '1. Client Geolocation & IP Capture', sub: 'Acquires high-accuracy GPS coordinates (lat, lng, accuracy) & WAN IP from request headers', color: C.amber },
@@ -619,8 +672,8 @@ function generateSvg() {
       { type: 'step', label: '3. Haversine Distance Calculation', sub: 'Computes spherical distance (d = 2R * asin(sqrt(...))) between scanner & OfficeConfig', color: C.cyan },
       { type: 'condition', label: 'GEOFENCE DISTANCE CHECK', sub: 'If distanceMeters > radiusMeters (50m) -> HTTP 403 GEO_OUT_OF_BOUNDS + Audit Cheating Alert' },
       { type: 'step', label: '4. Office WiFi Public IP Matching (Optional)', sub: 'If enforceWifiIp: compares client WAN IP with OfficeConfig.officePublicIp', color: C.purple },
-      { type: 'condition', label: 'WIFI WAN MISMATCH CHECK', sub: 'If clientIp !== officePublicIp -> HTTP 403 WIFI_IP_MISMATCH + Transactional Rollback' },
-      { type: 'step', label: '5. Verified Telemetry Persistence', sub: 'Logs checkInLatitude, checkInLongitude, checkInDistanceMeters, checkInClientIp to AttendanceRecord', color: C.emerald }
+      { type: 'condition', label: 'DOUBLE-SCAN COOLDOWN (60s)', sub: 'If check-out attempted < 60s after check-in -> HTTP 429 SCAN_COOLDOWN_ACTIVE (token spared)' },
+      { type: 'step', label: '5. Complete Punch Telemetry Persistence', sub: 'Persists checkIn* and checkOut* (Latitude, Longitude, Distance, IP) in AttendanceRecord', color: C.emerald }
     ],
     {
       routes: ['src/lib/geo.ts', 'src/lib/attendance-scan-handler.ts'],
@@ -862,7 +915,7 @@ function generateInteractiveHtml(svgContent) {
         PAYROLL ATTENDANCE SCHEME FLOW INSPECTOR
       </h1>
       <span class="text-xs px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 font-mono">
-        14 PRISMA MODELS &bull; 8 RUNTIME SCHEMES
+        18 PRISMA MODELS &bull; 8 RUNTIME SCHEMES
       </span>
     </div>
 

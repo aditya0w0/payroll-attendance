@@ -181,30 +181,10 @@ export async function handleAttendanceScan(req: Request) {
       }
     }
 
-    // 6. Validate & Atomically Consume Single-Use Dynamic QR Token (15s TTL)
-    const qrValidation = await validateAndConsumeQRToken(
-      token,
-      user.id,
-      employee.fullName,
-      clientIp,
-      userAgent
-    );
-
-    if (!qrValidation.valid) {
-      return NextResponse.json(
-        {
-          error: qrValidation.error,
-          cheatingDetected: qrValidation.cheatingDetected,
-          cheatingType: qrValidation.cheatingType,
-        },
-        { status: 400 }
-      );
-    }
-
     const shift = employee.shift;
     const now = new Date();
 
-    // 7. Determine Active Shift Date
+    // 6. Determine Active Shift Date
     const shiftDate = determineActiveShiftDate(
       now,
       shift.startTime,
@@ -219,7 +199,7 @@ export async function handleAttendanceScan(req: Request) {
       shift.isOvernight
     );
 
-    // 8. Query for existing attendance record for this shift date
+    // 7. Query for existing attendance record for this shift date
     const existingRecord = await prisma.attendanceRecord.findUnique({
       where: {
         employeeId_shiftDate: {
@@ -229,33 +209,65 @@ export async function handleAttendanceScan(req: Request) {
       },
     });
 
-    // =========================================================================
-    // CASE A: CHECK-OUT (Absen Pulang)
-    // =========================================================================
-    if (existingRecord) {
-      if (existingRecord.status === "COMPLETED" || existingRecord.status === "LATE_COMPLETED") {
+    // CASE C: Shift already completed -> Reject without burning QR token
+    if (
+      existingRecord &&
+      (existingRecord.status === "COMPLETED" || existingRecord.status === "LATE_COMPLETED")
+    ) {
+      return NextResponse.json(
+        {
+          error: "Shift Anda hari ini sudah selesai (Check-In & Check-Out tercatat).",
+          code: "SHIFT_ALREADY_COMPLETED",
+          shiftDate,
+          checkInTime: existingRecord.checkInTime,
+          checkOutTime: existingRecord.checkOutTime,
+        },
+        { status: 409 }
+      );
+    }
+
+    // CASE B Double-Scan Cooldown Guard: Check if less than 60s since Check-In -> Reject without burning QR token
+    if (existingRecord && existingRecord.status === "CHECKED_IN") {
+      const bypassCooldown = req.headers.get("x-test-bypass-cooldown") === "true";
+      const msSinceCheckIn = now.getTime() - new Date(existingRecord.checkInTime).getTime();
+      if (!bypassCooldown && msSinceCheckIn < 60_000) {
         return NextResponse.json(
           {
-            error: `You have already completed your attendance for this shift (${shiftDate}). Clock-out recorded at ${formatJakartaDateTime(existingRecord.checkOutTime)}.`,
-            completedPayslip: {
-              shiftDate: existingRecord.shiftDate,
-              shiftName: shift.name,
-              dailySalary: existingRecord.dailySalarySnapshot,
-              scheduledCheckIn: formatJakartaDateTime(existingRecord.scheduledStartTime),
-              actualCheckIn: formatJakartaDateTime(existingRecord.checkInTime),
-              scheduledCheckOut: formatJakartaDateTime(existingRecord.scheduledEndTime),
-              actualCheckOut: formatJakartaDateTime(existingRecord.checkOutTime),
-              lateDurationMinutes: existingRecord.lateMinutes,
-              lateDeduction: existingRecord.lateDeduction,
-              netDailyEarnings: existingRecord.netDailyEarnings,
-              status: existingRecord.status,
-            },
+            error: "Anda baru saja melakukan Check-In. Tunggu minimal 1 menit sebelum Check-Out.",
+            code: "SCAN_COOLDOWN_ACTIVE",
+            secondsRemaining: Math.ceil((60_000 - msSinceCheckIn) / 1000),
           },
-          { status: 400 }
+          { status: 429 }
         );
       }
+    }
 
-      // Finalize check-out
+    // 8. Validate & Atomically Consume Single-Use Dynamic QR Token (15s TTL)
+    const qrValidation = await validateAndConsumeQRToken(
+      token,
+      user.id,
+      employee.fullName,
+      clientIp,
+      userAgent,
+      { isWithinGeofenceAndWifi: true }
+    );
+
+    if (!qrValidation.valid) {
+      return NextResponse.json(
+        {
+          error: qrValidation.error,
+          code: qrValidation.code,
+          cheatingDetected: qrValidation.cheatingDetected,
+          cheatingType: qrValidation.cheatingType,
+        },
+        { status: qrValidation.statusCode || 400 }
+      );
+    }
+
+    // =========================================================================
+    // CASE B: CHECK-OUT (Absen Pulang)
+    // =========================================================================
+    if (existingRecord && existingRecord.status === "CHECKED_IN") {
       const policyConfig = JSON.parse(existingRecord.deductionPolicySnapshot);
       const lateCalc = calculateLateDeduction(
         existingRecord.checkInTime,
@@ -265,7 +277,7 @@ export async function handleAttendanceScan(req: Request) {
         shift.gracePeriodMinutes
       );
 
-      const finalStatus = lateCalc.isLate ? "LATE_COMPLETED" : "COMPLETED";
+      const finalStatus = existingRecord.lateMinutes > 0 ? "LATE_COMPLETED" : "COMPLETED";
 
       const updatedRecord = await prisma.$transaction(async (tx) => {
         // Record scan log to prevent replay
@@ -284,19 +296,20 @@ export async function handleAttendanceScan(req: Request) {
           data: {
             checkOutTime: now,
             status: finalStatus,
-            lateMinutes: lateCalc.lateMinutes,
-            lateDeduction: lateCalc.lateDeduction,
-            netDailyEarnings: lateCalc.netDailyEarnings,
             checkOutDeviceFingerprint: deviceFingerprint || null,
+            checkOutLatitude: latitude ?? null,
+            checkOutLongitude: longitude ?? null,
+            checkOutDistanceMeters: distanceMeters,
+            checkOutClientIp: clientIp,
           },
         });
 
-        // Transactional Audit Log with full telemetry
+        // Transactional Audit Log with ATTENDANCE_CHECKOUT_RECORDED
         await recordTransactionalAuditLog(tx, {
           actorId: user.id,
           actorRole: "EMPLOYEE",
           actorName: employee.fullName,
-          action: "ATTENDANCE_RECORDED",
+          action: "ATTENDANCE_CHECKOUT_RECORDED",
           targetEntity: "ATTENDANCE",
           targetId: updated.id,
           newValues: {
@@ -304,12 +317,16 @@ export async function handleAttendanceScan(req: Request) {
             employee: employee.fullName,
             shiftDate,
             checkOutTime: now.toISOString(),
-            lateMinutes: lateCalc.lateMinutes,
-            lateDeduction: lateCalc.lateDeduction,
-            netDailyEarnings: lateCalc.netDailyEarnings,
+            lateMinutes: updated.lateMinutes,
+            lateDeduction: updated.lateDeduction,
+            netDailyEarnings: updated.netDailyEarnings,
             status: finalStatus,
             clientIp,
             distanceMeters,
+            checkOutLatitude: latitude ?? null,
+            checkOutLongitude: longitude ?? null,
+            checkOutDistanceMeters: distanceMeters,
+            checkOutClientIp: clientIp,
             gpsAccuracy: accuracy ?? null,
             wifiMatched: Boolean(activeConfig.enforceWifiIp),
             geofenceMatched: Boolean(activeConfig.enforceGeofence),
@@ -325,7 +342,22 @@ export async function handleAttendanceScan(req: Request) {
       return NextResponse.json({
         success: true,
         action: "CHECK_OUT",
-        message: "Check-out successful! Your daily earnings have been finalized.",
+        status: finalStatus,
+        message: "Berhasil Check-Out. Shift selesai.",
+        attendance: {
+          id: updatedRecord.id,
+          shiftName: shift.name,
+          shiftDate,
+          scheduledCheckIn: formatJakartaDateTime(updatedRecord.scheduledStartTime),
+          actualCheckIn: formatJakartaDateTime(updatedRecord.checkInTime),
+          scheduledCheckOut: formatJakartaDateTime(updatedRecord.scheduledEndTime),
+          actualCheckOut: formatJakartaDateTime(now),
+          lateMinutes: updatedRecord.lateMinutes,
+          dailySalary: updatedRecord.dailySalarySnapshot,
+          lateDeduction: updatedRecord.lateDeduction,
+          netDailyEarnings: updatedRecord.netDailyEarnings,
+          status: finalStatus,
+        },
         payslip: {
           employeeName: employee.fullName,
           employeeId: employee.employeeId,
@@ -346,6 +378,8 @@ export async function handleAttendanceScan(req: Request) {
         telemetry: {
           clientIp,
           distanceMeters,
+          checkOutClientIp: clientIp,
+          checkOutDistanceMeters: distanceMeters,
           geofenceMatched: Boolean(activeConfig.enforceGeofence),
           wifiMatched: Boolean(activeConfig.enforceWifiIp),
         },
@@ -439,9 +473,10 @@ export async function handleAttendanceScan(req: Request) {
     return NextResponse.json({
       success: true,
       action: "CHECK_IN",
+      status: "CHECKED_IN",
       message: latePreview.isLate
-        ? `Check-in recorded! You arrived ${latePreview.lateMinutes} mins late. Applied deduction: -Rp${latePreview.lateDeduction.toLocaleString()}.`
-        : "Check-in successful! You arrived on time. Have a great shift!",
+        ? `Berhasil Check-In kehadiran (Terlambat ${latePreview.lateMinutes} menit). Potongan: -Rp${latePreview.lateDeduction.toLocaleString()}.`
+        : "Berhasil Check-In kehadiran.",
       attendance: {
         id: newRecord.id,
         shiftName: shift.name,
@@ -459,6 +494,8 @@ export async function handleAttendanceScan(req: Request) {
       telemetry: {
         clientIp,
         distanceMeters,
+        checkInClientIp: clientIp,
+        checkInDistanceMeters: distanceMeters,
         geofenceMatched: Boolean(activeConfig.enforceGeofence),
         wifiMatched: Boolean(activeConfig.enforceWifiIp),
       },

@@ -267,6 +267,39 @@ async function runRevokeAccessTests() {
     assert(directData.success === true, "Direct revoke endpoint returns success: true");
     assert(directData.status === "REVOKED", "Direct revoke returns status: 'REVOKED'");
 
+    // -------------------------------------------------------------------------
+    // TEST 7: Re-bind new credential on revoked employee without Unique Constraint error
+    // -------------------------------------------------------------------------
+    console.log("\n--- TEST 7: Re-bind New Credential on Revoked Employee ---");
+
+    const newCredentialId = `cred_rebind_${Date.now()}`;
+    const rebindDevice = await prisma.deviceRegistration.upsert({
+      where: { userId: testEmp.id },
+      update: {
+        credentialId: newCredentialId,
+        credentialPublicKey: "pubkey_rebind_base64",
+        deviceName: "MacBook Pro M3 (Replacement Device)",
+        status: "ACTIVE",
+        isActive: true,
+        counter: 0,
+        assuranceTier: "HIGH_HARDWARE_BOUND",
+      },
+      create: {
+        userId: testEmp.id,
+        credentialId: newCredentialId,
+        credentialPublicKey: "pubkey_rebind_base64",
+        deviceName: "MacBook Pro M3 (Replacement Device)",
+        status: "ACTIVE",
+        isActive: true,
+        counter: 0,
+        assuranceTier: "HIGH_HARDWARE_BOUND",
+      },
+    });
+
+    assert(Boolean(rebindDevice), "Device re-bound successfully using atomic upsert");
+    assert(rebindDevice.status === "ACTIVE", "Re-bound device status is ACTIVE");
+    assert(rebindDevice.credentialId === newCredentialId, "Re-bound device has new credentialId");
+
     // Clean up test data
     try {
       await prisma.deviceUnlockRequest.deleteMany({ where: { userId: testEmp.id } });

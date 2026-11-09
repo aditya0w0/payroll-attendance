@@ -51,21 +51,21 @@ export async function POST(req: Request) {
         current.user.id,
         deviceFingerprint || boundDevice.credentialId || "webauthn_passkey"
       );
-    } else {
-      // Re-issue / refresh HTTP-only cookie
-      try {
-        const cookieStore = cookies();
-        const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000);
-        cookieStore.set(SESSION_COOKIE_NAME, activeToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production" && process.env.SECURE_COOKIES === "true",
-          sameSite: "lax",
-          path: "/",
-          expires: expiresAt,
-        });
-      } catch {
-        // Fallback for non-cookie test harnesses
-      }
+    }
+
+    // Set or refresh authoritative HTTP-only session cookie
+    try {
+      const cookieStore = cookies();
+      const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000);
+      cookieStore.set(SESSION_COOKIE_NAME, activeToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production" && process.env.SECURE_COOKIES === "true",
+        sameSite: "lax",
+        path: "/",
+        expires: expiresAt,
+      });
+    } catch {
+      // Fallback for non-cookie test harnesses
     }
 
     return NextResponse.json({

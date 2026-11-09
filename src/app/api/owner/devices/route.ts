@@ -112,9 +112,16 @@ export async function POST(req: Request) {
           where: { userId: request.userId },
         });
 
-        // Revoke old device registration / WebAuthn passkey
-        await tx.deviceRegistration.deleteMany({
+        // Revoke old device registration / WebAuthn passkey via atomic update
+        await tx.deviceRegistration.updateMany({
           where: { userId: request.userId },
+          data: {
+            status: "REVOKED",
+            isActive: false,
+            credentialId: null,
+            credentialPublicKey: null,
+            counter: 0,
+          },
         });
       });
 
@@ -198,8 +205,15 @@ export async function POST(req: Request) {
         await tx.session.deleteMany({
           where: { userId },
         });
-        await tx.deviceRegistration.deleteMany({
+        await tx.deviceRegistration.updateMany({
           where: { userId },
+          data: {
+            status: "REVOKED",
+            isActive: false,
+            credentialId: null,
+            credentialPublicKey: null,
+            counter: 0,
+          },
         });
         await tx.deviceUnlockRequest.updateMany({
           where: { userId, status: "PENDING" },
