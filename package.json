@@ -15,7 +15,7 @@
     "test:arch": "tsx scripts/test-hardened-architecture.ts",
     "test:geofence": "tsx scripts/test-anti-cheat-geofence.ts",
     "test": "tsx scripts/test-runner.js",
-    "test:all": "tsx scripts/test-runner.js && tsx scripts/test-token-ttl.js && tsx scripts/audit-enterprise-verification.js && tsx scripts/qa-security-suite.js && tsx scripts/test-hardened-architecture.ts && tsx scripts/test-pem-sanitization.ts && tsx scripts/test-webview-detect.ts && tsx scripts/test-rp-resolver.ts && tsx scripts/test-webauthn-endpoints.ts && tsx scripts/test-revoke-access.ts && tsx scripts/test-anti-cheat-geofence.ts"
+    "test:all": "tsx scripts/test-runner.js && tsx scripts/test-token-ttl.js && tsx scripts/audit-enterprise-verification.js && tsx scripts/qa-security-suite.js && tsx scripts/test-hardened-architecture.ts && tsx scripts/test-pem-sanitization.ts && tsx scripts/test-webview-detect.ts && tsx scripts/test-rp-resolver.ts && tsx scripts/test-webauthn-endpoints.ts && tsx scripts/test-revoke-access.ts && tsx scripts/test-anti-cheat-geofence.ts && tsx scripts/test-analytics-aggregation.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1163.0",
@@ -29,6 +29,7 @@
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "recharts": "^3.10.1",
     "tailwind-merge": "^2.5.5",
     "zod": "^3.23.8"
   },
