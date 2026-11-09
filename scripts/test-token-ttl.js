@@ -5,6 +5,7 @@
  */
 
 const { PrismaClient } = require("@prisma/client");
+const { recordAuditLog } = require("../src/lib/audit");
 const prisma = new PrismaClient();
 
 async function runTokenTTLSuite() {
@@ -84,25 +85,23 @@ async function runTokenTTLSuite() {
   }
 
   // Replay attempt detected -> log cheating alert
-  const alertLog1 = await prisma.auditLog.create({
-    data: {
-      actorId: siti.id,
-      actorRole: "EMPLOYEE",
-      actorName: siti.employeeProfile.fullName,
-      action: "CHEATING_ALERT_QR_SHARING_REUSE",
-      targetEntity: "ATTENDANCE_SECURITY",
-      targetId: challenge1.id,
-      newValues: JSON.stringify({
-        attemptedToken: token1,
-        consumedBy: budi.employeeProfile.fullName,
-        consumedAt: checkToken1.consumedAt.toISOString(),
-        attemptedBy: siti.employeeProfile.fullName,
-        incident: "Attempted to scan an already consumed single-use QR token",
-      }),
-      ipAddress: "192.168.1.115",
-      userAgent: "Mobile Safari",
-      reason: `Security Alert: Employee attempted to scan a QR code already consumed by ${budi.employeeProfile.fullName}. Suspected photo sharing / proxy attendance.`,
-    },
+  const alertLog1 = await recordAuditLog({
+    actorId: siti.id,
+    actorRole: "EMPLOYEE",
+    actorName: siti.employeeProfile.fullName,
+    action: "CHEATING_ALERT_QR_SHARING_REUSE",
+    targetEntity: "ATTENDANCE_SECURITY",
+    targetId: challenge1.id,
+    newValues: JSON.stringify({
+      attemptedToken: token1,
+      consumedBy: budi.employeeProfile.fullName,
+      consumedAt: checkToken1.consumedAt.toISOString(),
+      attemptedBy: siti.employeeProfile.fullName,
+      incident: "Attempted to scan an already consumed single-use QR token",
+    }),
+    ipAddress: "192.168.1.115",
+    userAgent: "Mobile Safari",
+    reason: `Security Alert: Employee attempted to scan a QR code already consumed by ${budi.employeeProfile.fullName}. Suspected photo sharing / proxy attendance.`,
   });
 
   console.log("  ✓ Token 1 rejected for Employee B: Already consumed.");
@@ -135,23 +134,21 @@ async function runTokenTTLSuite() {
   const isPastTTL = nowTest3 > challengeExpired.expiresAt;
   if (!isPastTTL) throw new Error("Expected challenge to be expired!");
 
-  const alertLogExpired = await prisma.auditLog.create({
-    data: {
-      actorId: siti.id,
-      actorRole: "EMPLOYEE",
-      actorName: siti.employeeProfile.fullName,
-      action: "CHEATING_ALERT_EXPIRED_QR",
-      targetEntity: "ATTENDANCE_SECURITY",
-      targetId: challengeExpired.id,
-      newValues: JSON.stringify({
-        token: tokenExpired,
-        expiredDelaySeconds: Math.round((nowTest3.getTime() - challengeExpired.expiresAt.getTime()) / 1000),
-        incident: "QR scan submitted after strict 15-second TTL window",
-      }),
-      ipAddress: "192.168.1.115",
-      userAgent: "Mobile Safari",
-      reason: "Security Alert: QR token scanned past 15-second TTL window. Suspected photo transmission delay.",
-    },
+  const alertLogExpired = await recordAuditLog({
+    actorId: siti.id,
+    actorRole: "EMPLOYEE",
+    actorName: siti.employeeProfile.fullName,
+    action: "CHEATING_ALERT_EXPIRED_QR",
+    targetEntity: "ATTENDANCE_SECURITY",
+    targetId: challengeExpired.id,
+    newValues: JSON.stringify({
+      token: tokenExpired,
+      expiredDelaySeconds: Math.round((nowTest3.getTime() - challengeExpired.expiresAt.getTime()) / 1000),
+      incident: "QR scan submitted after strict 15-second TTL window",
+    }),
+    ipAddress: "192.168.1.115",
+    userAgent: "Mobile Safari",
+    reason: "Security Alert: QR token scanned past 15-second TTL window. Suspected photo transmission delay.",
   });
 
   console.log("  ✓ Expired token rejected. Scan denied.");
@@ -165,22 +162,20 @@ async function runTokenTTLSuite() {
   const fakeLookup = await prisma.qRChallenge.findUnique({ where: { token: fakeToken } });
   if (fakeLookup !== null) throw new Error("Fake token unexpectedly found in DB!");
 
-  const alertLogForged = await prisma.auditLog.create({
-    data: {
-      actorId: budi.id,
-      actorRole: "EMPLOYEE",
-      actorName: budi.employeeProfile.fullName,
-      action: "CHEATING_ALERT_FORGED_QR",
-      targetEntity: "ATTENDANCE_SECURITY",
-      targetId: fakeToken.substring(0, 16),
-      newValues: JSON.stringify({
-        attemptedToken: fakeToken,
-        incident: "Unrecognized / forged QR challenge string submitted",
-      }),
-      ipAddress: "192.168.1.99",
-      userAgent: "Curl / Script",
-      reason: "Security Alert: Employee attempted attendance punch using an invalid or forged QR token.",
-    },
+  const alertLogForged = await recordAuditLog({
+    actorId: budi.id,
+    actorRole: "EMPLOYEE",
+    actorName: budi.employeeProfile.fullName,
+    action: "CHEATING_ALERT_FORGED_QR",
+    targetEntity: "ATTENDANCE_SECURITY",
+    targetId: fakeToken.substring(0, 16),
+    newValues: JSON.stringify({
+      attemptedToken: fakeToken,
+      incident: "Unrecognized / forged QR challenge string submitted",
+    }),
+    ipAddress: "192.168.1.99",
+    userAgent: "Curl / Script",
+    reason: "Security Alert: Employee attempted attendance punch using an invalid or forged QR token.",
   });
 
   console.log("  ✓ Forged token rejected. Scan denied.");

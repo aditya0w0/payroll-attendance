@@ -22,25 +22,63 @@ export async function createSession(userId: string, deviceFingerprint?: string):
     },
   });
 
-  const cookieStore = cookies();
-  cookieStore.set(SESSION_COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production" && process.env.SECURE_COOKIES === "true", // Enabled in production with HTTPS / SECURE_COOKIES=true, disabled for local development
-    sameSite: "lax",
-    path: "/",
-    expires: expiresAt,
-  });
+  try {
+    const cookieStore = cookies();
+    cookieStore.set(SESSION_COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production" && process.env.SECURE_COOKIES === "true", // Enabled in production with HTTPS / SECURE_COOKIES=true, disabled for local development
+      sameSite: "lax",
+      path: "/",
+      expires: expiresAt,
+    });
+  } catch (cookieErr: any) {
+    if (cookieErr?.digest === "DYNAMIC_SERVER_USAGE") {
+      throw cookieErr;
+    }
+    // Outside request scope (e.g. standalone test execution)
+  }
 
   return token;
 }
 
 /**
- * Retrieves currently authenticated user and active session from server-side cookies.
+ * Retrieves currently authenticated user and active session from server-side cookies or request headers.
  */
-export async function getCurrentUser() {
+export async function getCurrentUser(req?: Request) {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+    let token: string | undefined;
+
+    // 1. Try extracting token from Request headers if provided
+    if (req) {
+      const cookieHeader = req.headers.get("cookie");
+      if (cookieHeader) {
+        const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${SESSION_COOKIE_NAME}=([^;]+)`));
+        if (match) {
+          token = decodeURIComponent(match[1]);
+        }
+      }
+      if (!token) {
+        const authHeader = req.headers.get("authorization");
+        if (authHeader && authHeader.startsWith("Bearer ")) {
+          token = authHeader.substring(7).trim();
+        }
+      }
+    }
+
+    // 2. Fall back to Next.js cookies() store
+    if (!token) {
+      try {
+        const cookieStore = cookies();
+        token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+      } catch (cookieErr: any) {
+        if (cookieErr?.digest === "DYNAMIC_SERVER_USAGE") {
+          throw cookieErr;
+        }
+        // If outside request scope (e.g. testing), return null
+        if (!req) return null;
+      }
+    }
+
     if (!token) return null;
 
     const session = await prisma.session.findUnique({
@@ -76,7 +114,10 @@ export async function getCurrentUser() {
       user: session.user,
       deviceFingerprint: session.deviceFingerprint,
     };
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.digest === "DYNAMIC_SERVER_USAGE") {
+      throw error;
+    }
     console.error("Error verifying current user session:", error);
     return null;
   }
@@ -108,16 +149,20 @@ export async function destroySession(): Promise<boolean> {
 
 export interface DevicePolicyResult {
   allowed: boolean;
+  mustBindDevice?: boolean;
   reason?: string;
   requestCode?: string;
   boundDeviceName?: string;
   attemptedDeviceName?: string;
+  requiresWebAuthn?: boolean;
+  assuranceTier?: string;
 }
 
 /**
  * Enforces Single-Device Policy for Employee accounts.
- * If employee has no device, binds this device automatically.
- * If device does not match, blocks access and generates 5-minute single-use unlock challenge code.
+ * Primary: WebAuthn / FIDO2 Passkey Credential
+ * Secondary: Device Fingerprint telemetry
+ * Zero-Lockout Recovery: If browser storage is cleared, prompts WebAuthn rather than HTTP 423 lockout!
  */
 export async function enforceSingleDevicePolicy(
   user: any,
@@ -134,36 +179,38 @@ export async function enforceSingleDevicePolicy(
 
   const existingDevice = user.deviceRegistration;
 
-  // Case 1: First login on an unbound account -> Auto-bind device
-  if (!existingDevice) {
-    await prisma.deviceRegistration.create({
-      data: {
-        userId: user.id,
-        deviceFingerprint,
-        deviceName: deviceName || "Registered Mobile Terminal",
-        publicKey: publicKey || null,
-        platform: userAgent.includes("Mac") ? "macOS" : userAgent.includes("iPhone") ? "iOS" : userAgent.includes("Android") ? "Android" : "Web",
-        isActive: true,
-      },
-    });
-
-    await recordAuditLog({
-      actorId: user.id,
-      actorRole: "EMPLOYEE",
-      actorName: user.employeeProfile?.fullName || user.username,
-      action: "DEVICE_INITIAL_BINDING",
-      targetEntity: "DEVICE_SECURITY",
-      targetId: deviceFingerprint,
-      newValues: { deviceName, deviceFingerprint },
-      ipAddress,
-      userAgent,
-      reason: "Initial single-device binding established upon first login",
-    });
-
-    return { allowed: true };
+  // Case 1: Unbound account -> Strict physical passkey device enrollment required (No auto-assignment)
+  if (!existingDevice || !existingDevice.isActive) {
+    return {
+      allowed: false,
+      mustBindDevice: true,
+      reason: "FIRST_TIME_DEVICE_BINDING_REQUIRED",
+    };
   }
 
-  // Case 2: Matching registered device
+  // Case 2: Account has registered WebAuthn Passkey
+  if (existingDevice.credentialId && existingDevice.isActive) {
+    // If deviceFingerprint matches secondary telemetry, allow direct session
+    if (existingDevice.deviceFingerprint === deviceFingerprint) {
+      await prisma.deviceRegistration.update({
+        where: { id: existingDevice.id },
+        data: { lastSeenAt: new Date() },
+      });
+      return { allowed: true };
+    }
+
+    // Zero-Lockout Recovery: Browser storage / IndexedDB was wiped, or fingerprint changed!
+    // Trigger biometric WebAuthn verification instead of HTTP 423 quarantine!
+    return {
+      allowed: false,
+      reason: "WEBAUTHN_REQUIRED",
+      requiresWebAuthn: true,
+      boundDeviceName: existingDevice.deviceName,
+      assuranceTier: existingDevice.assuranceTier,
+    };
+  }
+
+  // Case 3: Matching legacy registered device
   if (existingDevice.deviceFingerprint === deviceFingerprint && existingDevice.isActive) {
     await prisma.deviceRegistration.update({
       where: { id: existingDevice.id },

@@ -88,34 +88,60 @@ model DeductionPolicy {
 }
 
 model DeviceRegistration {
-  id                String   @id @default(cuid())
-  userId            String   @unique
-  deviceFingerprint String
-  publicKey         String?  // Web Crypto exported public key
-  deviceName        String
-  platform          String   @default("Browser")
-  registeredAt      DateTime @default(now())
-  lastSeenAt        DateTime @default(now())
-  isActive          Boolean  @default(true)
+  id                    String    @id @default(cuid())
+  userId                String    @unique
+  deviceFingerprint     String?   // Secondary telemetry/risk signal
+  publicKey             String?   // Legacy Web Crypto public key
+  deviceName            String
+  platform              String    @default("Browser")
+  registeredAt          DateTime  @default(now())
+  lastSeenAt            DateTime  @default(now())
+  isActive              Boolean   @default(true)
+  status                String    @default("ACTIVE") // "ACTIVE" | "REVOKED"
+
+  // WebAuthn / FIDO2 Passkey Credential Fields
+  credentialId          String?   @unique // base64url credential ID
+  credentialPublicKey   String?   // base64url COSE public key
+  counter               Int       @default(0)
+  transports            String?   // JSON array e.g. ["internal"]
+  credentialBackedUp    Boolean   @default(false)
+  credentialDeviceType  String    @default("singleDevice") // "singleDevice" | "multiDevice"
+  assuranceTier         String    @default("HIGH_HARDWARE_BOUND") // "HIGH_HARDWARE_BOUND" | "STANDARD_PASSKEY_SYNCED" | "LEGACY_FINGERPRINT"
+  aaguid                String?
+  lastAuthenticatedAt   DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model WebAuthnChallenge {
+  id        String   @id @default(cuid())
+  challenge String   @unique
+  userId    String?
+  purpose   String   // "REGISTRATION" | "AUTHENTICATION" | "RECOVERY"
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId, purpose])
+}
+
 model DeviceUnlockRequest {
-  id                   String    @id @default(cuid())
-  requestCode          String    @unique // e.g. "REQ-94218"
-  unlockCode           String    // 6-digit random code, e.g. "482915"
-  userId               String
-  requestedFingerprint String
-  requestedDeviceName  String
-  previousDeviceName   String?
-  status               String    @default("PENDING") // "PENDING" | "APPROVED" | "USED" | "EXPIRED" | "REJECTED"
-  ipAddress            String?
-  userAgent            String?
-  expiresAt            DateTime
-  createdAt            DateTime  @default(now())
-  resolvedAt           DateTime?
-  resolvedByUserId     String?
+  id                    String    @id @default(cuid())
+  requestCode           String    @unique // e.g. "REQ-94218"
+  unlockCode            String    // 6-digit random code or challenge
+  userId                String
+  requestedFingerprint  String
+  requestedDeviceName   String
+  previousDeviceName    String?
+  previousAssuranceTier String?   @default("LEGACY_FINGERPRINT")
+  riskScore             Int       @default(0) // 0-100 risk score
+  reason                String?   // Employee provided reason
+  status                String    @default("PENDING") // "PENDING" | "APPROVED" | "USED" | "EXPIRED" | "REJECTED"
+  ipAddress             String?
+  userAgent             String?
+  expiresAt             DateTime
+  createdAt             DateTime  @default(now())
+  resolvedAt            DateTime?
+  resolvedByUserId      String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -145,26 +171,30 @@ model QRScanLog {
 }
 
 model AttendanceRecord {
-  id                       String    @id @default(cuid())
-  employeeId               String
-  shiftId                  String
-  shiftDate                String    // "YYYY-MM-DD" authoritative shift start date
-  checkInTime              DateTime
-  checkOutTime             DateTime?
-  scheduledStartTime       DateTime
-  scheduledEndTime         DateTime
-  status                   String    @default("CHECKED_IN") // "CHECKED_IN" | "COMPLETED" | "LATE_COMPLETED" | "EXCEPTION"
-  lateMinutes              Int       @default(0)
-  dailySalarySnapshot      Int       // IDR daily salary snapshot at check-in
-  deductionPolicySnapshot  String    // JSON snapshot of deduction rate and mode
-  lateDeduction            Int       @default(0) // IDR deducted
-  netDailyEarnings         Int       @default(0) // IDR earned for this day
-  checkInDeviceFingerprint String?
+  id                        String    @id @default(cuid())
+  employeeId                String
+  shiftId                   String
+  shiftDate                 String    // "YYYY-MM-DD" authoritative shift start date
+  checkInTime               DateTime
+  checkOutTime              DateTime?
+  scheduledStartTime        DateTime
+  scheduledEndTime          DateTime
+  status                    String    @default("CHECKED_IN") // "CHECKED_IN" | "COMPLETED" | "LATE_COMPLETED" | "EXCEPTION"
+  lateMinutes               Int       @default(0)
+  dailySalarySnapshot       Int       // IDR daily salary snapshot at check-in
+  deductionPolicySnapshot   String    // JSON snapshot of deduction rate and mode
+  lateDeduction             Int       @default(0) // IDR deducted
+  netDailyEarnings          Int       @default(0) // IDR earned for this day
+  checkInDeviceFingerprint  String?
   checkOutDeviceFingerprint String?
-  manualCorrectionNote     String?
-  correctedByUserId        String?
-  createdAt                DateTime  @default(now())
-  updatedAt                DateTime  @updatedAt
+  checkInLatitude           Float?
+  checkInLongitude          Float?
+  checkInDistanceMeters     Int?
+  checkInClientIp           String?
+  manualCorrectionNote      String?
+  correctedByUserId         String?
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
 
   employee EmployeeProfile @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   shift    Shift           @relation(fields: [shiftId], references: [id])
@@ -225,6 +255,8 @@ model PayrollAdjustment {
 
 model AuditLog {
   id             String   @id @default(cuid())
+  sequenceNumber Int      @unique
+  schemaVersion  Int      @default(2) // 1 = legacy baseline, 2 = ed25519 hash-chained
   timestamp      DateTime @default(now())
   actorId        String?
   actorRole      String   @default("SYSTEM") // "OWNER" | "EMPLOYEE" | "SYSTEM"
@@ -234,11 +266,33 @@ model AuditLog {
   targetId       String?
   previousValues String?  // JSON
   newValues      String?  // JSON
+  previousHash   String   // SHA-256 of previous record
+  currentHash    String   // SHA-256(canonical_json(event_fields + previousHash))
+  signature      String   // Ed25519 signature of currentHash
   ipAddress      String?
   userAgent      String?
   reason         String?
 
-  user User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  user       User?        @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  outboxItem AuditOutbox?
+}
+
+model AuditOutbox {
+  id             String    @id @default(cuid())
+  auditLogId     String    @unique
+  sequenceNumber Int
+  status         String    @default("PENDING") // "PENDING" | "DELIVERED" | "FAILED"
+  retryCount     Int       @default(0)
+  nextAttemptAt  DateTime  @default(now())
+  lastError      String?
+  batchKey       String?
+  deliveredAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  auditLog AuditLog @relation(fields: [auditLogId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextAttemptAt])
 }
 
 model Session {
@@ -250,4 +304,18 @@ model Session {
   createdAt         DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model OfficeConfig {
+  id              String   @id @default(cuid())
+  officeName      String   @default("Kantor Utama")
+  latitude        Float    // Office GPS Latitude
+  longitude       Float    // Office GPS Longitude
+  radiusMeters    Int      @default(50) // Geofence radius tolerance (default: 50m)
+  officePublicIp  String?  // Office public WiFi WAN IP (e.g., IndiHome/Biznet IP)
+  enforceWifiIp   Boolean  @default(false)
+  enforceGeofence Boolean  @default(true)
+  maxGpsAccuracy  Int      @default(80) // Reject spoofed / low-accuracy signals (> 80m)
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
 }

@@ -63,7 +63,7 @@ export default function OwnerQRDisplayPage() {
       </div>
 
       {/* QR Code Container */}
-      <div className="apple-card p-8 inline-block shadow-sm">
+      <div className="bg-white dark:bg-[#1C1C1E] border border-neutral-200 dark:border-neutral-800 rounded-xl p-8 inline-block shadow-sm">
         {loading || !qrDataUrl ? (
           <div className="w-64 h-64 flex items-center justify-center text-xs text-neutral-400">
             Generating cryptographic challenge...

@@ -5,6 +5,7 @@
 
 const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcryptjs");
+const { recordAuditLog } = require("../src/lib/audit");
 
 const prisma = new PrismaClient();
 
@@ -275,16 +276,14 @@ async function runTests() {
     }
 
     const userSiti = await prisma.user.findFirst({ where: { email: "siti@company.com" } });
-    const cheatingAlert = await prisma.auditLog.create({
-      data: {
-        actorId: userSiti?.id || null,
-        actorRole: "EMPLOYEE",
-        actorName: "Siti Rahma",
-        action: "CHEATING_ALERT_QR_SHARING_REUSE",
-        targetEntity: "ATTENDANCE_SECURITY",
-        targetId: qrChallenge.id,
-        reason: "Security Alert: Employee attempted to scan a QR code already consumed by Budi Santoso.",
-      },
+    const cheatingAlert = await recordAuditLog({
+      actorId: userSiti?.id || null,
+      actorRole: "EMPLOYEE",
+      actorName: "Siti Rahma",
+      action: "CHEATING_ALERT_QR_SHARING_REUSE",
+      targetEntity: "ATTENDANCE_SECURITY",
+      targetId: qrChallenge.id,
+      reason: "Security Alert: Employee attempted to scan a QR code already consumed by Budi Santoso.",
     });
     console.log(`  ✓ Replay / proxy punch blocked: Already consumed token cannot be reused by another employee.`);
     console.log(`  ✓ Cheating attempt automatically flagged in audit trail: #${cheatingAlert.id}`);
@@ -293,17 +292,15 @@ async function runTests() {
     // TEST 6: Zero-Trust Append-Only Audit Logging
     // -------------------------------------------------------------------------
     console.log("\n▶ TEST 6: Zero-Trust Append-Only Audit Trail");
-    const testAudit = await prisma.auditLog.create({
-      data: {
-        actorRole: "OWNER",
-        actorName: "System Owner",
-        action: "TEST_VERIFICATION_EVENT",
-        targetEntity: "SECURITY",
-        targetId: "TEST_001",
-        previousValues: JSON.stringify({ status: "UNVERIFIED" }),
-        newValues: JSON.stringify({ status: "VERIFIED_100_PERCENT" }),
-        reason: "Automated end-to-end verification suite execution",
-      },
+    const testAudit = await recordAuditLog({
+      actorRole: "OWNER",
+      actorName: "System Owner",
+      action: "TEST_VERIFICATION_EVENT",
+      targetEntity: "SECURITY",
+      targetId: "TEST_001",
+      previousValues: JSON.stringify({ status: "UNVERIFIED" }),
+      newValues: JSON.stringify({ status: "VERIFIED_100_PERCENT" }),
+      reason: "Automated end-to-end verification suite execution",
     });
     if (!testAudit.id) throw new Error("Audit log insert failed");
     console.log(`  ✓ Audit Event logged: #${testAudit.id} Action: ${testAudit.action}`);

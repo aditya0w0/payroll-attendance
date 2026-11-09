@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit";
+import { triggerBackgroundFlush } from "@/lib/audit-outbox";
 
 export async function GET(req: NextRequest) {
   const current = await getCurrentUser();
@@ -207,6 +208,9 @@ export async function POST(req: NextRequest) {
       },
       reason: "Owner finalized payroll period. Snapshots permanently locked.",
     });
+
+    // Event-driven non-blocking audit flush to ensure WORM archival
+    triggerBackgroundFlush();
 
     return NextResponse.json({
       success: true,

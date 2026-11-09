@@ -1,10 +1,11 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { recordAuditLog } from "../src/lib/audit";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Seeding database for Payroll & QR Attendance...");
+  console.log("[SEED] Seeding database for Payroll & QR Attendance...");
 
   // 1. Owner account
   const ownerPasswordHash = await bcrypt.hash("admin123", 10);
@@ -19,7 +20,7 @@ async function main() {
       status: "ACTIVE",
     },
   });
-  console.log(`✓ Owner created: ${owner.email} (Password: admin123)`);
+  console.log(`[OK] Owner created: ${owner.email} (Password: admin123)`);
 
   // 2. Deduction Policies
   const policyPerMin = await prisma.deductionPolicy.create({
@@ -43,7 +44,7 @@ async function main() {
       maxDeductionPercent: 100,
     },
   });
-  console.log("✓ Deduction policies created");
+  console.log("[OK] Deduction policies created");
 
   // 3. Work Shifts (Daytime, Evening, Overnight)
   const shiftMorning = await prisma.shift.create({
@@ -81,7 +82,7 @@ async function main() {
       deductionPolicyId: policyHourly.id,
     },
   });
-  console.log("✓ Work shifts created (Morning, Evening, Overnight)");
+  console.log("[OK] Work shifts created (Morning, Evening, Overnight)");
 
   // 4. Employees
   const empPasswordHash = await bcrypt.hash("employee123", 10);
@@ -164,7 +165,7 @@ async function main() {
     },
     include: { employeeProfile: true },
   });
-  console.log("✓ Employees created: Budi, Siti, Ahmad (Password: employee123)");
+  console.log("[OK] Employees created: Budi, Siti, Ahmad (Password: employee123)");
 
   // 5. Initial Pending Device Unlock Request for demo
   await prisma.deviceUnlockRequest.create({
@@ -212,49 +213,61 @@ async function main() {
   }
 
   // 7. Initial Zero-Trust Audit Logs
-  await prisma.auditLog.createMany({
-    data: [
-      {
-        actorRole: "OWNER",
-        actorName: "System Owner",
-        action: "SYSTEM_INITIALIZATION",
-        targetEntity: "SYSTEM",
-        targetId: "GENESIS",
-        newValues: JSON.stringify({ system: "Payroll & QR Attendance", timezone: "Asia/Jakarta" }),
-        ipAddress: "127.0.0.1",
-        reason: "Initial system bootstrap with Zero-Trust configuration",
-      },
-      {
-        actorRole: "OWNER",
-        actorName: "System Owner",
-        action: "EMPLOYEE_CREATED",
-        targetEntity: "EMPLOYEE",
-        targetId: userBudi.id,
-        newValues: JSON.stringify({
-          fullName: "Budi Santoso",
-          dailySalary: 150000,
-          shift: "Morning Shift (08:00 - 17:00)",
-        }),
-        ipAddress: "127.0.0.1",
-        reason: "New employee onboarding",
-      },
-      {
-        actorRole: "SYSTEM",
-        actorName: "Security Engine",
-        action: "DEVICE_LOGIN_BLOCKED",
-        targetEntity: "DEVICE_SECURITY",
-        targetId: "REQ-94218",
-        newValues: JSON.stringify({
-          user: "Budi Santoso",
-          blockedDevice: "Suspicious Chrome on Windows 11",
-          reason: "Single-device policy violation. Unlock request generated.",
-        }),
-        ipAddress: "192.168.1.105",
-      },
-    ],
+  await recordAuditLog({
+    actorRole: "OWNER",
+    actorName: "System Owner",
+    action: "SYSTEM_INITIALIZATION",
+    targetEntity: "SYSTEM",
+    targetId: "GENESIS",
+    newValues: { system: "Payroll & QR Attendance", timezone: "Asia/Jakarta" },
+    ipAddress: "127.0.0.1",
+    reason: "Initial system bootstrap with Zero-Trust configuration",
   });
 
-  console.log("✅ Database successfully seeded with full initial data!");
+  await recordAuditLog({
+    actorRole: "OWNER",
+    actorName: "System Owner",
+    action: "EMPLOYEE_CREATED",
+    targetEntity: "EMPLOYEE",
+    targetId: userBudi.id,
+    newValues: {
+      fullName: "Budi Santoso",
+      dailySalary: 150000,
+      shift: "Morning Shift (08:00 - 17:00)",
+    },
+    ipAddress: "127.0.0.1",
+    reason: "New employee onboarding",
+  });
+
+  await recordAuditLog({
+    actorRole: "SYSTEM",
+    actorName: "Security Engine",
+    action: "DEVICE_LOGIN_BLOCKED",
+    targetEntity: "DEVICE_SECURITY",
+    targetId: "REQ-94218",
+    newValues: {
+      user: "Budi Santoso",
+      blockedDevice: "Suspicious Chrome on Windows 11",
+      reason: "Single-device policy violation. Unlock request generated.",
+    },
+    ipAddress: "192.168.1.105",
+  });
+
+  // 10. Default Office Geofence & WiFi Configuration
+  await prisma.officeConfig.create({
+    data: {
+      officeName: "Kantor Pusat Jakarta",
+      latitude: -6.2088,
+      longitude: 106.8456,
+      radiusMeters: 50,
+      officePublicIp: "127.0.0.1",
+      enforceWifiIp: false,
+      enforceGeofence: true,
+      maxGpsAccuracy: 80,
+    },
+  });
+
+  console.log("[OK] Database successfully seeded with full initial data!");
 }
 
 main()
