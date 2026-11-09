@@ -13,18 +13,23 @@ const updateSchema = z.object({
   salaryChangeReason: z.string().optional(),
 });
 
+export const dynamic = "force-dynamic";
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const current = await getCurrentUser();
+  const current = await getCurrentUser(req);
   if (!current || current.user.role !== "OWNER") {
     return NextResponse.json({ error: "Owner authorization required" }, { status: 403 });
   }
 
   try {
     const employeeProfileId = params.id;
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
     const result = updateSchema.safeParse(body);
 
     if (!result.success) {

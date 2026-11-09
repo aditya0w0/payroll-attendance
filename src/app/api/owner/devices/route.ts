@@ -19,6 +19,8 @@ const deviceActionSchema = z.object({
   reason: z.string().optional(),
 });
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request) {
   const current = await getCurrentUser(req);
   if (!current || current.user.role !== "OWNER") {
@@ -69,7 +71,10 @@ export async function POST(req: Request) {
   }
 
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
     const result = deviceActionSchema.safeParse(body);
 
     if (!result.success) {

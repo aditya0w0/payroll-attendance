@@ -12,9 +12,14 @@ const replaceSchema = z.object({
   deviceFingerprint: z.string().optional().default("replacement_terminal"),
 });
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({ error: "Invalid JSON request body" }, { status: 400 });
+    }
     const result = replaceSchema.safeParse(body);
     if (!result.success) {
       return NextResponse.json({ error: "Validation error", details: result.error.flatten() }, { status: 400 });

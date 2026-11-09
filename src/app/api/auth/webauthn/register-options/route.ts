@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { createPasskeyRegistrationOptions } from "@/lib/webauthn";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Handles WebAuthn registration options generation for authenticated employees.
  * Supports both GET and POST requests.

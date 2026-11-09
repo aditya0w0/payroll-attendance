@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { flushAuditOutbox } from "@/lib/audit-outbox";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Vercel Serverless Cron Handler
  * Securely triggered by Vercel Cron via CRON_SECRET bearer token.

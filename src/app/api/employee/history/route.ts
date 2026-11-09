@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
-export async function GET() {
-  const current = await getCurrentUser();
+export const dynamic = "force-dynamic";
+
+export async function GET(req: Request) {
+  const current = await getCurrentUser(req);
   if (!current || current.user.role !== "EMPLOYEE" || !current.user.employeeProfile) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

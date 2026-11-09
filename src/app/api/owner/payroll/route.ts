@@ -5,8 +5,10 @@ import { getCurrentUser } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit";
 import { triggerBackgroundFlush } from "@/lib/audit-outbox";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
-  const current = await getCurrentUser();
+  const current = await getCurrentUser(req);
   if (!current || current.user.role !== "OWNER") {
     return NextResponse.json({ error: "Owner authorization required" }, { status: 403 });
   }
@@ -102,17 +104,17 @@ export async function GET(req: NextRequest) {
 
 // Finalize Payroll Period
 export async function POST(req: NextRequest) {
-  const current = await getCurrentUser();
+  const current = await getCurrentUser(req);
   if (!current || current.user.role !== "OWNER") {
     return NextResponse.json({ error: "Owner authorization required" }, { status: 403 });
   }
 
   try {
-    const body = await req.json();
-    const { year, month } = body;
-    if (!year || !month) {
+    const body = await req.json().catch(() => null);
+    if (!body || !body.year || !body.month) {
       return NextResponse.json({ error: "Year and month are required" }, { status: 400 });
     }
+    const { year, month } = body;
 
     const monthStr = `${year}-${String(month).padStart(2, "0")}`;
     const startDate = new Date(Date.UTC(year, month - 1, 1));

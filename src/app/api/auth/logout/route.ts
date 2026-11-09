@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { destroySession, getCurrentUser } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit";
 
-export async function POST() {
-  const current = await getCurrentUser();
+export const dynamic = "force-dynamic";
+
+export async function POST(req: Request) {
+  const current = await getCurrentUser(req);
   if (current) {
     await recordAuditLog({
       actorId: current.user.id,

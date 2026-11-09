@@ -45,9 +45,9 @@ async function runTokenTTLSuite() {
     },
   });
 
-  console.log(`  ✓ Challenge generated: ${challenge1.token}`);
-  console.log(`  ✓ Issued at: ${challenge1.issuedAt.toISOString()}`);
-  console.log(`  ✓ Expires at (Strict 15s TTL): ${challenge1.expiresAt.toISOString()}`);
+  console.log(`  [OK] Challenge generated: ${challenge1.token}`);
+  console.log(`  [OK] Issued at: ${challenge1.issuedAt.toISOString()}`);
+  console.log(`  [OK] Expires at (Strict 15s TTL): ${challenge1.expiresAt.toISOString()}`);
 
   // Employee A (Budi) scans within TTL
   const scanTime1 = new Date();
@@ -69,8 +69,8 @@ async function runTokenTTLSuite() {
   if (!consumedChallenge.consumedAt || consumedChallenge.isActive !== false) {
     throw new Error("Token was not atomically burned upon scan!");
   }
-  console.log(`  ✓ Employee A (Budi) scanned Token 1 successfully.`);
-  console.log(`  ✓ Token 1 burned: isActive = false, consumedBy = ${budi.employeeProfile.fullName}`);
+  console.log(`  [OK] Employee A (Budi) scanned Token 1 successfully.`);
+  console.log(`  [OK] Token 1 burned: isActive = false, consumedBy = ${budi.employeeProfile.fullName}`);
 
   // ---------------------------------------------------------------------------
   // TEST 2: Single-Use Enforcement & Proxy Punch Invalidation (Employee B scans Token A)
@@ -104,9 +104,9 @@ async function runTokenTTLSuite() {
     reason: `Security Alert: Employee attempted to scan a QR code already consumed by ${budi.employeeProfile.fullName}. Suspected photo sharing / proxy attendance.`,
   });
 
-  console.log("  ✓ Token 1 rejected for Employee B: Already consumed.");
-  console.log(`  ✓ Cheating Incident flagged to Owner: [${alertLog1.action}]`);
-  console.log(`  ✓ Recorded in Zero-Trust Audit Log #${alertLog1.id}`);
+  console.log("  [OK] Token 1 rejected for Employee B: Already consumed.");
+  console.log(`  [OK] Cheating Incident flagged to Owner: [${alertLog1.action}]`);
+  console.log(`  [OK] Recorded in Zero-Trust Audit Log #${alertLog1.id}`);
 
   // ---------------------------------------------------------------------------
   // TEST 3: Strict Expiration Past 15-Second TTL
@@ -127,8 +127,8 @@ async function runTokenTTLSuite() {
     },
   });
 
-  console.log(`  ✓ Challenge generated with expired TTL: ${challengeExpired.token}`);
-  console.log(`  ✓ Expired at: ${challengeExpired.expiresAt.toISOString()} (5 seconds past TTL)`);
+  console.log(`  [OK] Challenge generated with expired TTL: ${challengeExpired.token}`);
+  console.log(`  [OK] Expired at: ${challengeExpired.expiresAt.toISOString()} (5 seconds past TTL)`);
 
   const nowTest3 = new Date();
   const isPastTTL = nowTest3 > challengeExpired.expiresAt;
@@ -151,8 +151,8 @@ async function runTokenTTLSuite() {
     reason: "Security Alert: QR token scanned past 15-second TTL window. Suspected photo transmission delay.",
   });
 
-  console.log("  ✓ Expired token rejected. Scan denied.");
-  console.log(`  ✓ Incident flagged to Owner: [${alertLogExpired.action}]`);
+  console.log("  [OK] Expired token rejected. Scan denied.");
+  console.log(`  [OK] Incident flagged to Owner: [${alertLogExpired.action}]`);
 
   // ---------------------------------------------------------------------------
   // TEST 4: Forged / Fake QR Challenge String
@@ -178,8 +178,8 @@ async function runTokenTTLSuite() {
     reason: "Security Alert: Employee attempted attendance punch using an invalid or forged QR token.",
   });
 
-  console.log("  ✓ Forged token rejected. Scan denied.");
-  console.log(`  ✓ Incident flagged to Owner: [${alertLogForged.action}]`);
+  console.log("  [OK] Forged token rejected. Scan denied.");
+  console.log(`  [OK] Incident flagged to Owner: [${alertLogForged.action}]`);
 
   // ---------------------------------------------------------------------------
   // TEST 5: Owner Visibility & Alert Audit Feed
@@ -197,7 +197,7 @@ async function runTokenTTLSuite() {
     throw new Error("Owner audit log failed to retrieve flagged cheating alerts!");
   }
 
-  console.log(`  ✓ Successfully queried ${cheatingAlerts.length} high-priority security incidents:`);
+  console.log(`  [OK] Successfully queried ${cheatingAlerts.length} high-priority security incidents:`);
   cheatingAlerts.slice(0, 3).forEach((a, i) => {
     console.log(`    ${i + 1}. [${a.action}] Actor: ${a.actorName} | Reason: ${a.reason}`);
   });

@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   try {
-    const current = await getCurrentUser();
+    const current = await getCurrentUser(req);
     if (!current || current.user.role !== "OWNER") {
       return NextResponse.json(
         { error: "Unauthorized. Owner administrative privileges required." },

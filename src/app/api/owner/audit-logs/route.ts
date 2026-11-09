@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
-  const current = await getCurrentUser();
+  const current = await getCurrentUser(req);
   if (!current || current.user.role !== "OWNER") {
     return NextResponse.json({ error: "Owner authorization required" }, { status: 403 });
   }

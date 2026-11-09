@@ -527,6 +527,10 @@ async function runQASecuritySuite() {
   );
 
   // 4.4 Forged Token Submission Check
+  await prisma.attendanceRecord.deleteMany({
+    where: { employeeId: { in: [concUserA.employeeProfile.id, concUserB.employeeProfile.id] } },
+  });
+
   const forgedRes = await fetch(`${BASE_URL}/api/qr/scan`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "Cookie": cookieA },

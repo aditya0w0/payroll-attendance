@@ -15,9 +15,14 @@ const unlockSchema = z.object({
 const failedUnlockAttempts = new Map<string, { attempts: number; lastAttempt: number }>();
 const MAX_UNLOCK_ATTEMPTS = 5;
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({ error: "Invalid JSON request body" }, { status: 400 });
+    }
     const result = unlockSchema.safeParse(body);
 
     if (!result.success) {
@@ -136,19 +141,25 @@ export async function POST(req: NextRequest) {
         where: { userId: user.id },
       });
 
-      // Step B: Delete previous device registration
-      await tx.deviceRegistration.deleteMany({
+      // Step B: Upsert device registration atomically
+      await tx.deviceRegistration.upsert({
         where: { userId: user.id },
-      });
-
-      // Step C: Create new device registration
-      await tx.deviceRegistration.create({
-        data: {
+        update: {
+          deviceFingerprint,
+          deviceName,
+          platform: userAgent.includes("iPhone") ? "iOS" : userAgent.includes("Android") ? "Android" : "Web",
+          isActive: true,
+          status: "ACTIVE",
+          lastSeenAt: now,
+        },
+        create: {
           userId: user.id,
           deviceFingerprint,
           deviceName,
           platform: userAgent.includes("iPhone") ? "iOS" : userAgent.includes("Android") ? "Android" : "Web",
           isActive: true,
+          status: "ACTIVE",
+          lastSeenAt: now,
         },
       });
 

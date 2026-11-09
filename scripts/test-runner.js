@@ -83,8 +83,8 @@ async function runTests() {
     });
     if (!testEmployee) throw new Error("EMP-001 not found");
 
-    console.log(`  ✓ Employee verified: ${testEmployee.fullName}`);
-    console.log(`  ✓ Primary Wage Model: Daily Salary = Rp${testEmployee.dailySalary.toLocaleString()}`);
+    console.log(`  [OK] Employee verified: ${testEmployee.fullName}`);
+    console.log(`  [OK] Primary Wage Model: Daily Salary = Rp${testEmployee.dailySalary.toLocaleString()}`);
 
     // Update Daily Salary and record historical snapshot
     const oldSalary = testEmployee.dailySalary;
@@ -110,8 +110,8 @@ async function runTests() {
       where: { employeeId: testEmployee.id, newSalary: newSalary },
     });
     if (!salaryHistory) throw new Error("Salary history snapshot was not preserved!");
-    console.log(`  ✓ Salary updated: Rp${oldSalary.toLocaleString()} -> Rp${newSalary.toLocaleString()}`);
-    console.log(`  ✓ Historical salary preserved: Previous Rp${salaryHistory.previousSalary.toLocaleString()} on ${salaryHistory.effectiveDate.toISOString()}`);
+    console.log(`  [OK] Salary updated: Rp${oldSalary.toLocaleString()} -> Rp${newSalary.toLocaleString()}`);
+    console.log(`  [OK] Historical salary preserved: Previous Rp${salaryHistory.previousSalary.toLocaleString()} on ${salaryHistory.effectiveDate.toISOString()}`);
 
     // -------------------------------------------------------------------------
     // TEST 2: Work Shift Management (Morning, Evening, Overnight)
@@ -125,9 +125,9 @@ async function runTests() {
     if (!morningShift || !eveningShift || !overnightShift) {
       throw new Error("Missing required daytime, evening, or overnight shift configuration!");
     }
-    console.log(`  ✓ Morning Shift: ${morningShift.startTime} - ${morningShift.endTime}`);
-    console.log(`  ✓ Evening Shift: ${eveningShift.startTime} - ${eveningShift.endTime}`);
-    console.log(`  ✓ Overnight Shift: ${overnightShift.startTime} - ${overnightShift.endTime} (isOvernight = true)`);
+    console.log(`  [OK] Morning Shift: ${morningShift.startTime} - ${morningShift.endTime}`);
+    console.log(`  [OK] Evening Shift: ${eveningShift.startTime} - ${eveningShift.endTime}`);
+    console.log(`  [OK] Overnight Shift: ${overnightShift.startTime} - ${overnightShift.endTime} (isOvernight = true)`);
 
     // Verify overnight shift cross-calendar-day attendance calculation:
     // Shift: 22:00 (Nov 5) to 06:00 (Nov 6). Must be ONE attendance session for shiftDate "2026-11-05"
@@ -135,9 +135,9 @@ async function runTests() {
     const checkInTime = new Date("2026-11-05T15:05:00.000Z"); // 22:05 Jakarta (5m into shift)
     const checkOutTime = new Date("2026-11-06T23:02:00.000Z"); // 06:02 Jakarta on NEXT calendar day!
 
-    console.log(`  ✓ Overnight Check-in Date: ${checkInTime.toISOString().substring(0, 10)}`);
-    console.log(`  ✓ Overnight Check-out Date: ${checkOutTime.toISOString().substring(0, 10)} (Next day)`);
-    console.log(`  ✓ Bound to Single Shift Date Instance: ${shiftDate}`);
+    console.log(`  [OK] Overnight Check-in Date: ${checkInTime.toISOString().substring(0, 10)}`);
+    console.log(`  [OK] Overnight Check-out Date: ${checkOutTime.toISOString().substring(0, 10)} (Next day)`);
+    console.log(`  [OK] Bound to Single Shift Date Instance: ${shiftDate}`);
 
     // -------------------------------------------------------------------------
     // TEST 3: Lateness & Daily Deduction Formulas (Mode A & Mode B)
@@ -181,11 +181,11 @@ async function runTests() {
 
     const authorizedFp = userBudi.deviceRegistration.deviceFingerprint;
     const rogueFp = "fp_attacker_unauthorized_phone_99";
-    console.log(`  ✓ Authorized Device: ${userBudi.deviceRegistration.deviceName} (${authorizedFp.substring(0, 10)}...)`);
+    console.log(`  [OK] Authorized Device: ${userBudi.deviceRegistration.deviceName} (${authorizedFp.substring(0, 10)}...)`);
 
     // Verify mismatch detection
     if (authorizedFp === rogueFp) throw new Error("Device fingerprint mismatch failure");
-    console.log(`  ✓ Detected unregistered device attempt: ${rogueFp}`);
+    console.log(`  [OK] Detected unregistered device attempt: ${rogueFp}`);
 
     // Create 5-minute single-use unlock request challenge
     const reqCode = "REQ-TEST-" + Math.floor(1000 + Math.random() * 9000);
@@ -205,8 +205,8 @@ async function runTests() {
       },
     });
 
-    console.log(`  ✓ Challenge generated: Request ID = ${unlockReq.requestCode}, Unlock Code = ${unlockReq.unlockCode}`);
-    console.log(`  ✓ TTL strictly set to 5 minutes (Expires: ${unlockReq.expiresAt.toISOString()})`);
+    console.log(`  [OK] Challenge generated: Request ID = ${unlockReq.requestCode}, Unlock Code = ${unlockReq.unlockCode}`);
+    console.log(`  [OK] TTL strictly set to 5 minutes (Expires: ${unlockReq.expiresAt.toISOString()})`);
 
     // Owner approves and re-binds device
     await prisma.$transaction(async (tx) => {
@@ -224,7 +224,7 @@ async function runTests() {
       where: { userId: userBudi.id },
     });
     if (updatedDev.deviceFingerprint !== rogueFp) throw new Error("Device rebind failed");
-    console.log(`  ✓ Owner approved and re-bound new terminal: ${updatedDev.deviceName}`);
+    console.log(`  [OK] Owner approved and re-bound new terminal: ${updatedDev.deviceName}`);
 
     // Revert Budi's device to clean state
     await prisma.deviceRegistration.update({
@@ -248,8 +248,8 @@ async function runTests() {
         consumedByUserId: null,
       },
     });
-    console.log(`  ✓ Challenge Token Issued: ${qrChallenge.token}`);
-    console.log(`  ✓ Validity Window: Exactly 15 seconds (Expires at: ${qrChallenge.expiresAt.toISOString()})`);
+    console.log(`  [OK] Challenge Token Issued: ${qrChallenge.token}`);
+    console.log(`  [OK] Validity Window: Exactly 15 seconds (Expires at: ${qrChallenge.expiresAt.toISOString()})`);
 
     // Employee A (Budi) scans and burns the token immediately
     await prisma.qRChallenge.update({
@@ -267,7 +267,7 @@ async function runTests() {
         action: "CHECK_IN",
       },
     });
-    console.log(`  ✓ Budi scanned challenge token successfully. Token burned immediately.`);
+    console.log(`  [OK] Budi scanned challenge token successfully. Token burned immediately.`);
 
     // Employee B attempts to reuse the already consumed token -> Blocked & Flagged
     const burnedChallenge = await prisma.qRChallenge.findUnique({ where: { token } });
@@ -285,8 +285,8 @@ async function runTests() {
       targetId: qrChallenge.id,
       reason: "Security Alert: Employee attempted to scan a QR code already consumed by Budi Santoso.",
     });
-    console.log(`  ✓ Replay / proxy punch blocked: Already consumed token cannot be reused by another employee.`);
-    console.log(`  ✓ Cheating attempt automatically flagged in audit trail: #${cheatingAlert.id}`);
+    console.log(`  [OK] Replay / proxy punch blocked: Already consumed token cannot be reused by another employee.`);
+    console.log(`  [OK] Cheating attempt automatically flagged in audit trail: #${cheatingAlert.id}`);
 
     // -------------------------------------------------------------------------
     // TEST 6: Zero-Trust Append-Only Audit Logging
@@ -303,8 +303,8 @@ async function runTests() {
       reason: "Automated end-to-end verification suite execution",
     });
     if (!testAudit.id) throw new Error("Audit log insert failed");
-    console.log(`  ✓ Audit Event logged: #${testAudit.id} Action: ${testAudit.action}`);
-    console.log(`  ✓ Immutable State: Previous = ${testAudit.previousValues}, New = ${testAudit.newValues}`);
+    console.log(`  [OK] Audit Event logged: #${testAudit.id} Action: ${testAudit.action}`);
+    console.log(`  [OK] Immutable State: Previous = ${testAudit.previousValues}, New = ${testAudit.newValues}`);
 
     // -------------------------------------------------------------------------
     // TEST 7: Payroll Finalization & Historical Snapshot Protection
@@ -354,8 +354,8 @@ async function runTests() {
       },
     });
 
-    console.log(`  ✓ Finalized Period Created: 2026-10 (Status: ${period.status})`);
-    console.log(`  ✓ Locked Snapshot Net Earnings: Rp${finalizedRecord.netEarnings.toLocaleString()}`);
+    console.log(`  [OK] Finalized Period Created: 2026-10 (Status: ${period.status})`);
+    console.log(`  [OK] Locked Snapshot Net Earnings: Rp${finalizedRecord.netEarnings.toLocaleString()}`);
 
     // Changing employee current daily salary to Rp200,000 must NOT alter historical finalized record!
     await prisma.employeeProfile.update({
@@ -369,7 +369,7 @@ async function runTests() {
     if (verifyPastRecord.netEarnings !== 3288000 || verifyPastRecord.dailySalary !== 150000) {
       throw new Error("Historical integrity violated! Finalized record altered by current salary change!");
     }
-    console.log(`  ✓ Historical Integrity PASSED: Altering active employee daily salary did NOT rewrite past finalized payroll.`);
+    console.log(`  [OK] Historical Integrity PASSED: Altering active employee daily salary did NOT rewrite past finalized payroll.`);
 
     // Restore test employee daily salary
     await prisma.employeeProfile.update({

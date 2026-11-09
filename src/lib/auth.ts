@@ -26,7 +26,7 @@ export async function createSession(userId: string, deviceFingerprint?: string):
     const cookieStore = cookies();
     cookieStore.set(SESSION_COOKIE_NAME, token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production" && process.env.SECURE_COOKIES === "true", // Enabled in production with HTTPS / SECURE_COOKIES=true, disabled for local development
+      secure: process.env.NODE_ENV === "production" && process.env.SECURE_COOKIES !== "false",
       sameSite: "lax",
       path: "/",
       expires: expiresAt,
