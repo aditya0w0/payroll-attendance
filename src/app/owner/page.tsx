@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { formatIDR } from "@/lib/utils";
 import { getJakartaDateString, formatJakartaDateTime } from "@/lib/timezone";
 import { Users, ClipboardList, AlertCircle, Smartphone, ArrowRight, QrCode, ShieldAlert } from "lucide-react";
+import DashboardAnalytics from "@/components/owner/DashboardAnalytics";
 
 export const dynamic = "force-dynamic";
 
@@ -144,6 +145,9 @@ export default async function OwnerOverviewPage() {
           </span>
         </div>
       </div>
+
+      {/* Attendance Analytics & Trends */}
+      <DashboardAnalytics />
 
       {/* Two Column Grid */}
       <div className="grid lg:grid-cols-3 gap-6">

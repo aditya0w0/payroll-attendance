@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { formatIDR } from "@/lib/utils";
 import { formatJakartaDateTime } from "@/lib/timezone";
-import { Edit2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Edit2, CheckCircle2, AlertCircle, Users, FileText } from "lucide-react";
+import EmployeeAttendanceRoster from "@/components/owner/EmployeeAttendanceRoster";
 
 interface AttendanceItem {
   id: string;
@@ -32,6 +33,7 @@ interface AttendanceItem {
 }
 
 export default function OwnerAttendancePage() {
+  const [activeTab, setActiveTab] = useState<"ROSTER" | "LOGS">("ROSTER");
   const [records, setRecords] = useState<AttendanceItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
@@ -93,49 +95,84 @@ export default function OwnerAttendancePage() {
 
   return (
     <div className="space-y-6">
-      {/* Title */}
+      {/* Title & Tab Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
-            Attendance Log
+            Attendance &amp; Absence Management
           </h1>
           <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-            Server timestamps, shift schedules, late minutes, and net daily earnings.
+            Breakdown performa kehadiran per karyawan, keterlambatan, alpa, dan log presensi mentah.
           </p>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <input
-            type="date"
-            value={filterDate}
-            onChange={(e) => setFilterDate(e.target.value)}
-            className="hig-input py-1 px-2.5 w-auto"
-          />
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="hig-input py-1 px-2.5 w-auto"
+        {/* Tab Switcher */}
+        <div className="inline-flex bg-neutral-100 dark:bg-[#1C1C1E] p-1 rounded-xl border border-neutral-200 dark:border-neutral-800 text-xs font-medium self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setActiveTab("ROSTER")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+              activeTab === "ROSTER"
+                ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 shadow-sm font-semibold"
+                : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+            }`}
           >
-            <option value="">All Statuses</option>
-            <option value="CHECKED_IN">In Progress (Checked In)</option>
-            <option value="COMPLETED">Completed (On-Time)</option>
-            <option value="LATE_COMPLETED">Completed (Late)</option>
-            <option value="EXCEPTION">Exception</option>
-          </select>
-          {(filterDate || filterStatus) && (
-            <button
-              onClick={() => {
-                setFilterDate("");
-                setFilterStatus("");
-              }}
-              className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] underline text-xs"
-            >
-              Reset
-            </button>
-          )}
+            <Users className="w-3.5 h-3.5" />
+            <span>Rekap &amp; Alpa Karyawan</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("LOGS")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+              activeTab === "LOGS"
+                ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 shadow-sm font-semibold"
+                : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>Log Presensi Mentah</span>
+          </button>
         </div>
       </div>
+
+      {activeTab === "ROSTER" ? (
+        <EmployeeAttendanceRoster />
+      ) : (
+        <>
+          {/* Filters for Raw Logs */}
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs bg-white dark:bg-[#1C1C1E] p-3 rounded-xl border border-neutral-200 dark:border-neutral-800">
+            <span className="text-neutral-500 dark:text-neutral-400 font-medium">Filter Log Presensi:</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="date"
+                value={filterDate}
+                onChange={(e) => setFilterDate(e.target.value)}
+                className="hig-input py-1 px-2.5 w-auto"
+              />
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="hig-input py-1 px-2.5 w-auto"
+              >
+                <option value="">All Statuses</option>
+                <option value="CHECKED_IN">In Progress (Checked In)</option>
+                <option value="COMPLETED">Completed (On-Time)</option>
+                <option value="LATE_COMPLETED">Completed (Late)</option>
+                <option value="EXCEPTION">Exception</option>
+              </select>
+              {(filterDate || filterStatus) && (
+                <button
+                  onClick={() => {
+                    setFilterDate("");
+                    setFilterStatus("");
+                  }}
+                  className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] underline text-xs"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+          </div>
 
       {message && (
         <div
@@ -232,6 +269,8 @@ export default function OwnerAttendancePage() {
           </div>
         )}
       </div>
+        </>
+      )}
 
       {/* Manual Correction Modal */}
       {correctingRecord && (
