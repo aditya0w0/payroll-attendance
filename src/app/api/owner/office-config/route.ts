@@ -15,6 +15,8 @@ const configSchema = z.object({
   maxGpsAccuracy: z.number().min(5).max(1000).default(80),
 });
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request) {
   const current = await getCurrentUser(req);
   if (!current || current.user.role !== "OWNER") {

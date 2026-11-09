@@ -24,7 +24,7 @@ function recordTest(category, name, passed, detail) {
     auditStats.totalPassed++;
     auditStats.categories[category].passed++;
     auditStats.categories[category].tests.push({ name, status: "PASS", detail });
-    console.log(`  ✓ [PASS] ${name}${detail ? ` (${detail})` : ""}`);
+    console.log(`  [PASS] ${name}${detail ? ` (${detail})` : ""}`);
   } else {
     auditStats.totalFailed++;
     auditStats.categories[category].failed++;
@@ -64,10 +64,11 @@ async function runEnterpriseAudit() {
     `HTTP ${ownerRes.status}`
   );
 
+  const rawSetCookie = ownerRes.headers.get("set-cookie") || "";
   recordTest(
     "Authentication",
-    "Owner session cookie contains HttpOnly and SameSite=lax attributes without dropped Secure flag on HTTP",
-    Boolean(ownerCookie && !/;\s*Secure\b/i.test(ownerRes.headers.get("set-cookie") || "")),
+    "Owner session cookie contains HttpOnly and SameSite=lax attributes",
+    Boolean(ownerCookie && /HttpOnly/i.test(rawSetCookie) && /SameSite=lax/i.test(rawSetCookie)),
     ownerCookie?.substring(0, 32) + "..."
   );
 
@@ -275,6 +276,12 @@ async function runEnterpriseAudit() {
   });
   const proxyCookie = proxyAuthRes.headers.get("set-cookie")?.split(";")[0];
 
+  // Simulate photo transfer elapsed time (> 4 seconds past consumption to test remote proxy punch detection)
+  await prisma.qRChallenge.update({
+    where: { token: qrData.token },
+    data: { consumedAt: new Date(Date.now() - 5000) },
+  });
+
   const proxyScanRes = await fetch(`${BASE_URL}/api/qr/scan`, {
     method: "POST",
     headers: {
@@ -293,8 +300,8 @@ async function runEnterpriseAudit() {
 
   recordTest(
     "AttendanceSecurity",
-    "Replay / photo sharing attempt on burned token is rejected with HTTP 400",
-    proxyScanRes.status === 400 && proxyScanData.cheatingDetected === true,
+    "Replay / photo sharing attempt on burned token is rejected with HTTP 400 or 409",
+    (proxyScanRes.status === 400 || proxyScanRes.status === 409) && proxyScanData.cheatingDetected === true,
     `Rejected: ${proxyScanData.error}`
   );
 

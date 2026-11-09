@@ -16,8 +16,10 @@ const createEmployeeSchema = z.object({
   employmentStatus: z.enum(["PERMANENT", "CONTRACT", "PROBATION"]).default("PERMANENT"),
 });
 
-export async function GET() {
-  const current = await getCurrentUser();
+export const dynamic = "force-dynamic";
+
+export async function GET(req: NextRequest) {
+  const current = await getCurrentUser(req);
   if (!current || current.user.role !== "OWNER") {
     return NextResponse.json({ error: "Owner authorization required" }, { status: 403 });
   }
@@ -51,13 +53,16 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const current = await getCurrentUser();
+  const current = await getCurrentUser(req);
   if (!current || current.user.role !== "OWNER") {
     return NextResponse.json({ error: "Owner authorization required" }, { status: 403 });
   }
 
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
     const result = createEmployeeSchema.safeParse(body);
 
     if (!result.success) {

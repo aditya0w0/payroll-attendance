@@ -5,13 +5,15 @@ import { verifyAuditChainIntegrity } from "@/lib/audit-verifier";
 import { getArchiveProvider } from "@/lib/audit-outbox";
 import { getExportedPublicKey } from "@/lib/audit-crypto";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Audit Ledger & Outbox Health Status Endpoint
  * Returns real-time cryptographic verification of the hash-chain,
  * outbox delivery queue statistics, and external storage sink status.
  */
 export async function GET(req: NextRequest) {
-  const current = await getCurrentUser();
+  const current = await getCurrentUser(req);
   if (!current || current.user.role !== "OWNER") {
     return NextResponse.json(
       { error: "Owner authorization required" },

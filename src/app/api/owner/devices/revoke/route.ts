@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { executeRevokeDeviceAccess } from "@/lib/device-service";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: Request) {
   const current = await getCurrentUser(req);
   if (!current || current.user.role !== "OWNER") {

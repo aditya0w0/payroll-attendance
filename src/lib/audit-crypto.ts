@@ -129,10 +129,17 @@ export function getExportedPublicKey(): string {
 
 /**
  * Deterministically stringifies an object by sorting keys alphabetically (Canonical JSON).
+ * Handles Date objects, undefined properties, and BigInt without throwing runtime errors.
  */
 export function canonicalJson(obj: any): string {
   if (obj === null || obj === undefined) {
     return "null";
+  }
+  if (typeof obj === "bigint") {
+    return JSON.stringify(obj.toString());
+  }
+  if (obj instanceof Date) {
+    return JSON.stringify(obj.toISOString());
   }
   if (typeof obj !== "object") {
     return JSON.stringify(obj);
@@ -141,7 +148,10 @@ export function canonicalJson(obj: any): string {
     return "[" + obj.map((item) => canonicalJson(item)).join(",") + "]";
   }
 
-  const sortedKeys = Object.keys(obj).sort();
+  const sortedKeys = Object.keys(obj)
+    .filter((key) => obj[key] !== undefined)
+    .sort();
+
   const pairs = sortedKeys.map((key) => {
     const val = obj[key];
     return JSON.stringify(key) + ":" + canonicalJson(val);

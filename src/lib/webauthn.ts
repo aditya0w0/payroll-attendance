@@ -266,8 +266,8 @@ export async function verifyPasskeyRegistration(
     throw new Error("WebAuthn registration challenge expired or not found. Please try again.");
   }
 
-  // Delete consumed challenge
-  await prisma.webAuthnChallenge.delete({ where: { id: challengeRecord.id } });
+  // Delete consumed challenge safely without throwing on concurrent requests
+  await prisma.webAuthnChallenge.deleteMany({ where: { id: challengeRecord.id } });
 
   // 2. Verify response
   const verification: VerifiedRegistrationResponse = await verifyRegistrationResponse({
@@ -518,7 +518,8 @@ export async function verifyPasskeyAuthentication(
     throw new Error("Authentication challenge expired or not found. Please try again.");
   }
 
-  await prisma.webAuthnChallenge.delete({ where: { id: challengeRecord.id } });
+  // Delete consumed challenge safely without throwing on concurrent requests
+  await prisma.webAuthnChallenge.deleteMany({ where: { id: challengeRecord.id } });
 
   // 2. Fetch device registration
   const device = await prisma.deviceRegistration.findUnique({

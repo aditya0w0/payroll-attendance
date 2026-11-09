@@ -4,6 +4,8 @@ import { getCurrentUser, createSession, SESSION_COOKIE_NAME, SESSION_TTL_DAYS } 
 import { verifyPasskeyRegistration } from "@/lib/webauthn";
 import { parseDeviceNameFromUserAgent } from "@/lib/device-helper";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: Request) {
   try {
     const current = await getCurrentUser(req);
@@ -59,7 +61,7 @@ export async function POST(req: Request) {
       const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000);
       cookieStore.set(SESSION_COOKIE_NAME, activeToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production" && process.env.SECURE_COOKIES === "true",
+        secure: process.env.NODE_ENV === "production" && process.env.SECURE_COOKIES !== "false",
         sameSite: "lax",
         path: "/",
         expires: expiresAt,

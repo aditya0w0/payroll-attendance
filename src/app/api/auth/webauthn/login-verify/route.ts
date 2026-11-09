@@ -5,6 +5,8 @@ import { createSession } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit";
 import { verifyPasskeyAuthentication } from "@/lib/webauthn";
 
+export const dynamic = "force-dynamic";
+
 const verifySchema = z.object({
   userId: z.string().optional(),
   identifier: z.string().optional(),

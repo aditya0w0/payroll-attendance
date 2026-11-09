@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { createPasskeyAuthenticationOptions } from "@/lib/webauthn";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Common handler to generate WebAuthn authentication options.
  * Accepts user identifier via query parameter or JSON body.

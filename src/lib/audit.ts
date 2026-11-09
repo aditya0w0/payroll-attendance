@@ -26,13 +26,23 @@ const SECRET_KEY_REGEX = /password|secret|privatekey|token|unlockcode|credential
 
 /**
  * Recursively redacts sensitive credentials and secrets from audit payloads.
+ * Safe against circular references, arrays, and dates.
  */
-function redactSecrets(obj: any): any {
+function redactSecrets(obj: any, seen: WeakSet<object> = new WeakSet()): any {
   if (obj === null || obj === undefined) return obj;
   if (typeof obj !== "object") return obj;
 
+  if (seen.has(obj)) {
+    return "[CIRCULAR]";
+  }
+  seen.add(obj);
+
+  if (obj instanceof Date) {
+    return obj.toISOString();
+  }
+
   if (Array.isArray(obj)) {
-    return obj.map(redactSecrets);
+    return obj.map((item) => redactSecrets(item, seen));
   }
 
   const clean: Record<string, any> = {};
@@ -40,7 +50,7 @@ function redactSecrets(obj: any): any {
     if (SECRET_KEY_REGEX.test(key)) {
       clean[key] = "[REDACTED]";
     } else if (typeof val === "object" && val !== null) {
-      clean[key] = redactSecrets(val);
+      clean[key] = redactSecrets(val, seen);
     } else {
       clean[key] = val;
     }
@@ -69,6 +79,15 @@ export async function recordTransactionalAuditLog(tx: any, params: AuditLogParam
   const prevJson = safeStringify(params.previousValues);
   const newJson = safeStringify(params.newValues);
   const now = new Date();
+
+  // 0. Serialize audit log sequence allocation across concurrent transactions on PostgreSQL
+  try {
+    if (typeof tx.$executeRawUnsafe === "function") {
+      await tx.$executeRawUnsafe("SELECT pg_advisory_xact_lock(74839201);");
+    }
+  } catch {
+    // Non-PostgreSQL database or advisory lock unsupported
+  }
 
   // 1. Fetch latest audit log to establish hash-chain continuity
   const lastLog = await tx.auditLog.findFirst({
@@ -145,18 +164,28 @@ export async function recordTransactionalAuditLog(tx: any, params: AuditLogParam
  * Executes in a dedicated transaction and triggers best-effort outbox flush.
  */
 export async function recordAuditLog(params: AuditLogParams) {
-  try {
-    const result = await prisma.$transaction(async (tx) => {
-      return await recordTransactionalAuditLog(tx, params);
-    });
+  let attempts = 0;
+  const maxAttempts = 3;
 
-    // Best-effort non-blocking dispatch to external sink
-    dispatchOutboxFlush();
+  while (attempts < maxAttempts) {
+    attempts++;
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        return await recordTransactionalAuditLog(tx, params);
+      });
 
-    return result;
-  } catch (error) {
-    console.error("Failed to append to cryptographic audit ledger:", error);
-    // In Zero-Trust, audit failures bubble up to prevent un-audited state mutations
-    throw error;
+      // Best-effort non-blocking dispatch to external sink
+      dispatchOutboxFlush();
+
+      return result;
+    } catch (error: any) {
+      if (error?.code === "P2002" && attempts < maxAttempts) {
+        await new Promise((resolve) => setTimeout(resolve, 50 * attempts));
+        continue;
+      }
+      console.error("Failed to append to cryptographic audit ledger:", error);
+      // In Zero-Trust, audit failures bubble up to prevent un-audited state mutations
+      throw error;
+    }
   }
 }

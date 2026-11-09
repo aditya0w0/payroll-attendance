@@ -18,9 +18,14 @@ const failedLoginAttempts = new Map<string, { attempts: number; lockoutUntil: nu
 const MAX_LOGIN_FAILURES = 10;
 const LOCKOUT_DURATION_MS = 5 * 60 * 1000; // 5 minutes lockout
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({ error: "Invalid JSON request body" }, { status: 400 });
+    }
     const result = loginSchema.safeParse(body);
 
     if (!result.success) {
@@ -211,6 +216,9 @@ export async function POST(req: Request) {
     });
   } catch (error: any) {
     console.error("Login API error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error", details: error?.message || "Internal server error" },
+      { status: 500 }
+    );
   }
 }

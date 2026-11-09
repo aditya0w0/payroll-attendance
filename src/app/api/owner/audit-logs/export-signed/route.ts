@@ -4,13 +4,15 @@ import { prisma } from "@/lib/db";
 import { computeEventHash, signEventHash, getExportedPublicKey } from "@/lib/audit-crypto";
 import { recordAuditLog } from "@/lib/audit";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Signed Audit Ledger Export Endpoint
  * Streams/downloads a complete cryptographically verifiable JSONL audit trail
  * with cryptographic headers and tamper-evident signatures.
  */
 export async function GET(req: NextRequest) {
-  const current = await getCurrentUser();
+  const current = await getCurrentUser(req);
   if (!current || current.user.role !== "OWNER") {
     return NextResponse.json(
       { error: "Owner authorization required" },
