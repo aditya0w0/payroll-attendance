@@ -51,16 +51,20 @@ export async function executeRevokeDeviceAccess({
   const prevDev = targetDevice.deviceName;
   const prevTier = targetDevice.assuranceTier;
   const prevStatus = targetDevice.status;
+  const prevCredId = targetDevice.credentialId;
   const now = new Date();
 
   // 2. Atomic transaction: Update device to REVOKED, delete sessions, expire unlock requests, write audit log
   await prisma.$transaction(async (tx) => {
-    // A. Update device status = 'REVOKED' and isActive = false
+    // A. Update device status = 'REVOKED', nullify credentialId and credentialPublicKey, counter = 0
     await tx.deviceRegistration.update({
-      where: { id: targetDevice.id },
+      where: { userId: targetUserId },
       data: {
         status: "REVOKED",
         isActive: false,
+        credentialId: null,
+        credentialPublicKey: null,
+        counter: 0,
       },
     });
 
@@ -85,7 +89,8 @@ export async function executeRevokeDeviceAccess({
       targetId: targetDevice.id,
       previousValues: {
         deviceId: targetDevice.id,
-        deviceName: prevDev,
+        previousCredentialId: prevCredId,
+        previousDeviceName: prevDev,
         assuranceTier: prevTier,
         status: prevStatus,
         isActive: targetDevice.isActive,

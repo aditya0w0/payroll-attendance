@@ -321,11 +321,6 @@ export async function verifyPasskeyRegistration(
 
   // 4. Atomic Transaction: Bind Credential as Single Active Device & Revoke Other Sessions
   return await prisma.$transaction(async (tx) => {
-    // Delete previous device registration if any
-    await tx.deviceRegistration.deleteMany({
-      where: { userId: user.id },
-    });
-
     // Invalidate competing active sessions while preserving current session if provided
     if (currentSessionToken) {
       await tx.session.deleteMany({
@@ -353,8 +348,27 @@ export async function verifyPasskeyRegistration(
         : parsed.deviceName;
     const resolvedPlatform = parsed.platform;
 
-    const newDevice = await tx.deviceRegistration.create({
-      data: {
+    // Use upsert to safely bind or re-bind device without unique constraint collisions
+    const newDevice = await tx.deviceRegistration.upsert({
+      where: { userId: user.id },
+      update: {
+        credentialId: credIdBase64,
+        credentialPublicKey: credPubBase64,
+        counter: credential.counter,
+        transports: transportsJson,
+        credentialBackedUp,
+        credentialDeviceType,
+        assuranceTier,
+        aaguid: aaguid || null,
+        deviceName: resolvedDeviceName,
+        deviceFingerprint: deviceFingerprint || null,
+        platform: resolvedPlatform,
+        isActive: true,
+        status: "ACTIVE",
+        lastAuthenticatedAt: now,
+        lastSeenAt: now,
+      },
+      create: {
         userId: user.id,
         credentialId: credIdBase64,
         credentialPublicKey: credPubBase64,
@@ -370,6 +384,7 @@ export async function verifyPasskeyRegistration(
         isActive: true,
         status: "ACTIVE",
         lastAuthenticatedAt: now,
+        lastSeenAt: now,
       },
     });
 

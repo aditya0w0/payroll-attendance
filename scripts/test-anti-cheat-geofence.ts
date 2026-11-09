@@ -480,6 +480,33 @@ async function runAntiCheatGeofenceTests() {
     // -------------------------------------------------------------------------
     console.log("\n--- TEST 8: Alias Endpoint /api/employee/attendance/scan-verify ---");
 
+    // 8.1 First test double-scan cooldown guard without bypass header
+    const challengeCooldown = await createTestChallenge();
+    const cooldownReq = new Request("http://localhost:3000/api/employee/attendance/scan-verify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-forwarded-for": "103.28.112.5",
+        Cookie: `payroll_auth_token=${empSessionToken}`,
+      },
+      body: JSON.stringify({
+        qrToken: challengeCooldown.token,
+        deviceFingerprint: empFingerprint,
+        latitude: -6.2088,
+        longitude: 106.8456,
+        accuracy: 10,
+      }),
+    });
+    const cooldownRes = await postScanVerify(cooldownReq);
+    const cooldownData = await cooldownRes.json();
+    assert(cooldownRes.status === 429, "Immediate check-out rejected by 60s cooldown with HTTP 429", `Status: ${cooldownRes.status}`);
+    assert(cooldownData.code === "SCAN_COOLDOWN_ACTIVE", "Error code is SCAN_COOLDOWN_ACTIVE", `Code: ${cooldownData.code}`);
+
+    // Verify token was NOT consumed by the cooldown guard
+    const challengeAfterCooldown = await prisma.qRChallenge.findUnique({ where: { token: challengeCooldown.token } });
+    assert(challengeAfterCooldown?.isActive === true, "QR token was not consumed during cooldown rejection");
+
+    // 8.2 Perform check-out with x-test-bypass-cooldown: true
     const challengeCheckout = await createTestChallenge();
 
     const checkoutReq = new Request("http://localhost:3000/api/employee/attendance/scan-verify", {
@@ -487,6 +514,7 @@ async function runAntiCheatGeofenceTests() {
       headers: {
         "Content-Type": "application/json",
         "x-forwarded-for": "103.28.112.5",
+        "x-test-bypass-cooldown": "true",
         Cookie: `payroll_auth_token=${empSessionToken}`,
       },
       body: JSON.stringify({
@@ -500,8 +528,24 @@ async function runAntiCheatGeofenceTests() {
 
     const checkoutRes = await postScanVerify(checkoutReq);
     const checkoutData = await checkoutRes.json();
-    assert(checkoutRes.status === 200, "Alias endpoint /api/employee/attendance/scan-verify processes check-out successfully");
+    assert(checkoutRes.status === 200, "Alias endpoint /api/employee/attendance/scan-verify processes check-out successfully with cooldown bypass");
     assert(checkoutData.action === "CHECK_OUT", "Action is CHECK_OUT", `Action: ${checkoutData.action}`);
+
+    // Verify check-out telemetry in AttendanceRecord
+    const completedRecord = await prisma.attendanceRecord.findFirst({
+      where: { employeeId: empProfile.id },
+      orderBy: { createdAt: "desc" },
+    });
+    assert(Boolean(completedRecord?.checkOutTime), "AttendanceRecord has checkOutTime recorded");
+    assert(completedRecord?.checkOutLatitude !== null && completedRecord?.checkOutLatitude !== undefined, "checkOutLatitude is accurately saved");
+    assert(completedRecord?.checkOutLongitude !== null && completedRecord?.checkOutLongitude !== undefined, "checkOutLongitude is accurately saved");
+    assert(typeof completedRecord?.checkOutDistanceMeters === "number", "checkOutDistanceMeters is accurately saved", `Dist: ${completedRecord?.checkOutDistanceMeters}m`);
+    assert(completedRecord?.checkOutClientIp === "103.28.112.5", "checkOutClientIp is accurately saved", `IP: ${completedRecord?.checkOutClientIp}`);
+    assert(
+      completedRecord?.status === "COMPLETED" || completedRecord?.status === "LATE_COMPLETED",
+      "AttendanceRecord status is COMPLETED or LATE_COMPLETED",
+      `Status: ${completedRecord?.status}`
+    );
 
     // Clean up test attendance records, sessions, challenges, and reset OfficeConfig
     await prisma.qRChallenge.deleteMany({ where: { token: { startsWith: "qr_test_" } } });

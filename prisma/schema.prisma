@@ -191,6 +191,10 @@ model AttendanceRecord {
   checkInLongitude          Float?
   checkInDistanceMeters     Int?
   checkInClientIp           String?
+  checkOutLatitude          Float?
+  checkOutLongitude         Float?
+  checkOutDistanceMeters    Int?
+  checkOutClientIp          String?
   manualCorrectionNote      String?
   correctedByUserId         String?
   createdAt                 DateTime  @default(now())

@@ -14,6 +14,8 @@ export async function getOrCreateActiveQRChallenge(): Promise<{
   expiresAt: Date;
   secondsRemaining: number;
   qrDataUrl: string;
+  consumed: boolean;
+  serverTime: string;
 }> {
   const now = new Date();
 
@@ -54,6 +56,8 @@ export async function getOrCreateActiveQRChallenge(): Promise<{
       expiresAt: activeChallenge.expiresAt,
       secondsRemaining,
       qrDataUrl,
+      consumed: false,
+      serverTime: now.toISOString(),
     };
   }
 
@@ -104,6 +108,8 @@ export async function getOrCreateActiveQRChallenge(): Promise<{
     expiresAt: newChallenge.expiresAt,
     secondsRemaining: QR_ROTATION_SECONDS,
     qrDataUrl,
+    consumed: false,
+    serverTime: now.toISOString(),
   };
 }
 
@@ -111,6 +117,8 @@ export interface QRValidationResult {
   valid: boolean;
   challengeId?: string;
   error?: string;
+  code?: string;
+  statusCode?: number;
   cheatingDetected?: boolean;
   cheatingType?: "FORGED_QR" | "REUSED_QR" | "EXPIRED_QR";
 }
@@ -125,7 +133,8 @@ export async function validateAndConsumeQRToken(
   userId: string,
   employeeName: string,
   ipAddress: string = "127.0.0.1",
-  userAgent: string = "Unknown"
+  userAgent: string = "Unknown",
+  options?: { isWithinGeofenceAndWifi?: boolean }
 ): Promise<QRValidationResult> {
   const now = new Date();
 
@@ -156,6 +165,8 @@ export async function validateAndConsumeQRToken(
 
     return {
       valid: false,
+      statusCode: 400,
+      code: "FORGED_QR",
       cheatingDetected: true,
       cheatingType: "FORGED_QR",
       error: "Security Alert: Invalid or forged QR challenge token. This security incident has been flagged to the Owner.",
@@ -164,6 +175,21 @@ export async function validateAndConsumeQRToken(
 
   // Check B: Token was ALREADY CONSUMED by another or same employee -> REPLAY / SHARING ATTEMPT
   if (challenge.consumedAt || challenge.consumedByUserId || !challenge.isActive) {
+    const msSinceConsumed = challenge.consumedAt
+      ? now.getTime() - new Date(challenge.consumedAt).getTime()
+      : Infinity;
+
+    // Grace queue differentiation: scanned within 4 seconds of being consumed with valid office location/wifi
+    if (msSinceConsumed <= 4000 && (options?.isWithinGeofenceAndWifi ?? true)) {
+      return {
+        valid: false,
+        statusCode: 409,
+        code: "QR_QUEUE_ROTATING",
+        error: "QR baru saja digunakan oleh karyawan di depan Anda. Silakan scan ulang QR baru di layar.",
+        cheatingDetected: false,
+      };
+    }
+
     const consumedByUser = challenge.consumedByUserId
       ? await prisma.user.findUnique({
           where: { id: challenge.consumedByUserId },
@@ -194,6 +220,8 @@ export async function validateAndConsumeQRToken(
 
     return {
       valid: false,
+      statusCode: 409,
+      code: "QR_ALREADY_USED",
       cheatingDetected: true,
       cheatingType: "REUSED_QR",
       error: `Security Alert: This QR code has already been scanned and consumed. Each QR code is single-use only. Token sharing has been flagged to the Owner.`,

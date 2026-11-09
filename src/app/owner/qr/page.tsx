@@ -8,14 +8,21 @@ export default function OwnerQRDisplayPage() {
   const [token, setToken] = useState<string>("");
   const [secondsRemaining, setSecondsRemaining] = useState<number>(15);
   const [loading, setLoading] = useState<boolean>(true);
+  const tokenRef = React.useRef<string>("");
 
   const fetchActiveQR = async () => {
     try {
       const res = await fetch("/api/qr/active", { cache: "no-store" });
+      if (!res.ok) return;
       const data = await res.json();
-      setQrDataUrl(data.qrDataUrl);
-      setToken(data.token);
-      setSecondsRemaining(data.secondsRemaining || 15);
+
+      // If token rotated (either expired or consumed by employee ahead in queue):
+      if (data.token && data.token !== tokenRef.current) {
+        tokenRef.current = data.token;
+        setToken(data.token);
+        setQrDataUrl(data.qrDataUrl);
+        setSecondsRemaining(data.secondsRemaining || 15);
+      }
     } catch (e) {
       console.error("Failed to fetch QR challenge:", e);
     } finally {
@@ -26,20 +33,15 @@ export default function OwnerQRDisplayPage() {
   useEffect(() => {
     fetchActiveQR();
 
+    // 1-second countdown display tick
     const timer = setInterval(() => {
-      setSecondsRemaining((prev) => {
-        if (prev <= 1) {
-          fetchActiveQR();
-          return 15;
-        }
-        return prev - 1;
-      });
+      setSecondsRemaining((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
 
-    // Fast-poll every 2s to detect when an employee scans and burns the token
+    // Task 2.2: Fast-poll every 1500ms (1.5 seconds) for instant queue rotation on consumption
     const pollInterval = setInterval(() => {
       fetchActiveQR();
-    }, 2000);
+    }, 1500);
 
     return () => {
       clearInterval(timer);
