@@ -11,6 +11,7 @@ import {
   QrCode,
   LogOut,
   LayoutDashboard,
+  MapPin,
 } from "lucide-react";
 
 export default async function OwnerLayout({
@@ -31,6 +32,7 @@ export default async function OwnerLayout({
     { href: "/owner/attendance", label: "Attendance", icon: ClipboardList },
     { href: "/owner/payroll", label: "Payroll", icon: Wallet },
     { href: "/owner/devices", label: "Device Security", icon: Smartphone },
+    { href: "/owner/settings", label: "Location & WiFi", icon: MapPin },
     { href: "/owner/audit-logs", label: "Audit Logs", icon: Shield },
     { href: "/owner/qr", label: "Terminal QR", icon: QrCode },
   ];

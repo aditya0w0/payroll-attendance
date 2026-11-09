@@ -192,6 +192,9 @@ async function runEnterpriseAudit() {
     body: JSON.stringify({
       token: qrData.token,
       deviceFingerprint: "fp_ahmad_pixel_8_auth",
+      latitude: -6.2088,
+      longitude: 106.8456,
+      accuracy: 15,
     }),
   });
   const scanAhmadData = await scanAhmadRes.json();
@@ -215,28 +218,75 @@ async function runEnterpriseAudit() {
     `Consumed at: ${burnedDbChallenge?.consumedAt?.toISOString()}`
   );
 
-  // 2.4 Proxy Punch / Replay Attack Block (Siti attempts to scan the burned token)
-  const sitiAuthRes = await fetch(`${BASE_URL}/api/auth/login`, {
+  // 2.4 Proxy Punch / Replay Attack Block (Synthetic test employee attempts to scan burned token)
+  const syntheticProxyUser = await prisma.user.upsert({
+    where: { email: "test_proxy_emp@company.com" },
+    update: { role: "EMPLOYEE", status: "ACTIVE" },
+    create: {
+      email: "test_proxy_emp@company.com",
+      username: "test_proxy_emp",
+      passwordHash: await bcrypt.hash("employee123", 10),
+      role: "EMPLOYEE",
+      status: "ACTIVE",
+    },
+  });
+
+  const generalShift = await prisma.shift.findFirst();
+  await prisma.employeeProfile.upsert({
+    where: { userId: syntheticProxyUser.id },
+    update: { dailySalary: 150000, shiftId: generalShift.id, employmentStatus: "ACTIVE" },
+    create: {
+      userId: syntheticProxyUser.id,
+      employeeId: "EMP-TEST-PROXY",
+      fullName: "Synthetic Proxy Tester",
+      dailySalary: 150000,
+      shiftId: generalShift.id,
+      employmentStatus: "ACTIVE",
+    },
+  });
+
+  await prisma.deviceRegistration.upsert({
+    where: { userId: syntheticProxyUser.id },
+    create: {
+      userId: syntheticProxyUser.id,
+      deviceFingerprint: "fp_test_proxy_terminal",
+      deviceName: "Synthetic Test Terminal",
+      platform: "TestPlatform",
+      isActive: true,
+    },
+    update: {
+      deviceFingerprint: "fp_test_proxy_terminal",
+      deviceName: "Synthetic Test Terminal",
+      credentialId: null,
+      credentialPublicKey: null,
+      isActive: true,
+    },
+  });
+
+  const proxyAuthRes = await fetch(`${BASE_URL}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      identifier: "siti@company.com",
+      identifier: "test_proxy_emp@company.com",
       password: "employee123",
-      deviceFingerprint: "fp_siti_iphone_auth",
-      deviceName: "Siti's iPhone 15 Pro",
+      deviceFingerprint: "fp_test_proxy_terminal",
+      deviceName: "Synthetic Test Terminal",
     }),
   });
-  const sitiCookie = sitiAuthRes.headers.get("set-cookie")?.split(";")[0];
+  const proxyCookie = proxyAuthRes.headers.get("set-cookie")?.split(";")[0];
 
   const proxyScanRes = await fetch(`${BASE_URL}/api/qr/scan`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": sitiCookie,
+      "Cookie": proxyCookie,
     },
     body: JSON.stringify({
       token: qrData.token, // Reused token!
-      deviceFingerprint: "fp_siti_iphone_auth",
+      deviceFingerprint: "fp_test_proxy_terminal",
+      latitude: -6.2088,
+      longitude: 106.8456,
+      accuracy: 15,
     }),
   });
   const proxyScanData = await proxyScanRes.json();
@@ -269,11 +319,14 @@ async function runEnterpriseAudit() {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Cookie": sitiCookie,
+      "Cookie": proxyCookie,
     },
     body: JSON.stringify({
       token: "qr_fake_manipulated_challenge_payload_xyz",
-      deviceFingerprint: "fp_siti_iphone_auth",
+      deviceFingerprint: "fp_test_proxy_terminal",
+      latitude: -6.2088,
+      longitude: 106.8456,
+      accuracy: 15,
     }),
   });
   const forgedData = await forgedRes.json();
@@ -284,6 +337,15 @@ async function runEnterpriseAudit() {
     forgedRes.status === 400 && forgedData.cheatingType === "FORGED_QR",
     `Error: ${forgedData.error?.substring(0, 36)}...`
   );
+
+  // Clean up synthetic test records and ensure Siti remains clean
+  await prisma.session.deleteMany({ where: { userId: syntheticProxyUser.id } });
+  await prisma.deviceRegistration.deleteMany({ where: { userId: syntheticProxyUser.id } });
+
+  const cleanSitiUser = await prisma.user.findUnique({ where: { email: "siti@company.com" } });
+  if (cleanSitiUser) {
+    await prisma.deviceRegistration.deleteMany({ where: { userId: cleanSitiUser.id } });
+  }
 
   // ---------------------------------------------------------------------------
   // SECTION 3: WAGE MODEL, DEDUCTION MATH & OVERNIGHT SHIFTS

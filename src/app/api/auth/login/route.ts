@@ -18,7 +18,7 @@ const failedLoginAttempts = new Map<string, { attempts: number; lockoutUntil: nu
 const MAX_LOGIN_FAILURES = 10;
 const LOCKOUT_DURATION_MS = 5 * 60 * 1000; // 5 minutes lockout
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
     const body = await req.json();
     const result = loginSchema.safeParse(body);
@@ -106,26 +106,79 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Enforce Single-Device Policy for Employee accounts
-    const deviceCheck = await enforceSingleDevicePolicy(
-      user,
-      deviceFingerprint,
-      deviceName,
-      publicKey,
-      ip,
-      userAgent
-    );
+    if (user.role === "EMPLOYEE") {
+      const existingDevice = user.deviceRegistration;
 
-    if (!deviceCheck.allowed) {
-      return NextResponse.json(
-        {
-          error: "DEVICE_NOT_AUTHORIZED",
-          message: "Access Denied: This account is locked to a single authorized device.",
-          requestCode: deviceCheck.requestCode,
-          boundDeviceName: deviceCheck.boundDeviceName,
-          attemptedDeviceName: deviceCheck.attemptedDeviceName,
-        },
-        { status: 423 } // 423 Locked
+      // Strict First-Time Login Onboarding Flow: Employee has no registered device
+      if (!existingDevice || !existingDevice.isActive) {
+        // Authenticate credentials and establish onboarding session for passkey registration
+        await createSession(user.id, deviceFingerprint || "onboarding_terminal");
+
+        await recordAuditLog({
+          actorId: user.id,
+          actorRole: user.role,
+          actorName: user.employeeProfile?.fullName || user.username,
+          action: "AUTH_LOGIN_ONBOARDING_PENDING",
+          targetEntity: "DEVICE_SECURITY",
+          targetId: user.id,
+          newValues: { onboardingState: "MUST_BIND_DEVICE" },
+          ipAddress: ip,
+          userAgent,
+          reason: "First-time employee login authenticated. Onboarding session established for physical passkey enrollment.",
+        });
+
+        return NextResponse.json({
+          success: true,
+          mustBindDevice: true,
+          onboardingState: "MUST_BIND_DEVICE",
+          role: user.role,
+          redirectUrl: "/employee?onboarding=passkey",
+          message: "First-time login: Please register your hardware passkey to bind this device.",
+          user: {
+            id: user.id,
+            email: user.email,
+            username: user.username,
+            role: user.role,
+            name: user.employeeProfile?.fullName || user.username,
+            mustBindDevice: true,
+          },
+        });
+      }
+
+      const deviceCheck = await enforceSingleDevicePolicy(
+        user,
+        deviceFingerprint,
+        deviceName,
+        publicKey,
+        ip,
+        userAgent
       );
+
+      if (!deviceCheck.allowed) {
+        if (deviceCheck.requiresWebAuthn) {
+          return NextResponse.json(
+            {
+              requiresWebAuthn: true,
+              message: "Biometric Passkey required to verify registered device and re-hydrate session.",
+              userId: user.id,
+              boundDeviceName: deviceCheck.boundDeviceName,
+              assuranceTier: deviceCheck.assuranceTier,
+            },
+            { status: 200 }
+          );
+        }
+
+        return NextResponse.json(
+          {
+            error: "DEVICE_NOT_AUTHORIZED",
+            message: "Access Denied: This account is locked to a single authorized device.",
+            requestCode: deviceCheck.requestCode,
+            boundDeviceName: deviceCheck.boundDeviceName,
+            attemptedDeviceName: deviceCheck.attemptedDeviceName,
+          },
+          { status: 423 } // 423 Locked
+        );
+      }
     }
 
     // 4. Create authoritative server session

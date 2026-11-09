@@ -59,6 +59,78 @@
   }
 }
 
+.dark {
+  --system-bg: #000000;
+  --system-grouped-bg: #121214;
+  --card-bg: #1c1c1e;
+  --card-elevated: #2c2c2e;
+  --separator: #38383a;
+  --separator-subtle: #242426;
+  --border-hairline: rgba(255, 255, 255, 0.12);
+
+  --text-primary: #f5f5f7;
+  --text-secondary: #8e8e93;
+  --text-tertiary: #636366;
+
+  --accent: #2997ff;
+  --accent-hover: #40a3ff;
+  --accent-active: #1480f0;
+  --accent-tint: rgba(41, 151, 255, 0.15);
+
+  --system-green: #30d158;
+  --system-green-tint: rgba(48, 209, 88, 0.18);
+  --system-red: #ff453a;
+  --system-red-tint: rgba(255, 69, 58, 0.18);
+  --system-orange: #ff9f0a;
+  --system-orange-tint: rgba(255, 159, 10, 0.18);
+  --system-gray-pill: #2c2c2e;
+}
+
+.light {
+  --system-bg: #f5f5f7;
+  --system-grouped-bg: #f2f2f7;
+  --card-bg: #ffffff;
+  --card-elevated: #ffffff;
+  --separator: #e5e5ea;
+  --separator-subtle: #f0f0f2;
+  --border-hairline: rgba(0, 0, 0, 0.08);
+
+  --text-primary: #1d1d1f;
+  --text-secondary: #86868b;
+  --text-tertiary: #a1a1a6;
+
+  --accent: #0071e3;
+  --accent-hover: #0077ed;
+  --accent-active: #0062c4;
+  --accent-tint: rgba(0, 113, 227, 0.08);
+
+  --system-green: #34c759;
+  --system-green-tint: rgba(52, 199, 89, 0.12);
+  --system-red: #ff3b30;
+  --system-red-tint: rgba(255, 59, 48, 0.12);
+  --system-orange: #ff9500;
+  --system-orange-tint: rgba(255, 149, 0, 0.12);
+  --system-gray-pill: #e5e5ea;
+}
+
+html {
+  color-scheme: light dark;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.light {
+  color-scheme: light;
+}
+
+input,
+select,
+textarea {
+  color-scheme: light dark;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -184,6 +256,91 @@ body {
 }
 .hig-input::placeholder {
   color: var(--text-tertiary);
+}
+
+/* Apple Design Aliases for UI Resilience */
+.apple-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-hairline);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.apple-input {
+  background-color: var(--card-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--separator);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.4;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.apple-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-tint);
+}
+.apple-input::placeholder {
+  color: var(--text-tertiary);
+}
+.apple-input option {
+  background-color: var(--card-elevated);
+  color: var(--text-primary);
+}
+
+.apple-btn-primary {
+  background-color: var(--accent);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  border-radius: 8px;
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: opacity 0.12s ease;
+}
+.apple-btn-primary:hover {
+  opacity: 0.92;
+}
+.apple-btn-primary:active {
+  opacity: 0.78;
+}
+.apple-btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.apple-btn-secondary {
+  background-color: rgba(142, 142, 147, 0.12);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  border-radius: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--separator);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background-color 0.12s ease;
+}
+.apple-btn-secondary:hover {
+  background-color: rgba(142, 142, 147, 0.2);
+}
+.apple-btn-secondary:active {
+  background-color: rgba(142, 142, 147, 0.28);
+}
+.apple-btn-secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* Apple HIG Segmented Control */

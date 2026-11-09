@@ -200,13 +200,69 @@ async function runQASecuritySuite() {
   // ===========================================================================
   console.log("\n▶ AUDIT SECTION 3: Device Binding, Unlock IDOR & Session Invalidation");
 
+  // Setup synthetic employee with authorized device to test rogue hardware quarantine
+  const testQuarantineUser = await prisma.user.upsert({
+    where: { email: "test_quarantine_emp@company.com" },
+    update: { role: "EMPLOYEE", status: "ACTIVE" },
+    create: {
+      email: "test_quarantine_emp@company.com",
+      username: "test_quarantine_emp",
+      passwordHash: await bcrypt.hash("employee123", 10),
+      role: "EMPLOYEE",
+      status: "ACTIVE",
+    },
+  });
+
+  const generalShift = await prisma.shift.findFirst();
+  await prisma.employeeProfile.upsert({
+    where: { userId: testQuarantineUser.id },
+    update: { dailySalary: 150000, shiftId: generalShift.id, employmentStatus: "ACTIVE" },
+    create: {
+      userId: testQuarantineUser.id,
+      employeeId: "EMP-TEST-QUARANTINE",
+      fullName: "Test Quarantine Employee",
+      dailySalary: 150000,
+      shiftId: generalShift.id,
+      employmentStatus: "ACTIVE",
+    },
+  });
+
+  await prisma.deviceRegistration.upsert({
+    where: { userId: testQuarantineUser.id },
+    create: {
+      userId: testQuarantineUser.id,
+      deviceFingerprint: "fp_authorized_test_device",
+      deviceName: "Authorized Test Terminal",
+      platform: "TestPlatform",
+      isActive: true,
+    },
+    update: {
+      deviceFingerprint: "fp_authorized_test_device",
+      deviceName: "Authorized Test Terminal",
+      isActive: true,
+    },
+  });
+
+  // Login as testQuarantineUser from authorized device to obtain a valid session cookie
+  const validDeviceAuthRes = await fetch(`${BASE_URL}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      identifier: "test_quarantine_emp@company.com",
+      password: "employee123",
+      deviceFingerprint: "fp_authorized_test_device",
+      deviceName: "Authorized Test Terminal",
+    }),
+  });
+  const quarantineUserCookie = validDeviceAuthRes.headers.get("set-cookie")?.split(";")[0];
+
   // 3.1 Rogue Hardware Quarantine (HTTP 423)
   const rogueFp = `fp_rogue_terminal_${Date.now()}`;
   const rogueLoginRes = await fetch(`${BASE_URL}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      identifier: "siti@company.com",
+      identifier: "test_quarantine_emp@company.com",
       password: "employee123",
       deviceFingerprint: rogueFp,
       deviceName: "Attacker External Hardware Station",
@@ -284,18 +340,18 @@ async function runQASecuritySuite() {
     data: {
       requestCode: req2Code,
       unlockCode: "888999",
-      userId: sitiDashData.employee.id ? (await prisma.employeeProfile.findUnique({ where: { id: sitiDashData.employee.id } })).userId : userOwner.id,
-      requestedFingerprint: "fp_siti_new_approved_ipad",
-      requestedDeviceName: "Siti's Authorized Replacement iPad",
-      previousDeviceName: "Siti's iPhone 15 Pro",
+      userId: testQuarantineUser.id,
+      requestedFingerprint: "fp_test_new_approved_ipad",
+      requestedDeviceName: "Authorized Replacement iPad",
+      previousDeviceName: "Authorized Test Terminal",
       status: "PENDING",
       expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     },
   });
 
-  // Verify sitiCookie is currently valid before switch
+  // Verify quarantineUserCookie is currently valid before switch
   const preSwitchRes = await fetch(`${BASE_URL}/api/employee/dashboard`, {
-    headers: { Cookie: sitiCookie },
+    headers: { Cookie: quarantineUserCookie },
   });
   const preValid = preSwitchRes.status === 200;
 
@@ -313,9 +369,9 @@ async function runQASecuritySuite() {
     }),
   });
 
-  // Check if previous session (sitiCookie) was immediately invalidated!
+  // Check if previous session (quarantineUserCookie) was immediately invalidated!
   const postSwitchRes = await fetch(`${BASE_URL}/api/employee/dashboard`, {
-    headers: { Cookie: sitiCookie },
+    headers: { Cookie: quarantineUserCookie },
   });
   recordTest(
     "DeviceSecurity",
@@ -324,13 +380,14 @@ async function runQASecuritySuite() {
     `Pre-switch: HTTP ${preSwitchRes.status} -> Post-switch: HTTP ${postSwitchRes.status}`
   );
 
-  // Restore Siti device binding for subsequent tests
-  const sitiUser = await prisma.user.findUnique({ where: { email: "siti@company.com" } });
-  await prisma.deviceRegistration.upsert({
-    where: { userId: sitiUser.id },
-    update: { deviceFingerprint: "fp_siti_iphone_auth", deviceName: "Siti's iPhone 15 Pro", isActive: true },
-    create: { userId: sitiUser.id, deviceFingerprint: "fp_siti_iphone_auth", deviceName: "Siti's iPhone 15 Pro", isActive: true },
-  });
+  // Clean up synthetic test records and ensure Siti remains completely clean and unbound
+  await prisma.session.deleteMany({ where: { userId: testQuarantineUser.id } });
+  await prisma.deviceRegistration.deleteMany({ where: { userId: testQuarantineUser.id } });
+
+  const sitiCleanUser = await prisma.user.findUnique({ where: { email: "siti@company.com" } });
+  if (sitiCleanUser) {
+    await prisma.deviceRegistration.deleteMany({ where: { userId: sitiCleanUser.id } });
+  }
 
   // ===========================================================================
   // SECTION 4: QR ATTENDANCE SECURITY, SINGLE-USE BURN & CONCURRENCY
@@ -437,12 +494,24 @@ async function runQASecuritySuite() {
     fetch(`${BASE_URL}/api/qr/scan`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Cookie": cookieA },
-      body: JSON.stringify({ token: testToken, deviceFingerprint: "fp_conc_a" }),
+      body: JSON.stringify({
+        token: testToken,
+        deviceFingerprint: "fp_conc_a",
+        latitude: -6.2088,
+        longitude: 106.8456,
+        accuracy: 15,
+      }),
     }),
     fetch(`${BASE_URL}/api/qr/scan`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Cookie": cookieB },
-      body: JSON.stringify({ token: testToken, deviceFingerprint: "fp_conc_b" }),
+      body: JSON.stringify({
+        token: testToken,
+        deviceFingerprint: "fp_conc_b",
+        latitude: -6.2088,
+        longitude: 106.8456,
+        accuracy: 15,
+      }),
     }),
   ]);
 
@@ -464,6 +533,9 @@ async function runQASecuritySuite() {
     body: JSON.stringify({
       token: "qr_attacker_forged_payload_" + Math.random(),
       deviceFingerprint: "fp_conc_a",
+      latitude: -6.2088,
+      longitude: 106.8456,
+      accuracy: 15,
     }),
   });
   const forgedData = await forgedRes.json();
@@ -490,6 +562,9 @@ async function runQASecuritySuite() {
     body: JSON.stringify({
       token: expiredDbChallenge.token,
       deviceFingerprint: "fp_conc_a",
+      latitude: -6.2088,
+      longitude: 106.8456,
+      accuracy: 15,
     }),
   });
   const expiredData = await expiredRes.json();

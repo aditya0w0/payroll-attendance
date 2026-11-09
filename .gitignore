@@ -10,6 +10,7 @@
 
 # Local runtime & tooling
 /.tools/
+/.outbox_archive/
 tsconfig.tsbuildinfo
 
 # SQLite Database files

@@ -2,10 +2,26 @@
 
 import React, { useState, useEffect } from "react";
 import { formatJakartaDateTime } from "@/lib/timezone";
-import { ShieldCheck, Search, RefreshCw, Eye, X, Terminal, Filter } from "lucide-react";
+import {
+  ShieldCheck,
+  Search,
+  RefreshCw,
+  Eye,
+  X,
+  Terminal,
+  Filter,
+  CheckCircle2,
+  AlertTriangle,
+  Download,
+  Send,
+  Database,
+  Lock,
+} from "lucide-react";
 
 interface AuditLogItem {
   id: string;
+  sequenceNumber: number;
+  schemaVersion: number;
   timestamp: string;
   actorId: string | null;
   actorRole: string;
@@ -13,11 +29,45 @@ interface AuditLogItem {
   action: string;
   targetEntity: string;
   targetId: string | null;
+  previousHash: string;
+  currentHash: string;
+  signature: string;
   previousValues: string | null;
   newValues: string | null;
   ipAddress: string | null;
   userAgent: string | null;
   reason: string | null;
+}
+
+interface AuditHealthData {
+  chainIntegrity: {
+    valid: boolean;
+    totalRecordsChecked: number;
+    genesisSequence: number;
+    latestSequence: number;
+    brokenSequence?: number;
+    brokenEntityId?: string;
+    error?: string;
+    checkedAt: string;
+  };
+  outbox: {
+    pendingCount: number;
+    deliveredCount: number;
+    failedCount: number;
+    totalQueue: number;
+  };
+  sink: {
+    providerType: "S3_R2_WORM" | "LOCAL_FALLBACK" | "NOT_CONFIGURED";
+    isWormConfigured: boolean;
+    bucket: string;
+    objectLockEnabled: boolean;
+  };
+  security: {
+    signingAlgorithm: string;
+    hashAlgorithm: string;
+    publicKey: string;
+  };
+  checkedAt: string;
 }
 
 export default function OwnerAuditLogsPage() {
@@ -26,6 +76,12 @@ export default function OwnerAuditLogsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [actionFilter, setActionFilter] = useState("");
   const [selectedLog, setSelectedLog] = useState<AuditLogItem | null>(null);
+
+  // Health and verification state
+  const [health, setHealth] = useState<AuditHealthData | null>(null);
+  const [verifying, setVerifying] = useState(false);
+  const [flushing, setFlushing] = useState(false);
+  const [flushMessage, setFlushMessage] = useState<string | null>(null);
 
   const loadLogs = async () => {
     setLoading(true);
@@ -43,9 +99,47 @@ export default function OwnerAuditLogsPage() {
     }
   };
 
+  const checkHealth = async () => {
+    setVerifying(true);
+    try {
+      const res = await fetch("/api/owner/audit-logs/health");
+      const data = await res.json();
+      if (res.ok) {
+        setHealth(data);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleManualFlush = async () => {
+    setFlushing(true);
+    setFlushMessage(null);
+    try {
+      const res = await fetch("/api/owner/audit-logs/flush", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setFlushMessage(`Outbox flushed: ${data.processedCount} records dispatched.`);
+        checkHealth();
+        loadLogs();
+      } else {
+        setFlushMessage(`Flush failed: ${data.error}`);
+      }
+    } catch (err: any) {
+      setFlushMessage(`Flush error: ${err.message}`);
+    } finally {
+      setFlushing(false);
+    }
+  };
+
   useEffect(() => {
     loadLogs();
+    checkHealth();
   }, [actionFilter]);
+
+  const isChainValid = health?.chainIntegrity.valid ?? true;
 
   return (
     <div className="space-y-6">
@@ -54,28 +148,161 @@ export default function OwnerAuditLogsPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
-              Audit Activity Log
+              Audit Activity Log & Integrity Ledger
             </h1>
             <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-              Zero-Trust Append-Only
+              SHA-256 Chain • Ed25519 Signed
             </span>
           </div>
           <p className="text-xs text-neutral-500 mt-1">
-            Authoritative append-only ledger tracking all administrative actions, wage revisions, and security events.
+            Authoritative append-only ledger tracking all administrative actions, wage revisions, and security events with cryptographic tamper detection.
           </p>
         </div>
 
-        {/* Search & Actions */}
+        {/* Action Controls */}
         <div className="flex items-center gap-2">
-          <div className="relative">
+          <a
+            href="/api/owner/audit-logs/export-signed"
+            download
+            className="apple-btn-secondary text-xs flex items-center gap-1.5"
+            title="Download signed JSONL ledger"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Export Signed (.jsonl)</span>
+          </a>
+
+          <button
+            onClick={checkHealth}
+            disabled={verifying}
+            className="apple-btn-secondary text-xs flex items-center gap-1.5"
+            title="Re-verify entire hash-chain and check outbox"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${verifying ? "animate-spin" : ""}`} />
+            <span>{verifying ? "Verifying..." : "Verify Chain"}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Audit & Security Health Status Panel */}
+      <div className="apple-card p-5 space-y-4 border border-neutral-200 dark:border-neutral-800">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-neutral-100 dark:border-neutral-800">
+          <div className="flex items-center gap-2.5">
+            {isChainValid ? (
+              <div className="w-7 h-7 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                <CheckCircle2 className="w-4 h-4 stroke-[2]" />
+              </div>
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center">
+                <AlertTriangle className="w-4 h-4 stroke-[2]" />
+              </div>
+            )}
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                  Cryptographic Ledger Integrity:
+                </h2>
+                <span
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase ${
+                    isChainValid
+                      ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
+                      : "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 border border-red-300 dark:border-red-800"
+                  }`}
+                >
+                  {isChainValid ? "VERIFIED INTACT" : "CHAIN BROKEN / TAMPERED"}
+                </span>
+              </div>
+              <p className="text-[11px] text-neutral-500">
+                {health?.chainIntegrity
+                  ? `${health.chainIntegrity.totalRecordsChecked} records verified (Sequence #${health.chainIntegrity.genesisSequence} to #${health.chainIntegrity.latestSequence})`
+                  : "Checking ledger continuity..."}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleManualFlush}
+              disabled={flushing || (health?.outbox.pendingCount ?? 0) === 0}
+              className="apple-btn-primary text-xs flex items-center gap-1.5"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>{flushing ? "Flushing..." : "Flush Outbox Now"}</span>
+            </button>
+          </div>
+        </div>
+
+        {flushMessage && (
+          <div className="p-2.5 rounded text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200">
+            {flushMessage}
+          </div>
+        )}
+
+        {/* 3-Column Health Metrics */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          {/* Col 1: Hash Chain Continuity */}
+          <div className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 space-y-1">
+            <div className="text-[10px] uppercase font-semibold text-neutral-400 tracking-wider">
+              Ledger Cryptography
+            </div>
+            <div className="font-medium text-neutral-800 dark:text-neutral-200">
+              Ed25519 Signatures + SHA-256
+            </div>
+            <div className="text-[10px] text-neutral-500 font-mono truncate">
+              Public Key: {health?.security.publicKey ? `${health.security.publicKey.slice(0, 24)}...` : "Loading..."}
+            </div>
+          </div>
+
+          {/* Col 2: Transactional Outbox */}
+          <div className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 space-y-1">
+            <div className="text-[10px] uppercase font-semibold text-neutral-400 tracking-wider">
+              Outbox Dispatch Queue
+            </div>
+            <div className="flex items-center gap-2 font-medium text-neutral-800 dark:text-neutral-200">
+              <span>{health?.outbox.pendingCount ?? 0} Pending</span>
+              <span className="text-neutral-400">•</span>
+              <span className="text-emerald-600 dark:text-emerald-400">
+                {health?.outbox.deliveredCount ?? 0} Delivered
+              </span>
+            </div>
+            <div className="text-[10px] text-neutral-500">
+              Scheduled via Vercel Cron (`*/10 * * * *`)
+            </div>
+          </div>
+
+          {/* Col 3: External WORM Storage */}
+          <div className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 space-y-1">
+            <div className="text-[10px] uppercase font-semibold text-neutral-400 tracking-wider">
+              Archive Storage Sink
+            </div>
+            <div className="font-medium text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5">
+              <Database className="w-3.5 h-3.5 text-neutral-500" />
+              <span>
+                {health?.sink.providerType === "S3_R2_WORM"
+                  ? "Cloudflare R2 / AWS S3"
+                  : "Local Outbox Archive"}
+              </span>
+            </div>
+            <div className="text-[10px] text-neutral-500">
+              {health?.sink.isWormConfigured
+                ? `WORM Lock: ${health.sink.objectLockEnabled ? "COMPLIANCE" : "Standard"}`
+                : "Zero-cost local directory storage"}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Search & Filters */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 flex-1">
+          <div className="relative flex-1 sm:max-w-xs">
             <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-neutral-400" />
             <input
               type="text"
-              placeholder="Search audit trail..."
+              placeholder="Search actor, reason, action..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && loadLogs()}
-              className="apple-input text-xs pl-8 pr-3 py-1.5 w-48 sm:w-60"
+              className="apple-input text-xs pl-8 pr-3 py-1.5 w-full"
             />
           </div>
 
@@ -85,57 +312,73 @@ export default function OwnerAuditLogsPage() {
             className="apple-input text-xs py-1.5 w-auto"
           >
             <option value="">All Actions</option>
-            <option value="CHEATING_ALERTS">Flagged Cheating Attempts</option>
+            <option value="CHEATING_ALERTS">Cheating Flags</option>
+            <option value="WEBAUTHN_AUTHENTICATED">WebAuthn Logins</option>
+            <option value="EMPLOYEE_DEVICE_REPLACEMENT_APPROVED">Device Replacements</option>
             <option value="EMPLOYEE_SALARY_CHANGED">Salary Revisions</option>
-            <option value="ATTENDANCE_CHECK_IN_LATE">Late Check-ins</option>
             <option value="DEVICE_LOGIN_BLOCKED">Device Lockouts</option>
-            <option value="DEVICE_UNLOCKED_AND_REBOUND">Device Unlocks</option>
-            <option value="ATTENDANCE_MANUALLY_CORRECTED">Manual Corrections</option>
-            <option value="PAYROLL_PERIOD_FINALIZED">Payroll Finalization</option>
+            <option value="ATTENDANCE_CHECK_IN">Check-Ins</option>
           </select>
-
-          <button onClick={loadLogs} className="apple-btn-secondary text-xs p-2" title="Reload Logs">
-            <RefreshCw className="w-3.5 h-3.5" />
-          </button>
         </div>
+
+        <button onClick={loadLogs} className="apple-btn-secondary text-xs py-1.5" title="Reload logs">
+          <RefreshCw className="w-3.5 h-3.5" />
+          <span>Refresh</span>
+        </button>
       </div>
 
       {/* Logs Table */}
       <div className="apple-card overflow-hidden">
         {loading ? (
-          <div className="text-center py-12 text-xs text-neutral-400">Loading audit records...</div>
+          <div className="text-center py-12 text-xs text-neutral-400">Loading audit ledger...</div>
         ) : logs.length === 0 ? (
-          <div className="text-center py-12 text-xs text-neutral-400">No audit records found matching criteria.</div>
+          <div className="text-center py-12 text-xs text-neutral-400">
+            No audit records found matching criteria.
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
               <thead>
                 <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 text-neutral-500">
+                  <th className="py-3 px-3 font-semibold uppercase tracking-wider">Seq</th>
                   <th className="py-3 px-4 font-semibold uppercase tracking-wider">Timestamp (WIB)</th>
                   <th className="py-3 px-4 font-semibold uppercase tracking-wider">Actor</th>
                   <th className="py-3 px-4 font-semibold uppercase tracking-wider">Action</th>
                   <th className="py-3 px-4 font-semibold uppercase tracking-wider">Target Entity</th>
-                  <th className="py-3 px-4 font-semibold uppercase tracking-wider">IP Address</th>
-                  <th className="py-3 px-4 font-semibold uppercase tracking-wider">Reason / Note</th>
-                  <th className="py-3 px-4 font-semibold uppercase tracking-wider text-right">Details</th>
+                  <th className="py-3 px-4 font-semibold uppercase tracking-wider">Ledger Hash</th>
+                  <th className="py-3 px-4 font-semibold uppercase tracking-wider">Reason / Details</th>
+                  <th className="py-3 px-3 font-semibold uppercase tracking-wider text-right">View</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
                 {logs.map((log) => {
-                  let badgeClass = "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300";
-                  if (log.action.startsWith("CHEATING_ALERT_")) badgeClass = "bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-200 border border-red-300 dark:border-red-800 font-semibold";
-                  else if (log.action.includes("SALARY")) badgeClass = "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300";
-                  else if (log.action.includes("BLOCKED")) badgeClass = "bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300";
-                  else if (log.action.includes("UNLOCKED")) badgeClass = "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300";
+                  let badgeClass =
+                    "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300";
+                  if (log.action.startsWith("CHEATING_ALERT_"))
+                    badgeClass =
+                      "bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-200 border border-red-300 dark:border-red-800 font-semibold";
+                  else if (log.action.includes("SALARY"))
+                    badgeClass = "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300";
+                  else if (log.action.includes("BLOCKED"))
+                    badgeClass = "bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300";
+                  else if (log.action.includes("WEBAUTHN") || log.action.includes("UNLOCKED"))
+                    badgeClass =
+                      "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300";
 
                   return (
                     <tr key={log.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-900/40">
+                      <td className="py-3 px-3 font-mono font-bold text-neutral-700 dark:text-neutral-300">
+                        #{log.sequenceNumber}
+                      </td>
+
                       <td className="py-3 px-4 whitespace-nowrap text-neutral-500 font-mono text-[11px]">
                         {formatJakartaDateTime(log.timestamp)}
                       </td>
 
                       <td className="py-3 px-4">
-                        <div className="font-medium text-neutral-900 dark:text-neutral-100">{log.actorName}</div>
+                        <div className="font-medium text-neutral-900 dark:text-neutral-100">
+                          {log.actorName}
+                        </div>
                         <div className="text-[10px] text-neutral-400">{log.actorRole}</div>
                       </td>
 
@@ -149,19 +392,21 @@ export default function OwnerAuditLogsPage() {
                         {log.targetEntity} {log.targetId ? `(${log.targetId.substring(0, 8)})` : ""}
                       </td>
 
-                      <td className="py-3 px-4 text-neutral-500 font-mono text-[11px]">{log.ipAddress || "--"}</td>
-
-                      <td className="py-3 px-4 text-neutral-500 max-w-xs truncate" title={log.reason || ""}>
-                        {log.reason || "--"}
+                      <td className="py-3 px-4 font-mono text-[10px] text-neutral-400 truncate max-w-[100px]">
+                        {log.currentHash ? log.currentHash.substring(0, 10) : "N/A"}...
                       </td>
 
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3 px-4 text-neutral-600 dark:text-neutral-400 max-w-[200px] truncate">
+                        {log.reason || (log.newValues ? log.newValues.substring(0, 60) : "-")}
+                      </td>
+
+                      <td className="py-3 px-3 text-right">
                         <button
                           onClick={() => setSelectedLog(log)}
-                          className="apple-btn-secondary text-[11px] px-2.5 py-1"
+                          className="apple-btn-secondary p-1.5 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+                          title="Inspect Cryptographic Entry"
                         >
-                          <Eye className="w-3 h-3 mr-1" />
-                          View
+                          <Eye className="w-3.5 h-3.5" />
                         </button>
                       </td>
                     </tr>
@@ -173,87 +418,114 @@ export default function OwnerAuditLogsPage() {
         )}
       </div>
 
-      {/* Detail Diff Modal Sheet */}
+      {/* Log Detail Drawer Modal */}
       {selectedLog && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="apple-card max-w-lg w-full p-6 animate-in fade-in zoom-in-95 max-h-[85vh] overflow-y-auto">
+          <div className="apple-card max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-neutral-200 dark:border-neutral-800">
               <div className="flex items-center gap-2">
                 <Terminal className="w-4 h-4 text-neutral-500" />
-                <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                  Audit Event #{selectedLog.id.substring(0, 8)}
-                </h2>
+                <h3 className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">
+                  Audit Record #{selectedLog.sequenceNumber} (v{selectedLog.schemaVersion})
+                </h3>
               </div>
               <button
                 onClick={() => setSelectedLog(null)}
-                className="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 p-1 rounded-lg"
+                className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-3.5 text-xs pt-4">
-              <div>
-                <span className="text-[10px] uppercase font-semibold text-neutral-400 block mb-0.5">Action Event</span>
-                <div className="font-mono font-medium text-neutral-900 dark:text-neutral-100">{selectedLog.action}</div>
+            <div className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-2 p-3 bg-neutral-50 dark:bg-neutral-900/60 rounded-xl">
+                <div>
+                  <span className="text-neutral-400 block text-[10px] uppercase font-semibold">
+                    Action
+                  </span>
+                  <span className="font-mono font-medium text-neutral-800 dark:text-neutral-200">
+                    {selectedLog.action}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-neutral-400 block text-[10px] uppercase font-semibold">
+                    Timestamp
+                  </span>
+                  <span className="font-mono text-neutral-800 dark:text-neutral-200">
+                    {formatJakartaDateTime(selectedLog.timestamp)}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-neutral-400 block text-[10px] uppercase font-semibold">
+                    Actor
+                  </span>
+                  <span className="text-neutral-800 dark:text-neutral-200">
+                    {selectedLog.actorName} ({selectedLog.actorRole})
+                  </span>
+                </div>
+                <div>
+                  <span className="text-neutral-400 block text-[10px] uppercase font-semibold">
+                    Target
+                  </span>
+                  <span className="font-mono text-neutral-800 dark:text-neutral-200">
+                    {selectedLog.targetEntity} : {selectedLog.targetId || "N/A"}
+                  </span>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-neutral-600 dark:text-neutral-400">
-                <div>
-                  <span className="text-[10px] uppercase font-semibold text-neutral-400 block mb-0.5">Actor</span>
-                  <span className="font-medium text-neutral-900 dark:text-neutral-100">{selectedLog.actorName}</span> ({selectedLog.actorRole})
+              {/* Cryptographic Linkages */}
+              <div className="p-3 bg-neutral-900 text-neutral-200 rounded-xl font-mono text-[11px] space-y-1.5 border border-neutral-700">
+                <div className="text-[10px] uppercase font-semibold text-neutral-400 tracking-wider">
+                  Cryptographic Hash Link & Digital Signature
                 </div>
-                <div>
-                  <span className="text-[10px] uppercase font-semibold text-neutral-400 block mb-0.5">Recorded Time</span>
-                  <span className="font-mono text-neutral-800 dark:text-neutral-200">{formatJakartaDateTime(selectedLog.timestamp)}</span>
+                <div className="truncate">
+                  <span className="text-neutral-400">Previous Hash:</span> {selectedLog.previousHash}
                 </div>
-                <div>
-                  <span className="text-[10px] uppercase font-semibold text-neutral-400 block mb-0.5">Network Origin</span>
-                  <span className="font-mono text-neutral-800 dark:text-neutral-200">{selectedLog.ipAddress || "Internal"}</span>
+                <div className="truncate">
+                  <span className="text-emerald-400">Current Hash:</span> {selectedLog.currentHash}
                 </div>
-                <div>
-                  <span className="text-[10px] uppercase font-semibold text-neutral-400 block mb-0.5">Target Entity</span>
-                  <span className="font-medium text-neutral-800 dark:text-neutral-200">{selectedLog.targetEntity}</span>
+                <div className="truncate">
+                  <span className="text-blue-400">Ed25519 Sig:</span> {selectedLog.signature}
                 </div>
               </div>
 
               {selectedLog.reason && (
-                <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200 dark:border-neutral-700">
-                  <span className="text-[10px] font-semibold text-neutral-500 uppercase block mb-1">Administrative Reason:</span>
-                  <p className="text-neutral-900 dark:text-neutral-100 leading-relaxed">{selectedLog.reason}</p>
+                <div>
+                  <span className="text-neutral-400 block text-[10px] uppercase font-semibold mb-1">
+                    Reason / Note
+                  </span>
+                  <div className="p-2.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-medium">
+                    {selectedLog.reason}
+                  </div>
                 </div>
               )}
 
               {selectedLog.previousValues && (
                 <div>
-                  <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block mb-1">
-                    Previous State
+                  <span className="text-neutral-400 block text-[10px] uppercase font-semibold mb-1">
+                    Previous Values Snapshot
                   </span>
-                  <pre className="p-3 rounded-lg bg-neutral-950 text-red-300 font-mono text-[11px] overflow-x-auto border border-neutral-800">
-                    {typeof selectedLog.previousValues === "string"
-                      ? selectedLog.previousValues
-                      : JSON.stringify(selectedLog.previousValues, null, 2)}
+                  <pre className="p-2.5 rounded-lg bg-neutral-100 dark:bg-neutral-900 font-mono text-[11px] text-neutral-700 dark:text-neutral-300 overflow-x-auto">
+                    {JSON.stringify(JSON.parse(selectedLog.previousValues), null, 2)}
                   </pre>
                 </div>
               )}
 
               {selectedLog.newValues && (
                 <div>
-                  <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block mb-1">
-                    New State (Applied)
+                  <span className="text-neutral-400 block text-[10px] uppercase font-semibold mb-1">
+                    New Values Snapshot
                   </span>
-                  <pre className="p-3 rounded-lg bg-neutral-950 text-emerald-300 font-mono text-[11px] overflow-x-auto border border-neutral-800">
-                    {typeof selectedLog.newValues === "string"
-                      ? selectedLog.newValues
-                      : JSON.stringify(selectedLog.newValues, null, 2)}
+                  <pre className="p-2.5 rounded-lg bg-neutral-100 dark:bg-neutral-900 font-mono text-[11px] text-neutral-700 dark:text-neutral-300 overflow-x-auto">
+                    {JSON.stringify(JSON.parse(selectedLog.newValues), null, 2)}
                   </pre>
                 </div>
               )}
             </div>
 
-            <div className="flex justify-end pt-4 border-t border-neutral-200 dark:border-neutral-800 mt-4">
-              <button onClick={() => setSelectedLog(null)} className="apple-btn-secondary text-xs px-4 py-1.5">
-                Dismiss
+            <div className="pt-2 flex justify-end">
+              <button onClick={() => setSelectedLog(null)} className="apple-btn-secondary text-xs">
+                Close
               </button>
             </div>
           </div>
