@@ -11,6 +11,7 @@ import {
   ArrowLeft,
   Zap,
   ShieldCheck,
+  ShieldAlert,
   SwitchCamera,
   X,
   RotateCcw,
@@ -19,6 +20,7 @@ import {
   Crosshair,
   Satellite,
   Radio,
+  Navigation,
 } from "lucide-react";
 import Link from "next/link";
 import { formatIDR } from "@/lib/utils";
@@ -55,6 +57,7 @@ export default function EmployeeScanPage() {
   const [gpsStatus, setGpsStatus] = useState<"idle" | "acquiring" | "ready" | "denied" | "error" | "timeout">("idle");
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [gpsErrorCode, setGpsErrorCode] = useState<string | null>(null);
+  const [isSecureContext, setIsSecureContext] = useState<boolean>(true);
   const [isDev, setIsDev] = useState(false);
   const gpsSubscriptionRef = useRef<GpsStreamSubscription | null>(null);
 
@@ -73,11 +76,21 @@ export default function EmployeeScanPage() {
   const [torchOn, setTorchOn] = useState(false);
 
   const startGpsWatch = () => {
-    const isDevelopment =
-      process.env.NODE_ENV === "development" ||
-      (typeof window !== "undefined" &&
-        (window.location.hostname === "localhost" ||
-          window.location.hostname === "127.0.0.1"));
+    const isSecure =
+      typeof window !== "undefined" &&
+      (window.isSecureContext ||
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1");
+
+    if (!isSecure) {
+      setIsSecureContext(false);
+      setGpsStatus("error");
+      setGpsErrorCode("INSECURE_CONTEXT");
+      setGpsError(
+        "Browser memblokir izin GPS karena aplikasi dibuka melalui HTTP biasa (bukan HTTPS). Buka aplikasi via HTTPS (gunakan ngrok/tunnel atau jalankan 'next dev --experimental-https') agar pop-up izin lokasi dapat muncul."
+      );
+      return;
+    }
 
     if (gpsSubscriptionRef.current) {
       gpsSubscriptionRef.current.stop();
@@ -107,18 +120,20 @@ export default function EmployeeScanPage() {
         } else if (diag.stage === "timeout") {
           setGpsStatus("timeout");
           setGpsErrorCode("GPS_INDOOR_TIMEOUT");
-          setGpsError(diag.errorMessage || "Mencari sinyal GPS satelit memakan waktu terlalu lama. Pastikan GPS aktif dan berada di dekat jendela/luar ruangan.");
+          setGpsError(
+            diag.errorMessage ||
+              "Mencari sinyal GPS satelit memakan waktu terlalu lama. Pastikan GPS aktif dan berada di dekat jendela/luar ruangan."
+          );
         } else if (diag.stage === "denied") {
           setGpsStatus("denied");
           setGpsErrorCode("GPS_PERMISSION_DENIED");
           setGpsError(
-            diag.errorMessage ||
-              "Izin lokasi belum diizinkan di browser ini. Buka setelan browser dan izinkan akses lokasi (Precise Location) untuk situs ini."
+            "Akses lokasi diblokir oleh browser. Buka setelan browser (Site Settings / Permissions) untuk mengizinkan lokasi."
           );
         } else if (diag.stage === "error") {
           setGpsStatus("error");
           setGpsErrorCode(diag.errorCode || "GPS_ERROR");
-          setGpsError(diag.errorMessage || "Sinyal GPS fisik tidak tersedia pada perangkat saat ini.");
+          setGpsError(diag.errorMessage || "Sinyal GPS fisik tidak tersedia pada perangkat saat ini. Pastikan GPS aktif.");
         }
       },
     });
@@ -136,12 +151,89 @@ export default function EmployeeScanPage() {
         if (err.code === "GPS_INDOOR_TIMEOUT") {
           setGpsStatus("timeout");
           setGpsErrorCode("GPS_INDOOR_TIMEOUT");
-          setGpsError(err.message);
+          setGpsError(
+            "Mencari sinyal GPS satelit memakan waktu terlalu lama. Pastikan GPS aktif dan berada di dekat jendela/luar ruangan."
+          );
         }
       });
   };
 
-  const acquireGpsLocation = startGpsWatch;
+  // Explicit Synchronous User-Gesture Handler for Geolocation Permission
+  const requestGpsWithUserGesture = () => {
+    if (typeof window === "undefined" || !navigator.geolocation) {
+      setGpsStatus("error");
+      setGpsErrorCode("GPS_UNAVAILABLE");
+      setGpsError("Browser ini tidak mendukung Geolocation API.");
+      return;
+    }
+
+    const isSecure =
+      window.isSecureContext ||
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1";
+
+    if (!isSecure) {
+      setIsSecureContext(false);
+      setGpsStatus("error");
+      setGpsErrorCode("INSECURE_CONTEXT");
+      setGpsError(
+        "Browser memblokir izin GPS karena aplikasi dibuka melalui HTTP biasa (bukan HTTPS). Buka aplikasi via HTTPS (gunakan ngrok/tunnel atau jalankan 'next dev --experimental-https') agar pop-up izin lokasi dapat muncul."
+      );
+      return;
+    }
+
+    setGpsStatus("acquiring");
+    setGpsError(null);
+    setGpsErrorCode(null);
+
+    // Direct synchronous user-gesture trigger to unlock native browser dialog
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const acc = Math.round(pos.coords.accuracy);
+        if (acc <= 50) {
+          // Immediately locked with high precision
+          setGpsCoords({
+            latitude: Number(pos.coords.latitude.toFixed(6)),
+            longitude: Number(pos.coords.longitude.toFixed(6)),
+            accuracy: acc,
+          });
+          setGpsStatus("ready");
+          setGpsError(null);
+          setGpsErrorCode(null);
+        } else {
+          // Coarse reading (>50m), start continuous stream warm-up
+          startGpsWatch();
+        }
+      },
+      (err) => {
+        console.error("Geolocation error:", err.code, err.message);
+        if (err.code === 1) { // PERMISSION_DENIED
+          setGpsStatus("denied");
+          setGpsErrorCode("GPS_PERMISSION_DENIED");
+          setGpsError(
+            "Akses lokasi diblokir oleh browser. Buka setelan browser (Site Settings / Permissions) untuk mengizinkan lokasi."
+          );
+        } else if (err.code === 2) { // POSITION_UNAVAILABLE
+          setGpsStatus("error");
+          setGpsErrorCode("POSITION_UNAVAILABLE");
+          setGpsError("Sinyal GPS fisik tidak tersedia pada perangkat saat ini. Pastikan GPS aktif.");
+        } else if (err.code === 3) { // TIMEOUT
+          setGpsStatus("timeout");
+          setGpsErrorCode("GPS_INDOOR_TIMEOUT");
+          setGpsError(
+            "Mencari sinyal GPS satelit memakan waktu terlalu lama. Pastikan GPS aktif dan berada di dekat jendela/luar ruangan."
+          );
+        } else {
+          setGpsStatus("error");
+          setGpsErrorCode("GPS_ERROR");
+          setGpsError(err.message || "Gagal memperoleh sinyal GPS.");
+        }
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  };
+
+  const acquireGpsLocation = requestGpsWithUserGesture;
 
   const handleUseMockGps = () => {
     setGpsCoords({
@@ -154,15 +246,50 @@ export default function EmployeeScanPage() {
     setGpsErrorCode(null);
   };
 
-  // Mount initialization: Acquire GPS & Auto-start Camera
+  // Mount initialization: Check context security & Auto-start Camera
   useEffect(() => {
-    setIsDev(
+    const isDevelopment =
       process.env.NODE_ENV === "development" ||
-        (typeof window !== "undefined" &&
-          (window.location.hostname === "localhost" ||
-            window.location.hostname === "127.0.0.1"))
-    );
-    startGpsWatch();
+      (typeof window !== "undefined" &&
+        (window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1"));
+    setIsDev(isDevelopment);
+
+    const isSecure =
+      typeof window !== "undefined" &&
+      (window.isSecureContext ||
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1");
+
+    setIsSecureContext(isSecure);
+
+    if (!isSecure) {
+      setGpsStatus("error");
+      setGpsErrorCode("INSECURE_CONTEXT");
+      setGpsError(
+        "Browser memblokir izin GPS karena aplikasi dibuka melalui HTTP biasa (bukan HTTPS). Buka aplikasi via HTTPS (gunakan ngrok/tunnel atau jalankan 'next dev --experimental-https') agar pop-up izin lokasi dapat muncul."
+      );
+    } else {
+      // Check if permission was already granted previously
+      if (typeof navigator !== "undefined" && (navigator as any).permissions?.query) {
+        (navigator as any).permissions
+          .query({ name: "geolocation" })
+          .then((perm: any) => {
+            if (perm.state === "granted") {
+              startGpsWatch();
+            } else {
+              setGpsStatus("idle");
+            }
+          })
+          .catch(() => {
+            setGpsStatus("idle");
+          });
+      } else {
+        // Mobile Safari: keep idle so user explicitly taps [AKTIFKAN IZIN GPS & LOKASI]
+        setGpsStatus("idle");
+      }
+    }
+
     startCamera("environment");
 
     return () => {
@@ -561,6 +688,16 @@ export default function EmployeeScanPage() {
                 <MapPin className="w-3.5 h-3.5 text-neutral-500" />
                 <span className="text-neutral-600 dark:text-neutral-400 font-medium">GPS Location:</span>
               </div>
+              {gpsStatus === "idle" && (
+                <button
+                  type="button"
+                  onClick={requestGpsWithUserGesture}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-mono font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors"
+                >
+                  <Navigation className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                  <span>[MENUNGGU IZIN LOKASI]</span>
+                </button>
+              )}
               {gpsStatus === "acquiring" && (
                 <div className="flex items-center gap-1.5 font-mono text-[10px] text-blue-600 dark:text-blue-400 text-right">
                   <span className="relative flex h-2 w-2 shrink-0">
@@ -569,8 +706,8 @@ export default function EmployeeScanPage() {
                   </span>
                   <span className="font-semibold">
                     {gpsDiagnostic.accuracy !== null
-                      ? `[MENCARI SATELIT GPS... AKURASI SAAT INI: ±${gpsDiagnostic.accuracy}m (TARGET <= 50m)]`
-                      : `[MENCARI SATELIT GPS... (TARGET <= 50m)]`}
+                      ? `[MENCARI LOKASI... ±${gpsDiagnostic.accuracy}m]`
+                      : `[MENCARI LOKASI...]`}
                   </span>
                 </div>
               )}
@@ -578,11 +715,11 @@ export default function EmployeeScanPage() {
                 <div className="flex items-center gap-1.5">
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-mono font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                     <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                    <span>[GPS TERKUNCI: ±{Math.round(gpsCoords.accuracy)}m]</span>
+                    <span>[LOKASI DIDAPAT: ±{Math.round(gpsCoords.accuracy)}m]</span>
                   </span>
                   <button
                     type="button"
-                    onClick={startGpsWatch}
+                    onClick={requestGpsWithUserGesture}
                     title="Kalibrasi ulang satelit GPS"
                     className="p-1 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors"
                   >
@@ -596,17 +733,76 @@ export default function EmployeeScanPage() {
                   <span>[TIMEOUT SATELIT]</span>
                 </span>
               )}
-              {(gpsStatus === "denied" || gpsStatus === "error" || gpsStatus === "idle") && (
+              {gpsStatus === "denied" && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800">
+                  <AlertCircle className="w-3 h-3 text-red-500" />
+                  <span>[IZIN DITOLAK]</span>
+                </span>
+              )}
+              {gpsStatus === "error" && (
                 <button
                   type="button"
-                  onClick={startGpsWatch}
+                  onClick={requestGpsWithUserGesture}
                   className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800 hover:bg-red-100"
                 >
                   <Crosshair className="w-3 h-3" />
-                  <span>Retry Location</span>
+                  <span>{gpsErrorCode === "INSECURE_CONTEXT" ? "[HTTP INSECURE]" : "[RETRY GPS]"}</span>
                 </button>
               )}
             </div>
+
+            {/* 1. Insecure Context (HTTP vs HTTPS) Alert Card */}
+            {(!isSecureContext || gpsErrorCode === "INSECURE_CONTEXT") && (
+              <div className="p-4 rounded-2xl bg-amber-500/10 border-2 border-amber-500/40 text-amber-950 dark:text-amber-200 text-xs flex items-start gap-3 text-left shadow-sm">
+                <ShieldAlert className="w-5 h-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                <div className="space-y-1.5 flex-1">
+                  <span className="font-semibold text-sm block font-mono text-amber-900 dark:text-amber-100">
+                    [INSECURE CONTEXT DETECTED]
+                  </span>
+                  <p className="leading-relaxed text-neutral-800 dark:text-neutral-200">
+                    Browser memblokir izin GPS karena aplikasi dibuka melalui HTTP biasa (bukan HTTPS). Buka aplikasi via HTTPS (gunakan ngrok/tunnel atau jalankan &apos;next dev --experimental-https&apos;) agar pop-up izin lokasi dapat muncul.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* 2. Explicit User-Gesture Action Button for Geolocation Permission */}
+            {gpsStatus === "idle" && isSecureContext && (
+              <div className="p-4 rounded-2xl bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 text-left space-y-3 shadow-sm">
+                <div className="flex items-start gap-2.5">
+                  <Navigation className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-semibold text-xs text-neutral-900 dark:text-neutral-100 block">
+                      Akses Lokasi GPS Diperlukan
+                    </span>
+                    <p className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-relaxed mt-0.5">
+                      Untuk validasi radius kantor dan anti-kecurangan, izinkan akses lokasi presisi pada browser Anda.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={requestGpsWithUserGesture}
+                  className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-xs font-semibold tracking-wide flex items-center justify-center gap-2 transition-all shadow-sm"
+                >
+                  <Navigation className="w-4 h-4 fill-white" />
+                  <span>[AKTIFKAN IZIN GPS &amp; LOKASI]</span>
+                </button>
+              </div>
+            )}
+
+            {/* 3. Acquiring State Diagnostic Card */}
+            {gpsStatus === "acquiring" && (
+              <div className="p-3.5 rounded-xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/60 text-xs flex items-center gap-2.5 text-left text-blue-900 dark:text-blue-300">
+                <Crosshair className="w-4 h-4 animate-spin text-blue-600 dark:text-blue-400 shrink-0" />
+                <div className="space-y-0.5 flex-1">
+                  <span className="font-semibold font-mono text-[11px]">[MENCARI LOKASI]</span>
+                  <p className="text-[11px] text-neutral-600 dark:text-neutral-400">
+                    Menghubungi satelit GPS / sinyal lokasi...
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Cellular BTS / High Inaccuracy Warning Card */}
             {gpsStatus === "acquiring" && gpsDiagnostic.isCellularBts && gpsDiagnostic.elapsedSeconds >= 5 && (
@@ -621,24 +817,24 @@ export default function EmployeeScanPage() {
               </div>
             )}
 
-            {/* 1. Geolocation Permission Denied State Card */}
+            {/* 4. Geolocation Permission Denied State Card */}
             {gpsStatus === "denied" && (
               <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 text-xs flex items-start gap-3 text-left">
                 <AlertCircle className="w-5 h-5 shrink-0 text-red-600 dark:text-red-400 mt-0.5" />
-                <div className="space-y-2 flex-1">
+                <div className="space-y-2.5 flex-1">
                   <div>
                     <span className="font-semibold text-sm block font-mono text-red-900 dark:text-red-200">
-                      [IZIN LOKASI DITOLAK]
+                      [IZIN DITOLAK]
                     </span>
                     <p className="leading-relaxed mt-1 text-neutral-700 dark:text-neutral-300">
                       {gpsError ||
-                        "Izin lokasi belum diizinkan di browser ini. Buka setelan browser dan izinkan akses lokasi (Precise Location) untuk situs ini."}
+                        "Akses lokasi diblokir oleh browser. Buka setelan browser (Site Settings / Permissions) untuk mengizinkan lokasi."}
                     </p>
                   </div>
                   <button
                     type="button"
-                    onClick={startGpsWatch}
-                    className="apple-btn-secondary text-xs px-3.5 py-1.5 font-medium inline-flex items-center gap-1.5 bg-white dark:bg-neutral-800 border-red-300 dark:border-red-700 hover:bg-neutral-50 dark:hover:bg-neutral-700 shadow-sm"
+                    onClick={requestGpsWithUserGesture}
+                    className="min-h-[44px] apple-btn-secondary text-xs px-4 py-2 font-medium inline-flex items-center gap-1.5 bg-white dark:bg-neutral-800 border-red-300 dark:border-red-700 hover:bg-neutral-50 dark:hover:bg-neutral-700 shadow-sm"
                   >
                     <RotateCcw className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
                     <span>Minta Izin Lokasi Ulang</span>
@@ -661,7 +857,7 @@ export default function EmployeeScanPage() {
               </div>
             )}
 
-            {/* 2. Indoor Satellite Timeout Action Card */}
+            {/* 5. Indoor Satellite Timeout Action Card */}
             {gpsStatus === "timeout" && (
               <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-3 text-left">
                 <Satellite className="w-5 h-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
@@ -676,8 +872,8 @@ export default function EmployeeScanPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={startGpsWatch}
-                    className="apple-btn-secondary text-xs px-3.5 py-1.5 font-medium inline-flex items-center gap-1.5 bg-white dark:bg-neutral-800 border-amber-300 dark:border-amber-700 hover:bg-neutral-50 dark:hover:bg-neutral-700 shadow-sm"
+                    onClick={requestGpsWithUserGesture}
+                    className="min-h-[44px] apple-btn-secondary text-xs px-4 py-2 font-medium inline-flex items-center gap-1.5 bg-white dark:bg-neutral-800 border-amber-300 dark:border-amber-700 hover:bg-neutral-50 dark:hover:bg-neutral-700 shadow-sm"
                   >
                     <RotateCw className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                     <span>Coba Lagi</span>
@@ -686,11 +882,11 @@ export default function EmployeeScanPage() {
               </div>
             )}
 
-            {/* 3. Hardware / System Geolocation Error Card */}
-            {gpsStatus === "error" && gpsError && (
+            {/* 6. Hardware / System Geolocation Error Card */}
+            {gpsStatus === "error" && gpsErrorCode !== "INSECURE_CONTEXT" && gpsError && (
               <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 text-xs flex items-start gap-3 text-left">
                 <AlertCircle className="w-5 h-5 shrink-0 text-red-600 dark:text-red-400 mt-0.5" />
-                <div className="space-y-2 flex-1">
+                <div className="space-y-2.5 flex-1">
                   <div>
                     <span className="font-semibold text-sm block font-mono text-red-900 dark:text-red-200">
                       {gpsErrorCode === "POSITION_UNAVAILABLE" ? "[SINYAL GPS TIDAK TERSEDIA]" : "[GPS ERROR]"}
@@ -701,8 +897,8 @@ export default function EmployeeScanPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={startGpsWatch}
-                    className="apple-btn-secondary text-xs px-3.5 py-1.5 font-medium inline-flex items-center gap-1.5 bg-white dark:bg-neutral-800 border-red-300 dark:border-red-700 hover:bg-neutral-50 dark:hover:bg-neutral-700 shadow-sm"
+                    onClick={requestGpsWithUserGesture}
+                    className="min-h-[44px] apple-btn-secondary text-xs px-4 py-2 font-medium inline-flex items-center gap-1.5 bg-white dark:bg-neutral-800 border-red-300 dark:border-red-700 hover:bg-neutral-50 dark:hover:bg-neutral-700 shadow-sm"
                   >
                     <RotateCcw className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
                     <span>Coba Lagi</span>
