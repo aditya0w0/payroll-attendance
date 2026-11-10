@@ -188,12 +188,15 @@ async function runEnterpriseAudit() {
   });
   const ahmadCookie = ahmadLoginRes.headers.get("set-cookie")?.split(";")[0];
 
+  const scanHeaders = {
+    "Content-Type": "application/json",
+    "Cookie": ahmadCookie,
+    ...(activeOffice?.officePublicIp ? { "x-forwarded-for": activeOffice.officePublicIp } : {}),
+  };
+
   const scanAhmadRes = await fetch(`${BASE_URL}/api/qr/scan`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": ahmadCookie,
-    },
+    headers: scanHeaders,
     body: JSON.stringify({
       token: qrData.token,
       deviceFingerprint: "fp_ahmad_pixel_8_auth",
@@ -286,12 +289,15 @@ async function runEnterpriseAudit() {
     data: { consumedAt: new Date(Date.now() - 5000) },
   });
 
+  const proxyScanHeaders = {
+    "Content-Type": "application/json",
+    "Cookie": proxyCookie,
+    ...(activeOffice?.officePublicIp ? { "x-forwarded-for": activeOffice.officePublicIp } : {}),
+  };
+
   const proxyScanRes = await fetch(`${BASE_URL}/api/qr/scan`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": proxyCookie,
-    },
+    headers: proxyScanHeaders,
     body: JSON.stringify({
       token: qrData.token, // Reused token!
       deviceFingerprint: "fp_test_proxy_terminal",
@@ -328,10 +334,7 @@ async function runEnterpriseAudit() {
   // 2.6 Forged Token Submission Check
   const forgedRes = await fetch(`${BASE_URL}/api/qr/scan`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": proxyCookie,
-    },
+    headers: proxyScanHeaders,
     body: JSON.stringify({
       token: "qr_fake_manipulated_challenge_payload_xyz",
       deviceFingerprint: "fp_test_proxy_terminal",

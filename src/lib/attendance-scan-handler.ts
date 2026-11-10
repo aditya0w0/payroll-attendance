@@ -54,7 +54,15 @@ export async function handleAttendanceScan(req: Request) {
       );
     }
 
-    const token = (parseRes.data.token || parseRes.data.qrToken)!.trim();
+    let token = (parseRes.data.token || parseRes.data.qrToken)!.trim();
+    if (token.startsWith("{") && (token.includes('"t"') || token.includes("'t'"))) {
+      try {
+        const parsed = JSON.parse(token);
+        if (parsed && typeof parsed.t === "string" && parsed.t.trim().length > 0) {
+          token = parsed.t.trim();
+        }
+      } catch {}
+    }
     const { deviceFingerprint, latitude, longitude, accuracy } = parseRes.data;
 
     // 1. Extract Real Client Network IP
@@ -172,8 +180,9 @@ export async function handleAttendanceScan(req: Request) {
     }
 
     // 5. Single-Device Security Verification & Cheating Flagging
-    if (user.deviceRegistration && deviceFingerprint) {
-      if (user.deviceRegistration.deviceFingerprint !== deviceFingerprint) {
+    if (user.deviceRegistration) {
+      const regFp = user.deviceRegistration.deviceFingerprint;
+      if (regFp && deviceFingerprint && regFp !== deviceFingerprint) {
         await recordAuditLog({
           actorId: user.id,
           actorRole: "EMPLOYEE",
@@ -183,7 +192,7 @@ export async function handleAttendanceScan(req: Request) {
           targetId: user.id,
           newValues: {
             registeredDevice: user.deviceRegistration.deviceName,
-            registeredFingerprint: user.deviceRegistration.deviceFingerprint,
+            registeredFingerprint: regFp,
             attemptedFingerprint: deviceFingerprint,
             incident: "Attempted to scan attendance from an unauthorized, unapproved device terminal.",
           },
@@ -200,6 +209,14 @@ export async function handleAttendanceScan(req: Request) {
           },
           { status: 403 }
         );
+      }
+
+      // If registered device has no fingerprint stored yet (bound via passkey), bind it now
+      if (!regFp && deviceFingerprint) {
+        await prisma.deviceRegistration.update({
+          where: { id: user.deviceRegistration.id },
+          data: { deviceFingerprint },
+        });
       }
     }
 

@@ -138,9 +138,20 @@ export async function validateAndConsumeQRToken(
 ): Promise<QRValidationResult> {
   const now = new Date();
 
+  // Parse token if it's encoded as JSON { t: "qr_...", exp: ... }
+  let cleanToken = (token || "").trim();
+  if (cleanToken.startsWith("{") && (cleanToken.includes('"t"') || cleanToken.includes("'t'"))) {
+    try {
+      const parsed = JSON.parse(cleanToken);
+      if (parsed && typeof parsed.t === "string" && parsed.t.trim().length > 0) {
+        cleanToken = parsed.t.trim();
+      }
+    } catch {}
+  }
+
   // 1. Locate the challenge token in database
   const challenge = await prisma.qRChallenge.findUnique({
-    where: { token },
+    where: { token: cleanToken },
   });
 
   // Check A: Token does not exist -> FORGERY ATTEMPT
