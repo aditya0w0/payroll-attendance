@@ -166,6 +166,10 @@ async function runEnterpriseAudit() {
   );
 
   // 2.2 Authorized Employee Punch (Burns token)
+  const activeOffice = await prisma.officeConfig.findFirst({ orderBy: { createdAt: "desc" } });
+  const testLat = activeOffice ? activeOffice.latitude : -6.928715;
+  const testLon = activeOffice ? activeOffice.longitude : 109.655502;
+
   // Cleanly clear previous day attendance for Ahmad so test is idempotent across repeated runs
   await prisma.attendanceRecord.deleteMany({
     where: { employee: { user: { email: "ahmad@company.com" } } },
@@ -193,8 +197,8 @@ async function runEnterpriseAudit() {
     body: JSON.stringify({
       token: qrData.token,
       deviceFingerprint: "fp_ahmad_pixel_8_auth",
-      latitude: -6.2088,
-      longitude: 106.8456,
+      latitude: testLat,
+      longitude: testLon,
       accuracy: 15,
     }),
   });
@@ -291,8 +295,8 @@ async function runEnterpriseAudit() {
     body: JSON.stringify({
       token: qrData.token, // Reused token!
       deviceFingerprint: "fp_test_proxy_terminal",
-      latitude: -6.2088,
-      longitude: 106.8456,
+      latitude: testLat,
+      longitude: testLon,
       accuracy: 15,
     }),
   });
@@ -331,8 +335,8 @@ async function runEnterpriseAudit() {
     body: JSON.stringify({
       token: "qr_fake_manipulated_challenge_payload_xyz",
       deviceFingerprint: "fp_test_proxy_terminal",
-      latitude: -6.2088,
-      longitude: 106.8456,
+      latitude: testLat,
+      longitude: testLon,
       accuracy: 15,
     }),
   });

@@ -484,6 +484,10 @@ async function runQASecuritySuite() {
   const cookieB = bLoginRes.headers.get("set-cookie")?.split(";")[0];
 
   // 4.2 Generate Active Challenge
+  const activeOffice = await prisma.officeConfig.findFirst({ orderBy: { createdAt: "desc" } });
+  const testLat = activeOffice ? activeOffice.latitude : -6.928715;
+  const testLon = activeOffice ? activeOffice.longitude : 109.655502;
+
   const qrGenRes = await fetch(`${BASE_URL}/api/qr/active`);
   const qrGenData = await qrGenRes.json();
   const testToken = qrGenData.token;
@@ -497,8 +501,8 @@ async function runQASecuritySuite() {
       body: JSON.stringify({
         token: testToken,
         deviceFingerprint: "fp_conc_a",
-        latitude: -6.2088,
-        longitude: 106.8456,
+        latitude: testLat,
+        longitude: testLon,
         accuracy: 15,
       }),
     }),
@@ -508,8 +512,8 @@ async function runQASecuritySuite() {
       body: JSON.stringify({
         token: testToken,
         deviceFingerprint: "fp_conc_b",
-        latitude: -6.2088,
-        longitude: 106.8456,
+        latitude: testLat,
+        longitude: testLon,
         accuracy: 15,
       }),
     }),
@@ -537,8 +541,8 @@ async function runQASecuritySuite() {
     body: JSON.stringify({
       token: "qr_attacker_forged_payload_" + Math.random(),
       deviceFingerprint: "fp_conc_a",
-      latitude: -6.2088,
-      longitude: 106.8456,
+      latitude: testLat,
+      longitude: testLon,
       accuracy: 15,
     }),
   });
@@ -566,8 +570,8 @@ async function runQASecuritySuite() {
     body: JSON.stringify({
       token: expiredDbChallenge.token,
       deviceFingerprint: "fp_conc_a",
-      latitude: -6.2088,
-      longitude: 106.8456,
+      latitude: testLat,
+      longitude: testLon,
       accuracy: 15,
     }),
   });
