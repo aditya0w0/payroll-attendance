@@ -121,8 +121,8 @@ export default function EmployeeScanPage() {
 
   const handleUseMockGps = () => {
     setGpsCoords({
-      latitude: -6.2088,
-      longitude: 106.8456,
+      latitude: -6.928715,
+      longitude: 109.655502,
       accuracy: 10,
     });
     setGpsStatus("ready");

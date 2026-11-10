@@ -66,8 +66,8 @@ export default function MapLocationPicker({
 
       if (!isMounted || !mapContainerRef.current) return;
 
-      const initialLat = latitude || -6.2088;
-      const initialLon = longitude || 106.8456;
+      const initialLat = latitude || -6.928715;
+      const initialLon = longitude || 109.655502;
 
       const map = L.map(mapContainerRef.current, {
         center: [initialLat, initialLon],
@@ -204,8 +204,13 @@ export default function MapLocationPicker({
             setDeviceAccuracy(info.currentAccuracy);
           }
         },
-        { targetAccuracyMeters: 20, maxAcquisitionMs: 7000 }
+        { targetAccuracyMeters: 20, maxAcquisitionMs: 15000, allowIpFallback: false }
       );
+
+      if (res.error) {
+        setLocatingStatus(res.error);
+        return;
+      }
 
       const lat = res.latitude;
       const lon = res.longitude;
@@ -235,7 +240,7 @@ export default function MapLocationPicker({
       await updateAddress(lat, lon);
       onChange({ latitude: lat, longitude: lon, address: res.address });
       setLocatingStatus(
-        `Lokasi terkunci! Akurasi +/- ${res.accuracy}m (${res.isHighPrecision ? "Presisi Satelit Tinggi" : "Estimasi Jaringan"})`
+        `Lokasi terkunci! Akurasi +/- ${res.accuracy}m (${res.isHighPrecision ? "Satelit Presisi Tinggi" : "GPS Hardware"})`
       );
     } catch (err: any) {
       setLocatingStatus(`Gagal membaca GPS: ${err.message}`);

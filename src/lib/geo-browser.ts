@@ -6,6 +6,12 @@
  * until maximum precision (lowest accuracy radius) is achieved.
  */
 
+export const DEFAULT_OFFICE_COORDS = {
+  latitude: -6.928715,
+  longitude: 109.655502,
+  address: "Starblak Seblak Basah, Kertijayan, Buaran, Pekalongan, Jawa Tengah 51171",
+};
+
 export interface PrecisionLocationResult {
   latitude: number;
   longitude: number;
@@ -29,27 +35,28 @@ export async function acquirePrecisionLocation(
   onProgress?: PrecisionProgressCallback,
   options: {
     targetAccuracyMeters?: number; // Stop immediately once accuracy <= target (default: 20m)
-    maxAcquisitionMs?: number;     // Max time to wait for satellite lock (default: 7000ms)
-    allowIpFallback?: boolean;     // Fallback to IP geolocation if GPS completely unavailable
+    maxAcquisitionMs?: number;     // Max time to wait for satellite lock (default: 15000ms)
+    allowIpFallback?: boolean;     // Fallback to IP geolocation ONLY if user explicitly permits (default: false)
   } = {}
 ): Promise<PrecisionLocationResult> {
   const targetAccuracy = options.targetAccuracyMeters ?? 20;
-  const maxWait = options.maxAcquisitionMs ?? 7000;
-  const allowIp = options.allowIpFallback ?? true;
+  const maxWait = options.maxAcquisitionMs ?? 15000;
+  // CRITICAL: Default to false to prevent cellular IP (e.g. Tegal gateway) from silently overriding Pekalongan GPS
+  const allowIp = options.allowIpFallback ?? false;
 
   if (typeof window === "undefined" || !navigator.geolocation) {
     if (allowIp) {
       return await acquireIpLocationFallback();
     }
-    throw new Error("Perangkat atau browser tidak memiliki sensor GPS Geolocation.");
+    throw new Error("Perangkat atau browser tidak memiliki sensor GPS Geolocation aktif.");
   }
 
   onProgress?.({
     stage: "requesting",
-    message: "Menghubungkan ke sensor lokasi dan satelit GPS...",
+    message: "Mengaktifkan sensor satelit GPS perangkat...",
   });
 
-  return new Promise<PrecisionLocationResult>((resolve) => {
+  return new Promise<PrecisionLocationResult>((resolve, reject) => {
     let bestFix: GeolocationCoordinates | null = null;
     let watchId: number | null = null;
     let isDone = false;
@@ -69,12 +76,14 @@ export async function acquirePrecisionLocation(
       onProgress?.({
         stage: "done",
         bestAccuracy: result.accuracy,
-        message: `Lokasi terkunci dengan akurasi +/- ${Math.round(result.accuracy)}m`,
+        message: result.error
+          ? result.error
+          : `Lokasi terkunci dengan akurasi +/- ${Math.round(result.accuracy)}m (${result.isHighPrecision ? "Satelit Presisi Tinggi" : "GPS Standar"})`,
       });
       resolve(result);
     };
 
-    // Hard timeout timer: Stop watching and use the best fix acquired
+    // Timeout timer: Stop watching and use the best fix acquired
     const timer = setTimeout(async () => {
       if (isDone) return;
       if (bestFix) {
@@ -88,18 +97,19 @@ export async function acquirePrecisionLocation(
       } else if (allowIp) {
         onProgress?.({
           stage: "fallback",
-          message: "GPS tidak merespons, beralih ke deteksi IP jaringan...",
+          message: "Sinyal GPS belum terkunci, beralih ke estimasi IP jaringan...",
         });
         const ipLoc = await acquireIpLocationFallback();
         finish(ipLoc);
       } else {
+        const errorMsg = "Sinyal satelit GPS belum terkunci (terhalang gedung atau izin lokasi belum aktif). Silakan geser pin manual pada peta atau pilih preset 'Pekalongan (Starblak)'.";
         finish({
-          latitude: -6.2088,
-          longitude: 106.8456,
-          accuracy: 500,
-          source: "ip_network",
+          latitude: DEFAULT_OFFICE_COORDS.latitude,
+          longitude: DEFAULT_OFFICE_COORDS.longitude,
+          accuracy: 100,
+          source: "gps_standard",
           isHighPrecision: false,
-          error: "Waktu permintaan GPS habis tanpa sinyal.",
+          error: errorMsg,
         });
       }
     }, maxWait);
@@ -119,7 +129,7 @@ export async function acquirePrecisionLocation(
             stage: "sampling",
             currentAccuracy: Math.round(acc),
             bestAccuracy: Math.round(bestFix.accuracy),
-            message: `Mengkalibrasi sinyal GPS... (Akurasi saat ini: +/- ${Math.round(acc)}m, terbaik: +/- ${Math.round(bestFix.accuracy)}m)`,
+            message: `Mengkalibrasi sinyal satelit GPS... (Akurasi: +/- ${Math.round(acc)}m, terbaik: +/- ${Math.round(bestFix.accuracy)}m)`,
           });
 
           // If reached target high accuracy (e.g. <= 20m), lock immediately
@@ -134,23 +144,22 @@ export async function acquirePrecisionLocation(
           }
         },
         async (err) => {
-          // If watchPosition fails immediately and we have no best fix
           if (!bestFix) {
             if (allowIp) {
               onProgress?.({
                 stage: "fallback",
-                message: `Izin lokasi ditolak (${err.message}). Menggunakan estimasi lokasi jaringan...`,
+                message: `Izin lokasi ditolak (${err.message}). Menggunakan estimasi jaringan...`,
               });
               const ipLoc = await acquireIpLocationFallback();
               finish(ipLoc);
             } else {
               finish({
-                latitude: -6.2088,
-                longitude: 106.8456,
-                accuracy: 1000,
-                source: "ip_network",
+                latitude: DEFAULT_OFFICE_COORDS.latitude,
+                longitude: DEFAULT_OFFICE_COORDS.longitude,
+                accuracy: 100,
+                source: "gps_standard",
                 isHighPrecision: false,
-                error: err.message,
+                error: `Izin lokasi belum diberikan atau sinyal terhalang: ${err.message}`,
               });
             }
           }
@@ -158,7 +167,7 @@ export async function acquirePrecisionLocation(
         {
           enableHighAccuracy: true,
           timeout: maxWait,
-          maximumAge: 0,
+          maximumAge: 5000,
         }
       );
     } catch (err: any) {
@@ -166,12 +175,12 @@ export async function acquirePrecisionLocation(
         acquireIpLocationFallback().then(finish);
       } else {
         finish({
-          latitude: -6.2088,
-          longitude: 106.8456,
-          accuracy: 1000,
-          source: "ip_network",
+          latitude: DEFAULT_OFFICE_COORDS.latitude,
+          longitude: DEFAULT_OFFICE_COORDS.longitude,
+          accuracy: 100,
+          source: "gps_standard",
           isHighPrecision: false,
-          error: err?.message,
+          error: err?.message || "Sensor GPS tidak dapat diakses",
         });
       }
     }
@@ -189,19 +198,19 @@ export async function acquireIpLocationFallback(): Promise<PrecisionLocationResu
     return {
       latitude: Number(data.latitude.toFixed(6)),
       longitude: Number(data.longitude.toFixed(6)),
-      accuracy: 500, // IP geolocation has rough city-level accuracy
+      accuracy: 500, // IP geolocation has rough regional accuracy
       source: "ip_network",
       isHighPrecision: false,
-      address: `${data.city || "Kota"}, ${data.region || ""}, ${data.country || "Indonesia"}`,
+      address: `${data.city || "Kota"}, ${data.region || ""}, ${data.country || "Indonesia"} (Estimasi IP Jaringan)`,
     };
   } catch {
     return {
-      latitude: -6.2088,
-      longitude: 106.8456,
-      accuracy: 1000,
+      latitude: DEFAULT_OFFICE_COORDS.latitude,
+      longitude: DEFAULT_OFFICE_COORDS.longitude,
+      accuracy: 500,
       source: "ip_network",
       isHighPrecision: false,
-      address: "Pusat Kota Jakarta (Fallback)",
+      address: DEFAULT_OFFICE_COORDS.address,
     };
   }
 }
