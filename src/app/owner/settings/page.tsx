@@ -258,7 +258,7 @@ export default function OwnerSettingsPage() {
       {/* Main Form */}
       <form onSubmit={handleSave} className="space-y-6">
         {/* Section 1: Office GPS Geofence */}
-        <div className="bg-white dark:bg-[#1C1C1E] border border-neutral-200 dark:border-neutral-800 rounded-xl p-6 shadow-sm space-y-5">
+        <div className="liquid-glass p-6 rounded-3xl shadow-sm space-y-5">
           <div className="flex items-center justify-between pb-3 border-b border-neutral-200 dark:border-neutral-800">
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -447,7 +447,7 @@ export default function OwnerSettingsPage() {
         </div>
 
         {/* Section 2: Office WiFi Public IP Matching */}
-        <div className="bg-white dark:bg-[#1C1C1E] border border-neutral-200 dark:border-neutral-800 rounded-xl p-6 shadow-sm space-y-5">
+        <div className="liquid-glass p-6 rounded-3xl shadow-sm space-y-5">
           <div className="flex items-center justify-between pb-3 border-b border-neutral-200 dark:border-neutral-800">
             <div className="flex items-center gap-2">
               <Wifi className="w-4 h-4 text-purple-600 dark:text-purple-400" />

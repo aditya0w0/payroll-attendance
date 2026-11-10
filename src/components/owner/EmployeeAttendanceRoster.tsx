@@ -81,7 +81,7 @@ export default function EmployeeAttendanceRoster() {
   return (
     <div className="space-y-4">
       {/* Controls Bar */}
-      <div className="bg-white dark:bg-[#1C1C1E] border border-neutral-200 dark:border-neutral-800 rounded-xl p-4 shadow-sm space-y-3">
+      <div className="liquid-glass p-4 rounded-2xl shadow-sm space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
@@ -96,13 +96,13 @@ export default function EmployeeAttendanceRoster() {
           </div>
 
           {/* Range Selector */}
-          <div className="inline-flex bg-neutral-100 dark:bg-[#2C2C2E] p-1 rounded-lg border border-neutral-200 dark:border-neutral-700 text-xs shrink-0 self-start sm:self-auto">
+          <div className="inline-flex liquid-glass-pill p-1 text-xs shrink-0 self-start sm:self-auto border border-white/30 dark:border-white/10">
             <button
               type="button"
               onClick={() => setRange("7d")}
               className={`px-2.5 py-1 rounded-md font-medium transition-all ${
                 range === "7d"
-                  ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 shadow-sm"
+                  ? "bg-white/90 dark:bg-white/15 text-neutral-900 dark:text-neutral-50 shadow-sm border border-white/50 dark:border-white/15 font-semibold"
                   : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
               }`}
             >
@@ -113,7 +113,7 @@ export default function EmployeeAttendanceRoster() {
               onClick={() => setRange("14d")}
               className={`px-2.5 py-1 rounded-md font-medium transition-all ${
                 range === "14d"
-                  ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 shadow-sm"
+                  ? "bg-white/90 dark:bg-white/15 text-neutral-900 dark:text-neutral-50 shadow-sm border border-white/50 dark:border-white/15 font-semibold"
                   : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
               }`}
             >
@@ -124,7 +124,7 @@ export default function EmployeeAttendanceRoster() {
               onClick={() => setRange("current_period")}
               className={`px-2.5 py-1 rounded-md font-medium transition-all ${
                 range === "current_period"
-                  ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 shadow-sm"
+                  ? "bg-white/90 dark:bg-white/15 text-neutral-900 dark:text-neutral-50 shadow-sm border border-white/50 dark:border-white/15 font-semibold"
                   : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
               }`}
             >
@@ -171,7 +171,7 @@ export default function EmployeeAttendanceRoster() {
       </div>
 
       {/* Roster Table Card */}
-      <div className="bg-white dark:bg-[#1C1C1E] border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden shadow-sm">
+      <div className="liquid-glass rounded-2xl overflow-hidden shadow-sm">
         {loading ? (
           <div className="text-center py-12 text-xs text-neutral-400 flex items-center justify-center gap-2">
             <RefreshCw className="w-4 h-4 animate-spin text-blue-600" />
@@ -340,7 +340,7 @@ export default function EmployeeAttendanceRoster() {
       {/* Employee Detail Modal */}
       {selectedEmployee && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#1C1C1E] border border-neutral-200 dark:border-neutral-800 rounded-2xl max-w-2xl w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+          <div className="liquid-glass-elevated max-w-2xl w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto shadow-2xl animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Header */}
             <div className="flex items-start justify-between pb-3 border-b border-neutral-200 dark:border-neutral-800">
               <div>

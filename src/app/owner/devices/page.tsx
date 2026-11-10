@@ -336,7 +336,7 @@ export default function OwnerDevicesPage() {
 
                   <div className="flex items-center gap-3">
                     {/* 6-digit Unlock Code Box */}
-                    <div className="bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-2.5 shadow-sm text-center">
+                    <div className="liquid-glass px-4 py-2.5 rounded-2xl shadow-sm text-center">
                       <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 block mb-1">
                         Unlock Code
                       </span>

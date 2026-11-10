@@ -44,12 +44,12 @@ export default async function OwnerLayout({
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--system-bg)]">
+    <div className="min-h-screen flex flex-col bg-transparent">
       {/* Top Header */}
-      <header className="sticky top-0 z-40 bg-[var(--card-bg)]/85 backdrop-blur-md border-b border-[var(--separator)]">
+      <header className="sticky top-0 z-40 liquid-glass border-b border-white/30 dark:border-white/10 shadow-sm backdrop-blur-2xl">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-12 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded-md bg-[var(--text-primary)] text-[var(--system-bg)] flex items-center justify-center">
+            <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-sm border border-white/30">
               <Shield className="w-3.5 h-3.5 stroke-[2]" />
             </div>
             <span className="text-xs font-semibold tracking-tight text-[var(--text-primary)]">CyberGuard</span>
@@ -61,13 +61,13 @@ export default async function OwnerLayout({
             <span className="text-[11px] text-[var(--text-tertiary)] hidden sm:inline tabular-numbers">
               WIB (UTC+7)
             </span>
-            <span className="hig-badge hig-badge-neutral text-[10px] font-semibold">
+            <span className="liquid-glass-pill px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30">
               OWNER
             </span>
             <form action={handleLogout}>
               <button
                 type="submit"
-                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-1 rounded transition-colors flex items-center gap-1 text-xs"
+                className="liquid-glass-btn-secondary px-2.5 py-1 text-xs rounded-xl flex items-center gap-1.5 transition-all text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 title="Sign Out"
               >
                 <LogOut className="w-3.5 h-3.5 stroke-[1.75]" />
@@ -78,7 +78,7 @@ export default async function OwnerLayout({
         </div>
 
         {/* Apple HIG Segmented Bar */}
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 border-t border-[var(--separator-subtle)] overflow-x-auto">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 border-t border-white/20 dark:border-white/10 overflow-x-auto">
           <nav className="flex space-x-1 py-1.5">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -86,7 +86,7 @@ export default async function OwnerLayout({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="px-2.5 py-1 text-xs font-medium rounded-md text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--separator-subtle)] flex items-center gap-1.5 transition-colors whitespace-nowrap"
+                  className="px-3 py-1.5 text-xs font-medium rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/40 dark:hover:bg-white/10 flex items-center gap-1.5 transition-all whitespace-nowrap active:scale-[0.98]"
                 >
                   <Icon className="w-3.5 h-3.5 stroke-[1.75]" />
                   {item.label}

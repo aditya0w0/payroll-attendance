@@ -52,7 +52,7 @@ export default function OwnerQRDisplayPage() {
   return (
     <div className="max-w-md mx-auto text-center space-y-6 py-6">
       <div>
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 mb-3">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium liquid-glass-pill mb-3">
           <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
           Dynamic Cryptographic Attendance
         </div>
@@ -65,7 +65,7 @@ export default function OwnerQRDisplayPage() {
       </div>
 
       {/* QR Code Container */}
-      <div className="bg-white dark:bg-[#1C1C1E] border border-neutral-200 dark:border-neutral-800 rounded-xl p-8 inline-block shadow-sm">
+      <div className="liquid-glass-elevated p-8 rounded-3xl inline-block shadow-lg">
         {loading || !qrDataUrl ? (
           <div className="w-64 h-64 flex items-center justify-center text-xs text-neutral-400">
             Generating cryptographic challenge...

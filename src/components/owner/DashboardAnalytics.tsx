@@ -32,8 +32,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     const total = hadir + terlambat + alpa;
 
     return (
-      <div className="bg-white dark:bg-[#2C2C2E] border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 shadow-lg rounded-lg p-3 text-xs space-y-1.5 min-w-[170px]">
-        <div className="font-semibold text-neutral-800 dark:text-neutral-200 border-b border-neutral-100 dark:border-neutral-700/60 pb-1 flex items-center justify-between">
+      <div className="liquid-glass-elevated border border-white/40 dark:border-white/10 text-neutral-900 dark:text-neutral-100 p-3.5 text-xs space-y-1.5 min-w-[170px] shadow-xl">
+        <div className="font-semibold text-neutral-800 dark:text-neutral-200 border-b border-white/20 dark:border-white/10 pb-1 flex items-center justify-between">
           <span>{label}</span>
           <span className="font-mono text-[10px] text-neutral-400">Total: {total}</span>
         </div>
@@ -133,13 +133,13 @@ export default function DashboardAnalytics() {
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="inline-flex bg-neutral-100 dark:bg-[#2C2C2E] p-1 rounded-lg border border-neutral-200 dark:border-neutral-700 text-xs">
+          <div className="inline-flex liquid-glass-pill p-1 text-xs border border-white/30 dark:border-white/10">
             <button
               type="button"
               onClick={() => setRange("7d")}
               className={`px-3 py-1 rounded-md font-medium transition-all ${
                 range === "7d"
-                  ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 shadow-sm"
+                  ? "bg-white/90 dark:bg-white/15 text-neutral-900 dark:text-neutral-50 shadow-sm border border-white/50 dark:border-white/15 rounded-md"
                   : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
               }`}
             >
@@ -150,7 +150,7 @@ export default function DashboardAnalytics() {
               onClick={() => setRange("14d")}
               className={`px-3 py-1 rounded-md font-medium transition-all ${
                 range === "14d"
-                  ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 shadow-sm"
+                  ? "bg-white/90 dark:bg-white/15 text-neutral-900 dark:text-neutral-50 shadow-sm border border-white/50 dark:border-white/15 rounded-md"
                   : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
               }`}
             >
@@ -161,7 +161,7 @@ export default function DashboardAnalytics() {
               onClick={() => setRange("current_period")}
               className={`px-3 py-1 rounded-md font-medium transition-all ${
                 range === "current_period"
-                  ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 shadow-sm"
+                  ? "bg-white/90 dark:bg-white/15 text-neutral-900 dark:text-neutral-50 shadow-sm border border-white/50 dark:border-white/15 rounded-md"
                   : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
               }`}
             >
@@ -173,7 +173,7 @@ export default function DashboardAnalytics() {
             type="button"
             onClick={fetchAnalytics}
             disabled={loading}
-            className="p-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-[#2C2C2E] text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-[#3A3A3C] transition-colors"
+            className="p-1.5 rounded-lg liquid-glass-btn-secondary text-neutral-600 dark:text-neutral-300 transition-colors"
             title="Refresh Data"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
@@ -181,10 +181,10 @@ export default function DashboardAnalytics() {
         </div>
       </div>
 
-      {/* KPI Metric Row (Apple HIG Cards) */}
+      {/* KPI Metric Row (Liquid Glass) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* 1. Tingkat Kehadiran */}
-        <div className="bg-white dark:bg-[#1C1C1E] border border-neutral-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm">
+        <div className="liquid-glass p-5 rounded-2xl">
           <div className="flex items-center justify-between text-neutral-500 dark:text-neutral-400 mb-1.5">
             <span className="text-[11px] font-semibold tracking-wider uppercase">
               Tingkat Kehadiran
@@ -200,7 +200,7 @@ export default function DashboardAnalytics() {
         </div>
 
         {/* 2. Total Hadir Tepat Waktu */}
-        <div className="bg-white dark:bg-[#1C1C1E] border border-neutral-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm">
+        <div className="liquid-glass p-5 rounded-2xl">
           <div className="flex items-center justify-between text-neutral-500 dark:text-neutral-400 mb-1.5">
             <span className="text-[11px] font-semibold tracking-wider uppercase">
               Total Hadir
@@ -216,7 +216,7 @@ export default function DashboardAnalytics() {
         </div>
 
         {/* 3. Terlambat */}
-        <div className="bg-white dark:bg-[#1C1C1E] border border-neutral-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm">
+        <div className="liquid-glass p-5 rounded-2xl">
           <div className="flex items-center justify-between text-neutral-500 dark:text-neutral-400 mb-1.5">
             <span className="text-[11px] font-semibold tracking-wider uppercase">
               Terlambat
@@ -232,7 +232,7 @@ export default function DashboardAnalytics() {
         </div>
 
         {/* 4. Tidak Masuk / Alpa */}
-        <div className="bg-white dark:bg-[#1C1C1E] border border-neutral-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm">
+        <div className="liquid-glass p-5 rounded-2xl">
           <div className="flex items-center justify-between text-neutral-500 dark:text-neutral-400 mb-1.5">
             <span className="text-[11px] font-semibold tracking-wider uppercase">
               Tidak Masuk / Alpa
@@ -249,7 +249,7 @@ export default function DashboardAnalytics() {
       </div>
 
       {/* Attendance Trend Chart Card */}
-      <div className="bg-white dark:bg-[#1C1C1E] border border-neutral-200 dark:border-neutral-800 rounded-xl p-5 shadow-sm space-y-4">
+      <div className="liquid-glass p-5 rounded-3xl space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-neutral-100 dark:border-neutral-800">
           <div>
             <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-50">

@@ -107,13 +107,13 @@ export default function OwnerAttendancePage() {
         </div>
 
         {/* Tab Switcher */}
-        <div className="inline-flex bg-neutral-100 dark:bg-[#1C1C1E] p-1 rounded-xl border border-neutral-200 dark:border-neutral-800 text-xs font-medium self-start sm:self-auto">
+        <div className="inline-flex liquid-glass-pill p-1 text-xs font-medium self-start sm:self-auto border border-white/30 dark:border-white/10">
           <button
             type="button"
             onClick={() => setActiveTab("ROSTER")}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
               activeTab === "ROSTER"
-                ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 shadow-sm font-semibold"
+                ? "bg-white/90 dark:bg-white/15 text-neutral-900 dark:text-neutral-50 shadow-sm border border-white/50 dark:border-white/15 font-semibold"
                 : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
             }`}
           >
@@ -125,7 +125,7 @@ export default function OwnerAttendancePage() {
             onClick={() => setActiveTab("LOGS")}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
               activeTab === "LOGS"
-                ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 shadow-sm font-semibold"
+                ? "bg-white/90 dark:bg-white/15 text-neutral-900 dark:text-neutral-50 shadow-sm border border-white/50 dark:border-white/15 font-semibold"
                 : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
             }`}
           >
@@ -140,7 +140,7 @@ export default function OwnerAttendancePage() {
       ) : (
         <>
           {/* Filters for Raw Logs */}
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs bg-white dark:bg-[#1C1C1E] p-3 rounded-xl border border-neutral-200 dark:border-neutral-800">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs liquid-glass p-3 rounded-2xl">
             <span className="text-neutral-500 dark:text-neutral-400 font-medium">Filter Log Presensi:</span>
             <div className="flex flex-wrap items-center gap-2">
               <input
