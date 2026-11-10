@@ -28,6 +28,7 @@ import {
   GpsStreamDiagnostic,
   GpsStreamSubscription,
 } from "@/lib/geo-stream";
+import jsQR from "jsqr";
 
 export default function EmployeeScanPage() {
   const router = useRouter();
@@ -59,6 +60,7 @@ export default function EmployeeScanPage() {
 
   // Camera Stream & Live Scanner State
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animFrameRef = useRef<number | null>(null);
   const isDetectingRef = useRef(false);
@@ -105,19 +107,18 @@ export default function EmployeeScanPage() {
         } else if (diag.stage === "timeout") {
           setGpsStatus("timeout");
           setGpsErrorCode("GPS_INDOOR_TIMEOUT");
-          setGpsError(diag.errorMessage || "Sinyal satelit GPS terhalang atap ruangan.");
+          setGpsError(diag.errorMessage || "Mencari sinyal GPS satelit memakan waktu terlalu lama. Pastikan GPS aktif dan berada di dekat jendela/luar ruangan.");
         } else if (diag.stage === "denied") {
           setGpsStatus("denied");
           setGpsErrorCode("GPS_PERMISSION_DENIED");
           setGpsError(
-            isDevelopment
-              ? "[GPS-UNAVAILABLE] Pastikan Location Services dan Wi-Fi aktif. Pada mode development, gunakan koordinat mock jika hardware tidak memiliki GPS."
-              : diag.errorMessage || "Geolocation access is mandatory for attendance check-in."
+            diag.errorMessage ||
+              "Izin lokasi belum diizinkan di browser ini. Buka setelan browser dan izinkan akses lokasi (Precise Location) untuk situs ini."
           );
         } else if (diag.stage === "error") {
           setGpsStatus("error");
           setGpsErrorCode(diag.errorCode || "GPS_ERROR");
-          setGpsError(diag.errorMessage || "Gagal memperoleh sinyal GPS.");
+          setGpsError(diag.errorMessage || "Sinyal GPS fisik tidak tersedia pada perangkat saat ini.");
         }
       },
     });
@@ -144,8 +145,8 @@ export default function EmployeeScanPage() {
 
   const handleUseMockGps = () => {
     setGpsCoords({
-      latitude: -6.2088,
-      longitude: 106.8456,
+      latitude: -6.9338,
+      longitude: 109.6541,
       accuracy: 10,
     });
     setGpsStatus("ready");
@@ -153,7 +154,7 @@ export default function EmployeeScanPage() {
     setGpsErrorCode(null);
   };
 
-  // Mount initialization: Acquire GPS & Environment detection
+  // Mount initialization: Acquire GPS & Auto-start Camera
   useEffect(() => {
     setIsDev(
       process.env.NODE_ENV === "development" ||
@@ -162,6 +163,8 @@ export default function EmployeeScanPage() {
             window.location.hostname === "127.0.0.1"))
     );
     startGpsWatch();
+    startCamera("environment");
+
     return () => {
       stopCamera();
       if (gpsSubscriptionRef.current) {
@@ -228,15 +231,26 @@ export default function EmployeeScanPage() {
           "Primary camera constraints failed (OverconstrainedError/fallback triggered), retrying with generic constraints:",
           constraintErr
         );
-        // Fallback for MacBooks, laptops, or webcams without environment lens or with strict constraint limits
         stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       }
 
       streamRef.current = stream;
 
       if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play().catch(() => {});
+        const video = videoRef.current;
+        video.srcObject = stream;
+        video.onloadedmetadata = async () => {
+          try {
+            await video.play();
+          } catch (playErr) {
+            console.warn("Video play error on loadedmetadata:", playErr);
+          }
+          startScanningLoop();
+        };
+
+        // Also attempt direct play in case metadata was already ready
+        await video.play().catch(() => {});
+        startScanningLoop();
       }
 
       setCameraActive(true);
@@ -246,9 +260,6 @@ export default function EmployeeScanPage() {
       const track = stream.getVideoTracks()[0];
       const capabilities: any = track?.getCapabilities ? track.getCapabilities() : {};
       setTorchSupported(Boolean(capabilities?.torch));
-
-      // Launch barcode detector frame loop if available
-      initBarcodeDetection();
     } catch (err: any) {
       console.error("Camera access error:", err);
       if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
@@ -270,37 +281,74 @@ export default function EmployeeScanPage() {
     }
   };
 
-  const initBarcodeDetection = () => {
-    if (typeof window === "undefined" || !("BarcodeDetector" in window)) {
-      return;
+  const startScanningLoop = () => {
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
     }
 
-    try {
-      const detector = new (window as any).BarcodeDetector({ formats: ["qr_code"] });
-      const detect = async () => {
-        if (!videoRef.current || !streamRef.current || isDetectingRef.current) return;
-        if (videoRef.current.readyState >= 2) {
+    const scanFrame = async () => {
+      if (!videoRef.current || !streamRef.current || isDetectingRef.current) return;
+      const video = videoRef.current;
+
+      // Verification gate: ensure video has enough data and valid dimensions
+      if (
+        video.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA &&
+        video.videoWidth > 0 &&
+        video.videoHeight > 0
+      ) {
+        let foundToken: string | null = null;
+
+        // 1. Try native BarcodeDetector if supported
+        if (typeof window !== "undefined" && "BarcodeDetector" in window) {
           try {
-            const barcodes = await detector.detect(videoRef.current);
+            const detector =
+              (window as any).__barcodeDetector ||
+              new (window as any).BarcodeDetector({ formats: ["qr_code"] });
+            (window as any).__barcodeDetector = detector;
+            const barcodes = await detector.detect(video);
             if (barcodes.length > 0 && barcodes[0]?.rawValue) {
-              const raw = barcodes[0].rawValue.trim();
-              if (raw.length > 3) {
-                isDetectingRef.current = true;
-                stopCamera();
-                await submitToken(raw);
-                return;
+              foundToken = barcodes[0].rawValue.trim();
+            }
+          } catch {
+            // non-fatal, fallback to jsQR
+          }
+        }
+
+        // 2. Fallback to jsQR canvas scanner if native detector didn't find a code
+        if (!foundToken && canvasRef.current) {
+          try {
+            const canvas = canvasRef.current;
+            const ctx = canvas.getContext("2d", { willReadFrequently: true });
+            if (ctx) {
+              canvas.width = video.videoWidth;
+              canvas.height = video.videoHeight;
+              ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+              const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                inversionAttempts: "dontInvert",
+              });
+              if (code && code.data) {
+                foundToken = code.data.trim();
               }
             }
           } catch {
-            // Frame pass dropped or non-critical error, continue loop
+            // Frame pass dropped, continue loop
           }
         }
-        animFrameRef.current = requestAnimationFrame(detect);
-      };
-      animFrameRef.current = requestAnimationFrame(detect);
-    } catch {
-      // BarcodeDetector initialization fallback
-    }
+
+        if (foundToken && foundToken.length > 3) {
+          isDetectingRef.current = true;
+          stopCamera();
+          await submitToken(foundToken);
+          return;
+        }
+      }
+
+      animFrameRef.current = requestAnimationFrame(scanFrame);
+    };
+
+    animFrameRef.current = requestAnimationFrame(scanFrame);
   };
 
   const toggleTorch = async () => {
@@ -406,17 +454,18 @@ export default function EmployeeScanPage() {
           <div className="apple-card p-6 text-center space-y-4">
             {/* Viewfinder Viewport */}
             <div className="relative w-full max-w-[280px] aspect-square mx-auto rounded-3xl overflow-hidden bg-neutral-950 border border-neutral-200 dark:border-neutral-800 shadow-inner flex items-center justify-center">
+              {/* Persistent Live Video Feed & Offscreen Canvas */}
+              <video
+                ref={videoRef}
+                playsInline
+                autoPlay
+                muted
+                className={`w-full h-full object-cover ${cameraActive ? "block" : "hidden"}`}
+              />
+              <canvas ref={canvasRef} className="hidden" />
+
               {cameraActive ? (
                 <>
-                  {/* Live Video Feed */}
-                  <video
-                    ref={videoRef}
-                    playsInline
-                    autoPlay
-                    muted
-                    className="w-full h-full object-cover"
-                  />
-
                   {/* 1. DECORATIVE OVERLAYS - STRICTLY pointer-events-none select-none */}
                   <div className="absolute inset-0 pointer-events-none select-none z-10">
                     {/* Dark Border Frame Cutout */}
@@ -572,21 +621,63 @@ export default function EmployeeScanPage() {
               </div>
             )}
 
-            {/* Indoor Satellite Timeout Action Card */}
-            {gpsStatus === "timeout" && (
-              <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-3 text-left">
-                <Satellite className="w-5 h-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
-                <div className="space-y-2.5 flex-1">
+            {/* 1. Geolocation Permission Denied State Card */}
+            {gpsStatus === "denied" && (
+              <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 text-xs flex items-start gap-3 text-left">
+                <AlertCircle className="w-5 h-5 shrink-0 text-red-600 dark:text-red-400 mt-0.5" />
+                <div className="space-y-2 flex-1">
                   <div>
-                    <span className="font-semibold text-sm block">Satelit GPS Tidak Terkunci</span>
+                    <span className="font-semibold text-sm block font-mono text-red-900 dark:text-red-200">
+                      [IZIN LOKASI DITOLAK]
+                    </span>
                     <p className="leading-relaxed mt-1 text-neutral-700 dark:text-neutral-300">
-                      Sinyal satelit GPS terhalang atap ruangan. Silakan melangkah beberapa meter ke dekat pintu atau jendela, lalu tekan Coba Lagi.
+                      {gpsError ||
+                        "Izin lokasi belum diizinkan di browser ini. Buka setelan browser dan izinkan akses lokasi (Precise Location) untuk situs ini."}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={startGpsWatch}
-                    className="apple-btn-secondary text-xs px-3 py-1.5 font-medium inline-flex items-center gap-1.5 bg-white dark:bg-neutral-800 border-amber-300 dark:border-amber-700 hover:bg-neutral-50 dark:hover:bg-neutral-700"
+                    className="apple-btn-secondary text-xs px-3.5 py-1.5 font-medium inline-flex items-center gap-1.5 bg-white dark:bg-neutral-800 border-red-300 dark:border-red-700 hover:bg-neutral-50 dark:hover:bg-neutral-700 shadow-sm"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+                    <span>Minta Izin Lokasi Ulang</span>
+                  </button>
+                  {isDev && (
+                    <div className="pt-2 border-t border-red-200 dark:border-red-800/60 flex items-center justify-between">
+                      <span className="text-[11px] text-red-700 dark:text-red-400 font-mono">
+                        Development Environment
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleUseMockGps}
+                        className="apple-btn-secondary text-[11px] px-2.5 py-1 font-medium bg-white dark:bg-neutral-800 border-red-300 dark:border-red-700 hover:bg-neutral-50 dark:hover:bg-neutral-700"
+                      >
+                        Use Mock Office Coordinates
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 2. Indoor Satellite Timeout Action Card */}
+            {gpsStatus === "timeout" && (
+              <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-3 text-left">
+                <Satellite className="w-5 h-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                <div className="space-y-2.5 flex-1">
+                  <div>
+                    <span className="font-semibold text-sm block font-mono text-amber-900 dark:text-amber-200">
+                      [PENCARIAN SATELIT TIMEOUT]
+                    </span>
+                    <p className="leading-relaxed mt-1 text-neutral-700 dark:text-neutral-300">
+                      Mencari sinyal GPS satelit memakan waktu terlalu lama. Pastikan GPS aktif dan berada di dekat jendela/luar ruangan.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={startGpsWatch}
+                    className="apple-btn-secondary text-xs px-3.5 py-1.5 font-medium inline-flex items-center gap-1.5 bg-white dark:bg-neutral-800 border-amber-300 dark:border-amber-700 hover:bg-neutral-50 dark:hover:bg-neutral-700 shadow-sm"
                   >
                     <RotateCw className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                     <span>Coba Lagi</span>
@@ -595,22 +686,27 @@ export default function EmployeeScanPage() {
               </div>
             )}
 
-            {/* 1. Geolocation Permission / Timeout Error Card */}
-            {(gpsStatus === "denied" || (gpsStatus === "error" && gpsError)) && (
-              <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 text-xs flex items-start gap-2.5 text-left">
-                <AlertCircle className="w-4 h-4 shrink-0 text-red-600 dark:text-red-400 mt-0.5" />
+            {/* 3. Hardware / System Geolocation Error Card */}
+            {gpsStatus === "error" && gpsError && (
+              <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 text-xs flex items-start gap-3 text-left">
+                <AlertCircle className="w-5 h-5 shrink-0 text-red-600 dark:text-red-400 mt-0.5" />
                 <div className="space-y-2 flex-1">
                   <div>
-                    <span className="font-semibold block">
-                      {gpsError?.includes("[GPS-UNAVAILABLE]")
-                        ? "[GPS-UNAVAILABLE]"
-                        : "[GPS REQUIRED]"}
+                    <span className="font-semibold text-sm block font-mono text-red-900 dark:text-red-200">
+                      {gpsErrorCode === "POSITION_UNAVAILABLE" ? "[SINYAL GPS TIDAK TERSEDIA]" : "[GPS ERROR]"}
                     </span>
-                    <span className="leading-relaxed">
-                      {gpsError?.replace("[GPS-UNAVAILABLE] ", "") ||
-                        "Geolocation access is mandatory for attendance check-in. Please enable location permissions in your browser."}
-                    </span>
+                    <p className="leading-relaxed mt-1 text-neutral-700 dark:text-neutral-300">
+                      {gpsError}
+                    </p>
                   </div>
+                  <button
+                    type="button"
+                    onClick={startGpsWatch}
+                    className="apple-btn-secondary text-xs px-3.5 py-1.5 font-medium inline-flex items-center gap-1.5 bg-white dark:bg-neutral-800 border-red-300 dark:border-red-700 hover:bg-neutral-50 dark:hover:bg-neutral-700 shadow-sm"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+                    <span>Coba Lagi</span>
+                  </button>
                   {isDev && (
                     <div className="pt-2 border-t border-red-200 dark:border-red-800/60 flex items-center justify-between">
                       <span className="text-[11px] text-red-700 dark:text-red-400 font-mono">

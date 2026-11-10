@@ -239,16 +239,25 @@ export function startGpsWarmUp(options: GpsStreamOptions = {}): GpsStreamSubscri
 
         if (err.code === 1) { // PERMISSION_DENIED
           errorCode = "GPS_PERMISSION_DENIED";
-          errorMessage = "Izin lokasi ditolak. Buka setelan browser dan aktifkan 'Lokasi Akurat / Precise Location'.";
+          errorMessage = "Izin lokasi belum diizinkan di browser ini. Buka setelan browser dan izinkan akses lokasi (Precise Location) untuk situs ini.";
           notify({
             stage: "denied",
             errorCode,
             errorMessage,
             isCellularBts: false,
           });
+        } else if (err.code === 2) { // POSITION_UNAVAILABLE
+          errorCode = "POSITION_UNAVAILABLE";
+          errorMessage = "Sinyal GPS fisik tidak tersedia pada perangkat saat ini. Pastikan GPS aktif.";
+          notify({
+            stage: "error",
+            errorCode,
+            errorMessage,
+            isCellularBts: false,
+          });
         } else if (err.code === 3) { // TIMEOUT
           errorCode = "GPS_INDOOR_TIMEOUT";
-          errorMessage = "Sinyal satelit GPS terhalang atap ruangan. Silakan melangkah beberapa meter ke dekat pintu atau jendela, lalu tekan Coba Lagi.";
+          errorMessage = "Mencari sinyal GPS satelit memakan waktu terlalu lama. Pastikan GPS aktif dan berada di dekat jendela/luar ruangan.";
           notify({
             stage: "timeout",
             errorCode,

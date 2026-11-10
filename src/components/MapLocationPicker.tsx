@@ -18,6 +18,7 @@ import {
   fetchAddressFromCoords,
   searchPlacesByQuery,
   PrecisionLocationResult,
+  DEFAULT_OFFICE_COORDS,
 } from "@/lib/geo-browser";
 
 interface MapLocationPickerProps {
@@ -66,8 +67,8 @@ export default function MapLocationPicker({
 
       if (!isMounted || !mapContainerRef.current) return;
 
-      const initialLat = latitude || -6.2088;
-      const initialLon = longitude || 106.8456;
+      const initialLat = latitude || DEFAULT_OFFICE_COORDS.latitude;
+      const initialLon = longitude || DEFAULT_OFFICE_COORDS.longitude;
 
       const map = L.map(mapContainerRef.current, {
         center: [initialLat, initialLon],
@@ -212,6 +213,13 @@ export default function MapLocationPicker({
         return;
       }
 
+      if (res.accuracy > 80) {
+        setLocatingStatus(
+          `Satelit GPS belum terkunci (akurasi seluler +/- ${res.accuracy}m terlalu kasar). Geser pin manual ke titik kantor atau pilih preset kota.`
+        );
+        return;
+      }
+
       const lat = res.latitude;
       const lon = res.longitude;
       setDeviceAccuracy(res.accuracy);
@@ -320,6 +328,35 @@ export default function MapLocationPicker({
                 <span className="line-clamp-2 leading-relaxed">{item.displayName}</span>
               </button>
             ))}
+          </div>
+        )}
+
+        {/* Empty Search Suggestion Card */}
+        {showSearchResults && searchResults.length === 0 && !isSearching && searchQuery.trim().length >= 2 && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-[#242426] border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-lg p-3 z-40 text-xs space-y-1.5">
+            <div className="flex items-center gap-1.5 font-medium text-neutral-800 dark:text-neutral-200">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span>Titik &quot;{searchQuery}&quot; tidak terdaftar di direktori OpenStreetMap</span>
+            </div>
+            <p className="text-[11px] leading-relaxed text-neutral-500 dark:text-neutral-400">
+              Peta umum hanya mencatat nama jalan, kelurahan, atau kecamatan. Cari wilayah terdekat Anda (contoh:{" "}
+              <button
+                type="button"
+                onClick={() => handleSearchChange("Buaran Pekalongan")}
+                className="text-blue-600 dark:text-blue-400 underline font-medium hover:text-blue-700"
+              >
+                Buaran Pekalongan
+              </button>{" "}
+              atau{" "}
+              <button
+                type="button"
+                onClick={() => handleSearchChange("Pekalongan")}
+                className="text-blue-600 dark:text-blue-400 underline font-medium hover:text-blue-700"
+              >
+                Pekalongan
+              </button>
+              ), lalu geser pin biru ke lokasi pintu toko/kantor Anda.
+            </p>
           </div>
         )}
       </div>
