@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import "leaflet/dist/leaflet.css";
+
 /* Apple Human Interface Guidelines (HIG) Design Tokens */
 :root {
   --system-bg: #f5f5f7;

@@ -1,19 +1,30 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import {
   MapPin,
   Wifi,
-  WifiOff,
   Crosshair,
   CheckCircle2,
   AlertCircle,
   Save,
   RefreshCw,
-  Sliders,
-  ShieldCheck,
   Globe,
+  Compass,
 } from "lucide-react";
+import { acquirePrecisionLocation, PrecisionLocationResult } from "@/lib/geo-browser";
+
+// Dynamic import for Leaflet map to prevent SSR window reference error
+const MapLocationPicker = dynamic(() => import("@/components/MapLocationPicker"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-80 rounded-xl bg-neutral-100 dark:bg-neutral-800 animate-pulse flex flex-col items-center justify-center gap-2 text-xs text-neutral-500">
+      <Compass className="w-6 h-6 animate-spin text-blue-500" />
+      <span>Memuat Peta Interaktif &amp; Geofence...</span>
+    </div>
+  ),
+});
 
 interface OfficeConfigData {
   id: string;
@@ -26,6 +37,14 @@ interface OfficeConfigData {
   enforceGeofence: boolean;
   maxGpsAccuracy: number;
 }
+
+const INDONESIA_CITY_PRESETS = [
+  { name: "Semarang", lat: -6.9904, lon: 110.4229 },
+  { name: "Jakarta", lat: -6.2088, lon: 106.8456 },
+  { name: "Surabaya", lat: -7.2575, lon: 112.7521 },
+  { name: "Bandung", lat: -6.9175, lon: 107.6191 },
+  { name: "Yogyakarta", lat: -7.7956, lon: 110.3695 },
+];
 
 export default function OwnerSettingsPage() {
   const [config, setConfig] = useState<OfficeConfigData>({
@@ -44,6 +63,7 @@ export default function OwnerSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [locating, setLocating] = useState(false);
   const [detectingIp, setDetectingIp] = useState(false);
+  const [detectingIpLocation, setDetectingIpLocation] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
   const loadConfig = async () => {
@@ -68,38 +88,70 @@ export default function OwnerSettingsPage() {
     loadConfig();
   }, []);
 
-  const handleGetCurrentLocation = () => {
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
+  // Multi-Sample Precision GPS Acquisition
+  const handleGetCurrentLocation = async () => {
+    setLocating(true);
+    setMessage(null);
+
+    try {
+      const res: PrecisionLocationResult = await acquirePrecisionLocation(
+        (info) => {
+          setMessage({
+            text: info.message,
+            type: "success",
+          });
+        },
+        { targetAccuracyMeters: 20, maxAcquisitionMs: 7000 }
+      );
+
+      setConfig((prev) => ({
+        ...prev,
+        latitude: res.latitude,
+        longitude: res.longitude,
+      }));
+
       setMessage({
-        text: "Browser tidak mendukung sensor GPS Geolocation.",
+        text: `Titik GPS berhasil diperbarui (${res.latitude}, ${res.longitude}) dengan akurasi +/- ${res.accuracy}m (${
+          res.isHighPrecision ? "Presisi Satelit Tinggi" : "Estimasi Jaringan"
+        }).`,
+        type: "success",
+      });
+    } catch (err: any) {
+      setMessage({
+        text: `Gagal membaca GPS: ${err.message}. Pastikan izin lokasi aktif pada browser Anda.`,
         type: "error",
       });
-      return;
+    } finally {
+      setLocating(false);
     }
+  };
 
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
+  // Detect and set coordinates from public IP / network
+  const handleUseIpLocation = async () => {
+    try {
+      setDetectingIpLocation(true);
+      setMessage(null);
+
+      const targetIp = config.officePublicIp || "";
+      const res = await fetch(`/api/geo/ip-lookup?ip=${encodeURIComponent(targetIp)}`);
+      const data = await res.json();
+
+      if (data.latitude && data.longitude) {
         setConfig((prev) => ({
           ...prev,
-          latitude: Number(pos.coords.latitude.toFixed(6)),
-          longitude: Number(pos.coords.longitude.toFixed(6)),
+          latitude: Number(data.latitude.toFixed(6)),
+          longitude: Number(data.longitude.toFixed(6)),
         }));
         setMessage({
-          text: `Koordinat GPS berhasil diambil (${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}) dengan akurasi +/- ${Math.round(pos.coords.accuracy)}m.`,
+          text: `Koordinat disesuaikan ke wilayah jaringan IP (${data.city || "Kota"}, ${data.region || ""}): ${data.latitude}, ${data.longitude}. Anda dapat menggeser pin peta untuk titik gerbang presisi.`,
           type: "success",
         });
-        setLocating(false);
-      },
-      (err) => {
-        setLocating(false);
-        setMessage({
-          text: `Gagal membaca GPS: ${err.message}. Pastikan izin lokasi aktif pada browser.`,
-          type: "error",
-        });
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
+      }
+    } catch {
+      setMessage({ text: "Gagal mendeteksi koordinat dari IP jaringan.", type: "error" });
+    } finally {
+      setDetectingIpLocation(false);
+    }
   };
 
   const handleGetMyIp = async () => {
@@ -114,7 +166,7 @@ export default function OwnerSettingsPage() {
           type: "success",
         });
       }
-    } catch (e: any) {
+    } catch {
       setMessage({ text: "Gagal mendeteksi IP publik WiFi kantor.", type: "error" });
     } finally {
       setDetectingIp(false);
@@ -166,7 +218,7 @@ export default function OwnerSettingsPage() {
             </span>
           </div>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-            Configure physical office GPS coordinates and public WiFi IP to block forwarded QR photo attendance (&quot;jastip absen&quot;).
+            Konfigurasi koordinat fisik kantor dan IP WiFi publik untuk mencegah kecurangan absen foto/jastip.
           </p>
         </div>
 
@@ -220,21 +272,79 @@ export default function OwnerSettingsPage() {
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5 md:col-span-2">
-              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                Nama Kantor / Toko
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+              Nama Kantor / Toko
+            </label>
+            <input
+              type="text"
+              value={config.officeName}
+              onChange={(e) => setConfig({ ...config, officeName: e.target.value })}
+              required
+              placeholder="Kantor Utama / Toko Cabang"
+              className="w-full bg-neutral-50 dark:bg-[#2C2C2E] text-neutral-900 dark:text-neutral-100 border border-neutral-300 dark:border-neutral-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
+            />
+          </div>
+
+          {/* Interactive Visual Map & Geofence Picker */}
+          <div className="space-y-2 pt-1">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">
+                Peta Lokasi &amp; Lingkaran Geofence
               </label>
-              <input
-                type="text"
-                value={config.officeName}
-                onChange={(e) => setConfig({ ...config, officeName: e.target.value })}
-                required
-                placeholder="Kantor Utama / Toko Cabang"
-                className="w-full bg-neutral-50 dark:bg-[#2C2C2E] text-neutral-900 dark:text-neutral-100 border border-neutral-300 dark:border-neutral-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
-              />
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="text-neutral-500 dark:text-neutral-400 text-[11px]">Kota Cepat:</span>
+                {INDONESIA_CITY_PRESETS.map((city) => (
+                  <button
+                    key={city.name}
+                    type="button"
+                    onClick={() => setConfig({ ...config, latitude: city.lat, longitude: city.lon })}
+                    className="text-[11px] px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                  >
+                    {city.name}
+                  </button>
+                ))}
+              </div>
             </div>
 
+            <MapLocationPicker
+              latitude={config.latitude}
+              longitude={config.longitude}
+              radiusMeters={config.radiusMeters}
+              onChange={({ latitude, longitude }) => {
+                setConfig((prev) => ({ ...prev, latitude, longitude }));
+              }}
+              onRadiusChange={(radiusMeters) => {
+                setConfig((prev) => ({ ...prev, radiusMeters }));
+              }}
+            />
+          </div>
+
+          {/* Location Capture Buttons */}
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <button
+              type="button"
+              onClick={handleGetCurrentLocation}
+              disabled={locating}
+              className="bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/60 rounded-lg px-3.5 py-2 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors disabled:opacity-50 shadow-sm"
+            >
+              <Crosshair className={`w-3.5 h-3.5 ${locating ? "animate-spin" : ""}`} />
+              <span>{locating ? "Mengunci Satelit GPS..." : "Gunakan Lokasi GPS Saya (Presisi Tinggi)"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleUseIpLocation}
+              disabled={detectingIpLocation}
+              className="bg-neutral-100 dark:bg-[#2C2C2E] text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-[#3A3A3C] rounded-lg px-3 py-2 text-xs font-medium inline-flex items-center gap-1.5 transition-colors disabled:opacity-50"
+            >
+              <Globe className={`w-3.5 h-3.5 ${detectingIpLocation ? "animate-spin" : ""}`} />
+              <span>{detectingIpLocation ? "Mendeteksi..." : "Gunakan Wilayah IP Jaringan"}</span>
+            </button>
+          </div>
+
+          {/* Coordinate Numeric Inputs */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
             <div className="space-y-1.5">
               <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
                 Latitude (Garis Lintang)
@@ -264,22 +374,7 @@ export default function OwnerSettingsPage() {
             </div>
           </div>
 
-          {/* Location Capture Button */}
-          <div className="flex flex-wrap items-center gap-3 pt-1">
-            <button
-              type="button"
-              onClick={handleGetCurrentLocation}
-              disabled={locating}
-              className="bg-neutral-100 dark:bg-[#2C2C2E] text-neutral-700 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-[#3A3A3C] rounded-lg px-3 py-2 text-xs font-medium inline-flex items-center gap-1.5 transition-colors disabled:opacity-50"
-            >
-              <Crosshair className={`w-3.5 h-3.5 ${locating ? "animate-spin" : ""}`} />
-              <span>{locating ? "Mengambil Koordinat GPS..." : "Gunakan Lokasi Saya Saat Ini"}</span>
-            </button>
-            <span className="text-xs text-neutral-500 dark:text-neutral-400">
-              Ambil titik presisi GPS dari browser perangkat Anda saat berada di kantor.
-            </span>
-          </div>
-
+          {/* Geofence Radius & Accuracy Settings */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-neutral-200 dark:border-neutral-800">
             <div className="space-y-1.5">
               <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
@@ -295,7 +390,7 @@ export default function OwnerSettingsPage() {
                   className="w-28 font-mono bg-neutral-50 dark:bg-[#2C2C2E] text-neutral-900 dark:text-neutral-100 border border-neutral-300 dark:border-neutral-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
                 />
                 <div className="flex gap-1.5">
-                  {[20, 50, 100].map((preset) => (
+                  {[20, 50, 100, 200].map((preset) => (
                     <button
                       key={preset}
                       type="button"
@@ -356,7 +451,7 @@ export default function OwnerSettingsPage() {
           </div>
         </div>
 
-        {/* Section 2: Office WiFi WAN IP Verification */}
+        {/* Section 2: Office WiFi Public IP Matching */}
         <div className="bg-white dark:bg-[#1C1C1E] border border-neutral-200 dark:border-neutral-800 rounded-xl p-6 shadow-sm space-y-5">
           <div className="flex items-center justify-between pb-3 border-b border-neutral-200 dark:border-neutral-800">
             <div className="flex items-center gap-2">
@@ -399,7 +494,7 @@ export default function OwnerSettingsPage() {
               </button>
             </div>
             <span className="text-xs text-neutral-500 dark:text-neutral-400 block">
-              IP publik router WiFi kantor (Biznet, IndiHome, CBN, MyRepublic). Buka halaman ini menggunakan WiFi kantor dan klik tombol deteksi.
+              IP publik router WiFi kantor (Biznet, IndiHome, CBN, MyRepublic, XL). Buka halaman ini menggunakan WiFi kantor dan klik tombol deteksi.
             </span>
           </div>
 
