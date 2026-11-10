@@ -149,22 +149,68 @@ async function runQASecuritySuite() {
     `HTTP ${unauthEmpRes.status}`
   );
 
-  // 2.2 Login as Employee (Siti)
-  const sitiLoginRes = await fetch(`${BASE_URL}/api/auth/login`, {
+  // 2.2 Setup synthetic employee for RBAC & IDOR testing
+  const morningShiftRbac = await prisma.shift.findFirst({ where: { isOvernight: false } });
+  const rbacHash = await bcrypt.hash("employee123", 10);
+
+  const rbacEmpUser = await prisma.user.upsert({
+    where: { email: "test_rbac_emp@company.com" },
+    update: {
+      passwordHash: rbacHash,
+      status: "ACTIVE",
+    },
+    create: {
+      email: "test_rbac_emp@company.com",
+      username: "test_rbac_emp",
+      passwordHash: rbacHash,
+      role: "EMPLOYEE",
+      status: "ACTIVE",
+      employeeProfile: {
+        create: {
+          fullName: "RBAC Test Employee",
+          employeeId: "EMP-RBAC-001",
+          dailySalary: 150000,
+          shiftId: morningShiftRbac.id,
+        },
+      },
+    },
+    include: { employeeProfile: true },
+  });
+
+  // Ensure clean device registration matching the test fingerprint and without passkey
+  await prisma.deviceRegistration.upsert({
+    where: { userId: rbacEmpUser.id },
+    update: {
+      deviceFingerprint: "fp_test_rbac_auth",
+      deviceName: "RBAC Test Terminal",
+      isActive: true,
+      status: "ACTIVE",
+      credentialId: null,
+    },
+    create: {
+      userId: rbacEmpUser.id,
+      deviceFingerprint: "fp_test_rbac_auth",
+      deviceName: "RBAC Test Terminal",
+      isActive: true,
+      status: "ACTIVE",
+    },
+  });
+
+  const empLoginRes = await fetch(`${BASE_URL}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      identifier: "siti@company.com",
+      identifier: "test_rbac_emp@company.com",
       password: "employee123",
-      deviceFingerprint: "fp_siti_iphone_auth",
-      deviceName: "Siti's iPhone 15 Pro",
+      deviceFingerprint: "fp_test_rbac_auth",
+      deviceName: "RBAC Test Terminal",
     }),
   });
-  const sitiCookie = sitiLoginRes.headers.get("set-cookie")?.split(";")[0];
+  const empCookie = empLoginRes.headers.get("set-cookie")?.split(";")[0];
 
   // 2.3 Vertical Privilege Escalation Attempt: Employee accessing Owner API
   const empAccessOwnerRes = await fetch(`${BASE_URL}/api/owner/payroll`, {
-    headers: { Cookie: sitiCookie },
+    headers: { Cookie: empCookie },
   });
   recordTest(
     "Authorization",
@@ -174,7 +220,7 @@ async function runQASecuritySuite() {
   );
 
   const empAccessAuditRes = await fetch(`${BASE_URL}/api/owner/audit-logs`, {
-    headers: { Cookie: sitiCookie },
+    headers: { Cookie: empCookie },
   });
   recordTest(
     "Authorization",
@@ -184,16 +230,19 @@ async function runQASecuritySuite() {
   );
 
   // 2.4 Horizontal IDOR Attempt: Employee Dashboard isolation
-  const sitiDashRes = await fetch(`${BASE_URL}/api/employee/dashboard`, {
-    headers: { Cookie: sitiCookie },
+  const empDashRes = await fetch(`${BASE_URL}/api/employee/dashboard`, {
+    headers: { Cookie: empCookie },
   });
-  const sitiDashData = await sitiDashRes.json();
+  const empDashData = await empDashRes.json();
   recordTest(
     "Authorization",
     "Employee dashboard strictly scopes to authenticated identity (no IDOR parameter tampering possible)",
-    sitiDashRes.status === 200 && sitiDashData.employee.fullName === "Siti Rahma",
-    `Resolved identity: ${sitiDashData.employee?.fullName}`
+    empDashRes.status === 200 && empDashData.employee?.fullName === "RBAC Test Employee",
+    `Resolved identity: ${empDashData.employee?.fullName}`
   );
+
+  // Cleanup synthetic rbac user session
+  await prisma.session.deleteMany({ where: { userId: rbacEmpUser.id } });
 
   // ===========================================================================
   // SECTION 3: DEVICE BINDING, IDOR UNLOCK & SESSION REVOCATION
@@ -380,14 +429,9 @@ async function runQASecuritySuite() {
     `Pre-switch: HTTP ${preSwitchRes.status} -> Post-switch: HTTP ${postSwitchRes.status}`
   );
 
-  // Clean up synthetic test records and ensure Siti remains completely clean and unbound
+  // Clean up synthetic test records
   await prisma.session.deleteMany({ where: { userId: testQuarantineUser.id } });
   await prisma.deviceRegistration.deleteMany({ where: { userId: testQuarantineUser.id } });
-
-  const sitiCleanUser = await prisma.user.findUnique({ where: { email: "siti@company.com" } });
-  if (sitiCleanUser) {
-    await prisma.deviceRegistration.deleteMany({ where: { userId: sitiCleanUser.id } });
-  }
 
   // ===========================================================================
   // SECTION 4: QR ATTENDANCE SECURITY, SINGLE-USE BURN & CONCURRENCY
@@ -812,4 +856,13 @@ runQASecuritySuite()
     console.error("Fatal test error:", e);
     process.exit(1);
   })
-  .finally(() => prisma.$disconnect());
+  .finally(async () => {
+    const rbacUser = await prisma.user.findUnique({ where: { email: "test_rbac_emp@company.com" } }).catch(() => null);
+    if (rbacUser) {
+      await prisma.session.deleteMany({ where: { userId: rbacUser.id } }).catch(() => {});
+      await prisma.deviceRegistration.deleteMany({ where: { userId: rbacUser.id } }).catch(() => {});
+      await prisma.employeeProfile.deleteMany({ where: { userId: rbacUser.id } }).catch(() => {});
+      await prisma.user.deleteMany({ where: { id: rbacUser.id } }).catch(() => {});
+    }
+    await prisma.$disconnect();
+  });

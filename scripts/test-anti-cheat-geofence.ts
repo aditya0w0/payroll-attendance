@@ -367,17 +367,14 @@ async function runAntiCheatGeofenceTests() {
     // -------------------------------------------------------------------------
     console.log("\n--- TEST 6: Anti-Cheat - Office WiFi IP Mismatch ---");
 
-    // Enable enforceWifiIp = true
-    await prisma.officeConfig.create({
+    // Enable enforceWifiIp = true and set Jakarta headquarters coordinates
+    await prisma.officeConfig.updateMany({
       data: {
-        officeName: "Headquarters Jakarta",
         latitude: -6.2088,
         longitude: 106.8456,
         radiusMeters: 50,
         officePublicIp: "103.28.112.5",
         enforceWifiIp: true,
-        enforceGeofence: true,
-        maxGpsAccuracy: 80,
       },
     });
 
@@ -418,11 +415,14 @@ async function runAntiCheatGeofenceTests() {
       accuracy: 12,
     };
 
+    const currentOffice7 = await prisma.officeConfig.findFirst({ orderBy: { createdAt: "desc" } });
+    const matchingIp = currentOffice7?.officePublicIp || "103.28.112.5";
+
     const validReq = new Request("http://localhost:3000/api/qr/scan", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-forwarded-for": "103.28.112.5", // Matching office public WiFi IP
+        "x-forwarded-for": matchingIp, // Matching office public WiFi IP
         Cookie: `payroll_auth_token=${empSessionToken}`,
       },
       body: JSON.stringify({
@@ -457,7 +457,7 @@ async function runAntiCheatGeofenceTests() {
       `Distance: ${savedRecord?.checkInDistanceMeters}m`
     );
     assert(
-      savedRecord?.checkInClientIp === "103.28.112.5",
+      savedRecord?.checkInClientIp === matchingIp,
       "checkInClientIp is stored as matching office IP",
       `IP: ${savedRecord?.checkInClientIp}`
     );
@@ -480,13 +480,16 @@ async function runAntiCheatGeofenceTests() {
     // -------------------------------------------------------------------------
     console.log("\n--- TEST 8: Alias Endpoint /api/employee/attendance/scan-verify ---");
 
+    const currentOffice8 = await prisma.officeConfig.findFirst({ orderBy: { createdAt: "desc" } });
+    const matchingIp8 = currentOffice8?.officePublicIp || "103.28.112.5";
+
     // 8.1 First test double-scan cooldown guard without bypass header
     const challengeCooldown = await createTestChallenge();
     const cooldownReq = new Request("http://localhost:3000/api/employee/attendance/scan-verify", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-forwarded-for": "103.28.112.5",
+        "x-forwarded-for": matchingIp8,
         Cookie: `payroll_auth_token=${empSessionToken}`,
       },
       body: JSON.stringify({
@@ -513,7 +516,7 @@ async function runAntiCheatGeofenceTests() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-forwarded-for": "103.28.112.5",
+        "x-forwarded-for": matchingIp8,
         "x-test-bypass-cooldown": "true",
         Cookie: `payroll_auth_token=${empSessionToken}`,
       },
@@ -540,7 +543,7 @@ async function runAntiCheatGeofenceTests() {
     assert(completedRecord?.checkOutLatitude !== null && completedRecord?.checkOutLatitude !== undefined, "checkOutLatitude is accurately saved");
     assert(completedRecord?.checkOutLongitude !== null && completedRecord?.checkOutLongitude !== undefined, "checkOutLongitude is accurately saved");
     assert(typeof completedRecord?.checkOutDistanceMeters === "number", "checkOutDistanceMeters is accurately saved", `Dist: ${completedRecord?.checkOutDistanceMeters}m`);
-    assert(completedRecord?.checkOutClientIp === "103.28.112.5", "checkOutClientIp is accurately saved", `IP: ${completedRecord?.checkOutClientIp}`);
+    assert(completedRecord?.checkOutClientIp === matchingIp8, "checkOutClientIp is accurately saved", `IP: ${completedRecord?.checkOutClientIp}`);
     assert(
       completedRecord?.status === "COMPLETED" || completedRecord?.status === "LATE_COMPLETED",
       "AttendanceRecord status is COMPLETED or LATE_COMPLETED",
@@ -551,7 +554,7 @@ async function runAntiCheatGeofenceTests() {
     await prisma.qRChallenge.deleteMany({ where: { token: { startsWith: "qr_test_" } } });
     await prisma.attendanceRecord.deleteMany({ where: { employeeId: empProfile.id } });
     await prisma.session.deleteMany({ where: { userId: { in: [testOwner.id, testEmp.id] } } });
-    await prisma.officeConfig.deleteMany({ where: { officeName: "Headquarters Jakarta" } });
+    await prisma.officeConfig.updateMany({ data: { enforceWifiIp: false } });
 
     console.log("\n================================================================================");
     console.log(`TEST RESULTS: ${passedTests}/${totalTests} PASSED, ${failedTests} FAILED`);
@@ -564,6 +567,7 @@ async function runAntiCheatGeofenceTests() {
     console.error("Unhandled error during test suite:", err);
     process.exit(1);
   } finally {
+    await prisma.officeConfig.updateMany({ data: { enforceWifiIp: false } }).catch(() => {});
     await prisma.$disconnect();
   }
 }

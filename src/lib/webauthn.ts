@@ -266,6 +266,31 @@ export async function verifyPasskeyRegistration(
     throw new Error("WebAuthn registration challenge expired or not found. Please try again.");
   }
 
+  // Security Enforcement: If employee already has a bound active device, verify approved unlock request exists
+  let approvedUnlockId: string | null = null;
+  if (user.role === "EMPLOYEE") {
+    const existingDevice = await prisma.deviceRegistration.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (existingDevice && existingDevice.credentialId && existingDevice.isActive) {
+      const approvedUnlock = await prisma.deviceUnlockRequest.findFirst({
+        where: {
+          userId: user.id,
+          status: "APPROVED",
+          expiresAt: { gt: now },
+        },
+      });
+
+      if (!approvedUnlock) {
+        throw new Error(
+          "DEVICE_ALREADY_BOUND: Perangkat fisik/Passkey sudah terikat secara permanen pada akun ini. Pengikatan ulang hanya diizinkan dengan persetujuan Unlock dari Owner."
+        );
+      }
+      approvedUnlockId = approvedUnlock.id;
+    }
+  }
+
   // Delete consumed challenge safely without throwing on concurrent requests
   await prisma.webAuthnChallenge.deleteMany({ where: { id: challengeRecord.id } });
 
@@ -321,6 +346,14 @@ export async function verifyPasskeyRegistration(
 
   // 4. Atomic Transaction: Bind Credential as Single Active Device & Revoke Other Sessions
   return await prisma.$transaction(async (tx) => {
+    // If re-binding via approved unlock request, mark request completed
+    if (approvedUnlockId) {
+      await tx.deviceUnlockRequest.update({
+        where: { id: approvedUnlockId },
+        data: { status: "COMPLETED" },
+      });
+    }
+
     // Invalidate competing active sessions while preserving current session if provided
     if (currentSessionToken) {
       await tx.session.deleteMany({

@@ -11,7 +11,25 @@ export const SESSION_TTL_DAYS = 7;
  */
 export async function createSession(userId: string, deviceFingerprint?: string): Promise<string> {
   const token = crypto.randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000);
+
+  // Fetch user role to determine session policy
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+
+  // Strict Enterprise Single-Device Security for Employees:
+  // 1. Single Active Session Enforcement: Invalidate all other active sessions for this employee
+  // 2. Strict Session Expiration: 24 hours for employee mobile terminals (7 days for Owner workstation)
+  const isEmployee = user?.role === "EMPLOYEE";
+  const ttlMs = isEmployee ? 24 * 60 * 60 * 1000 : SESSION_TTL_DAYS * 24 * 60 * 60 * 1000;
+  const expiresAt = new Date(Date.now() + ttlMs);
+
+  if (isEmployee) {
+    await prisma.session.deleteMany({
+      where: { userId },
+    });
+  }
 
   await prisma.session.create({
     data: {
@@ -107,6 +125,16 @@ export async function getCurrentUser(req?: Request) {
 
     if (session.user.status !== "ACTIVE") {
       return null;
+    }
+
+    // Strict Employee Security Enforcement:
+    // If user is EMPLOYEE and has a registered device that has been revoked or deactivated by Owner,
+    // terminate the session immediately!
+    if (session.user.role === "EMPLOYEE") {
+      if (session.user.deviceRegistration && !session.user.deviceRegistration.isActive) {
+        await prisma.session.deleteMany({ where: { sessionToken: token } });
+        return null;
+      }
     }
 
     return {

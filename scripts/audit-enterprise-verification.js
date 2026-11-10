@@ -352,14 +352,9 @@ async function runEnterpriseAudit() {
     `Error: ${forgedData.error?.substring(0, 36)}...`
   );
 
-  // Clean up synthetic test records and ensure Siti remains clean
+  // Clean up synthetic test records
   await prisma.session.deleteMany({ where: { userId: syntheticProxyUser.id } });
   await prisma.deviceRegistration.deleteMany({ where: { userId: syntheticProxyUser.id } });
-
-  const cleanSitiUser = await prisma.user.findUnique({ where: { email: "siti@company.com" } });
-  if (cleanSitiUser) {
-    await prisma.deviceRegistration.deleteMany({ where: { userId: cleanSitiUser.id } });
-  }
 
   // ---------------------------------------------------------------------------
   // SECTION 3: WAGE MODEL, DEDUCTION MATH & OVERNIGHT SHIFTS
