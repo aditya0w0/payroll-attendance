@@ -194,6 +194,17 @@ export default function MapLocationPicker({
 
   // Handle High-Precision GPS Lock
   const handlePrecisionLocate = async () => {
+    const isSecure =
+      typeof window !== "undefined" &&
+      (window.isSecureContext ||
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1");
+
+    if (!isSecure) {
+      setLocatingStatus("Browser memblokir izin GPS karena dibuka via HTTP biasa (bukan HTTPS). Buka via HTTPS agar GPS dapat aktif.");
+      return;
+    }
+
     setLocating(true);
     setLocatingStatus("Mengaktifkan satelit GPS...");
 
@@ -262,6 +273,30 @@ export default function MapLocationPicker({
     setSearchQuery(val);
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
 
+    // Direct coordinate or Google Maps link detection
+    const trimmed = val.trim();
+    const gmapsMatch = trimmed.match(/(?:@|q=|\/place\/)(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/);
+    const directMatch = trimmed.match(/^(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)$/);
+    const coordMatch = gmapsMatch || directMatch;
+
+    if (coordMatch) {
+      const lat = parseFloat(coordMatch[1]);
+      const lon = parseFloat(coordMatch[2]);
+      if (lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+        setSearchResults([
+          {
+            displayName: `Titik Koordinat: ${lat.toFixed(6)}, ${lon.toFixed(6)} (Klik untuk atur lokasi)`,
+            name: `${lat.toFixed(6)}, ${lon.toFixed(6)}`,
+            latitude: Number(lat.toFixed(6)),
+            longitude: Number(lon.toFixed(6)),
+          },
+        ]);
+        setShowSearchResults(true);
+        setIsSearching(false);
+        return;
+      }
+    }
+
     if (val.trim().length < 2) {
       setSearchResults([]);
       setShowSearchResults(false);
@@ -305,7 +340,7 @@ export default function MapLocationPicker({
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             onFocus={() => searchResults.length > 0 && setShowSearchResults(true)}
-            placeholder="Cari nama kantor, gedung, jalan, atau kota (contoh: Semarang, Sudirman Jakarta)..."
+            placeholder="Cari nama jalan, kelurahan, kota, atau tempel koordinat Google Maps (-6.9287, 109.6555)..."
             className="w-full pl-9 pr-10 py-2.5 text-xs bg-neutral-50 dark:bg-[#2C2C2E] text-neutral-900 dark:text-neutral-100 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500 shadow-sm"
           />
           <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-3" />
@@ -339,23 +374,7 @@ export default function MapLocationPicker({
               <span>Titik &quot;{searchQuery}&quot; tidak terdaftar di direktori OpenStreetMap</span>
             </div>
             <p className="text-[11px] leading-relaxed text-neutral-500 dark:text-neutral-400">
-              Peta umum hanya mencatat nama jalan, kelurahan, atau kecamatan. Cari wilayah terdekat Anda (contoh:{" "}
-              <button
-                type="button"
-                onClick={() => handleSearchChange("Buaran Pekalongan")}
-                className="text-blue-600 dark:text-blue-400 underline font-medium hover:text-blue-700"
-              >
-                Buaran Pekalongan
-              </button>{" "}
-              atau{" "}
-              <button
-                type="button"
-                onClick={() => handleSearchChange("Pekalongan")}
-                className="text-blue-600 dark:text-blue-400 underline font-medium hover:text-blue-700"
-              >
-                Pekalongan
-              </button>
-              ), lalu geser pin biru ke lokasi pintu toko/kantor Anda.
+              Peta umum hanya mencatat nama jalan, kelurahan, atau kota (bukan nama toko/usaha privat). Silakan cari nama jalan/kelurahan terdekat, atau tempel koordinat dari Google Maps (contoh: <span className="font-mono text-neutral-700 dark:text-neutral-300">-6.9287, 109.6555</span>), lalu geser pin biru ke lokasi tepat pintu kantor Anda.
             </p>
           </div>
         )}

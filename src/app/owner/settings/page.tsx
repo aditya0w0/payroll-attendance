@@ -39,13 +39,14 @@ interface OfficeConfigData {
 }
 
 const INDONESIA_CITY_PRESETS = [
-  { name: "Buaran (Pekalongan)", lat: -6.9338, lon: 109.6541 },
-  { name: "Pekalongan Kota", lat: -6.8886, lon: 109.6753 },
+  { name: "Pekalongan", lat: -6.8886, lon: 109.6753 },
+  { name: "Buaran", lat: -6.9338, lon: 109.6541 },
   { name: "Semarang", lat: -6.9904, lon: 110.4229 },
   { name: "Jakarta", lat: -6.2088, lon: 106.8456 },
-  { name: "Surabaya", lat: -7.2575, lon: 112.7521 },
   { name: "Bandung", lat: -6.9175, lon: 107.6191 },
+  { name: "Surabaya", lat: -7.2575, lon: 112.7521 },
   { name: "Yogyakarta", lat: -7.7956, lon: 110.3695 },
+  { name: "Solo", lat: -7.5666, lon: 110.8292 },
   { name: "Medan", lat: 3.5952, lon: 98.6722 },
 ];
 
@@ -66,7 +67,6 @@ export default function OwnerSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [locating, setLocating] = useState(false);
   const [detectingIp, setDetectingIp] = useState(false);
-  const [detectingIpLocation, setDetectingIpLocation] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
   const loadConfig = async () => {
@@ -93,6 +93,20 @@ export default function OwnerSettingsPage() {
 
   // Multi-Sample Precision GPS Acquisition
   const handleGetCurrentLocation = async () => {
+    const isSecure =
+      typeof window !== "undefined" &&
+      (window.isSecureContext ||
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1");
+
+    if (!isSecure) {
+      setMessage({
+        text: "Browser memblokir izin GPS karena aplikasi dibuka melalui HTTP biasa (bukan HTTPS). Buka aplikasi via HTTPS agar pop-up izin lokasi dapat muncul.",
+        type: "error",
+      });
+      return;
+    }
+
     setLocating(true);
     setMessage(null);
 
@@ -117,7 +131,7 @@ export default function OwnerSettingsPage() {
 
       if (res.accuracy > 80) {
         setMessage({
-          text: `Satelit GPS belum terkunci (akurasi seluler +/- ${res.accuracy}m terlalu kasar). Geser pin manual ke titik kantor atau pilih preset Buaran (Pekalongan).`,
+          text: `Satelit GPS belum terkunci (akurasi seluler +/- ${res.accuracy}m terlalu kasar). Geser pin manual ke titik kantor pada peta atau cari nama jalan/kelurahan terdekat.`,
           type: "error",
         });
         return;
@@ -142,34 +156,6 @@ export default function OwnerSettingsPage() {
       });
     } finally {
       setLocating(false);
-    }
-  };
-
-  // Detect and set coordinates from public IP / network
-  const handleUseIpLocation = async () => {
-    try {
-      setDetectingIpLocation(true);
-      setMessage(null);
-
-      const targetIp = config.officePublicIp || "";
-      const res = await fetch(`/api/geo/ip-lookup?ip=${encodeURIComponent(targetIp)}`);
-      const data = await res.json();
-
-      if (data.latitude && data.longitude) {
-        setConfig((prev) => ({
-          ...prev,
-          latitude: Number(data.latitude.toFixed(6)),
-          longitude: Number(data.longitude.toFixed(6)),
-        }));
-        setMessage({
-          text: `Koordinat disesuaikan ke wilayah IP (${data.city || "Kota"}, ${data.region || ""}): ${data.latitude}, ${data.longitude}. Catatan: Jaringan seluler sering diarahkan ke gateway operator regional (misal Tegal/Semarang). Gunakan GPS Satelit atau tombol preset Pekalongan untuk lokasi fisik akurat.`,
-          type: "success",
-        });
-      }
-    } catch {
-      setMessage({ text: "Gagal mendeteksi koordinat dari IP jaringan.", type: "error" });
-    } finally {
-      setDetectingIpLocation(false);
     }
   };
 
@@ -349,16 +335,6 @@ export default function OwnerSettingsPage() {
             >
               <Crosshair className={`w-3.5 h-3.5 ${locating ? "animate-spin" : ""}`} />
               <span>{locating ? "Mengunci Satelit GPS..." : "Gunakan Lokasi GPS Saya (Presisi Tinggi)"}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleUseIpLocation}
-              disabled={detectingIpLocation}
-              className="bg-neutral-100 dark:bg-[#2C2C2E] text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-[#3A3A3C] rounded-lg px-3 py-2 text-xs font-medium inline-flex items-center gap-1.5 transition-colors disabled:opacity-50"
-            >
-              <Globe className={`w-3.5 h-3.5 ${detectingIpLocation ? "animate-spin" : ""}`} />
-              <span>{detectingIpLocation ? "Mendeteksi..." : "Gunakan Wilayah IP Jaringan"}</span>
             </button>
           </div>
 

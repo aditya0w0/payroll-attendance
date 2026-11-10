@@ -106,8 +106,8 @@ export async function acquirePrecisionLocation(
         finish(ipLoc);
       } else {
         const errorMsg = lastSeenAccuracy && lastSeenAccuracy > discardThreshold
-          ? `Satelit GPS presisi belum terkunci (hanya terdeteksi BTS seluler +/- ${Math.round(lastSeenAccuracy)}m yang kurang presisi). Silakan geser pin manual pada peta atau pilih preset Pekalongan.`
-          : "Sinyal satelit GPS belum terkunci (terhalang atap ruangan atau izin lokasi belum aktif). Silakan geser pin manual pada peta atau pilih preset kota terdekat.";
+          ? `Satelit GPS presisi belum terkunci (hanya terdeteksi BTS seluler +/- ${Math.round(lastSeenAccuracy)}m yang kurang presisi). Silakan cari nama jalan atau geser pin manual pada peta.`
+          : "Sinyal satelit GPS belum terkunci (terhalang atap ruangan atau izin lokasi belum aktif). Silakan cari nama jalan atau geser pin manual pada peta.";
         finish({
           latitude: DEFAULT_OFFICE_COORDS.latitude,
           longitude: DEFAULT_OFFICE_COORDS.longitude,
