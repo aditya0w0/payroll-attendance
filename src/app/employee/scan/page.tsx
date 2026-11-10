@@ -49,8 +49,16 @@ interface DashboardShiftInfo {
 
 export default function EmployeeScanPage() {
   const router = useRouter();
-  const [shiftInfo, setShiftInfo] = useState<DashboardShiftInfo | null>(null);
-  const [loadingShift, setLoadingShift] = useState(true);
+  const [shiftInfo, setShiftInfo] = useState<DashboardShiftInfo | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = sessionStorage.getItem("cg_employee_dashboard_cache");
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return null;
+  });
+  const [loadingShift, setLoadingShift] = useState(false);
 
   // Scan & Processing State
   const [loading, setLoading] = useState(false);
@@ -83,6 +91,7 @@ export default function EmployeeScanPage() {
   const pendingTokenRef = useRef<string | null>(null);
   const lastScannedTokenRef = useRef<string | null>(null);
   const lastScannedTimeRef = useRef<number>(0);
+  const lastScanTickRef = useRef<number>(0);
 
   // Camera Stream & Live Scanner State
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -105,6 +114,11 @@ export default function EmployeeScanPage() {
       if (res.ok) {
         const d = await res.json();
         setShiftInfo(d);
+        if (typeof window !== "undefined") {
+          try {
+            sessionStorage.setItem("cg_employee_dashboard_cache", JSON.stringify(d));
+          } catch {}
+        }
       }
     } catch {
       // Non-fatal, scanner can still function
@@ -272,17 +286,28 @@ export default function EmployeeScanPage() {
       if (videoRef.current) {
         const video = videoRef.current;
         video.srcObject = stream;
+
+        let loopInitiated = false;
+        const initiateLoop = () => {
+          if (!loopInitiated) {
+            loopInitiated = true;
+            startScanningLoop();
+          }
+        };
+
         video.onloadedmetadata = async () => {
           try {
             await video.play();
           } catch (playErr) {
             console.warn("Video play error:", playErr);
           }
-          startScanningLoop();
+          initiateLoop();
         };
 
         await video.play().catch(() => {});
-        startScanningLoop();
+        if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
+          initiateLoop();
+        }
       }
 
       setCameraActive(true);
@@ -317,10 +342,24 @@ export default function EmployeeScanPage() {
 
     const scanFrame = async () => {
       // If currently submitting or camera stream stopped, schedule next check
-      if (!videoRef.current || !streamRef.current || isSubmittingRef.current) {
+      if (!videoRef.current || !streamRef.current) {
         animFrameRef.current = requestAnimationFrame(scanFrame);
         return;
       }
+
+      if (isSubmittingRef.current) {
+        animFrameRef.current = requestAnimationFrame(scanFrame);
+        return;
+      }
+
+      // THROTTLE: Run heavy QR decoding every ~125ms (~8 checks/sec)
+      // This frees up >85% CPU cycles so main thread stays silky smooth
+      const now = performance.now();
+      if (now - lastScanTickRef.current < 125) {
+        animFrameRef.current = requestAnimationFrame(scanFrame);
+        return;
+      }
+      lastScanTickRef.current = now;
 
       const video = videoRef.current;
 
@@ -519,6 +558,24 @@ export default function EmployeeScanPage() {
       }
       stopCamera();
       setScanResult(data);
+      if (typeof window !== "undefined") {
+        try {
+          if (shiftInfo) {
+            const nextState: "NOT_CHECKED_IN" | "CHECKED_IN" | "COMPLETED" =
+              data.action === "CHECK_IN" ? "CHECKED_IN" : "COMPLETED";
+            const updated: DashboardShiftInfo = {
+              ...shiftInfo,
+              today: {
+                ...shiftInfo.today,
+                state: nextState,
+                activeRecord: data.record || shiftInfo.today.activeRecord,
+              },
+            };
+            sessionStorage.setItem("cg_employee_dashboard_cache", JSON.stringify(updated));
+            setShiftInfo(updated);
+          }
+        } catch {}
+      }
       loadShiftStatus();
     } catch (err: any) {
       // Error: Keep camera stream alive, show error, and re-arm scanner after 2.5s

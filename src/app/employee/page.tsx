@@ -77,8 +77,23 @@ interface DashboardData {
 }
 
 export default function EmployeeDashboardPage() {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<DashboardData | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = sessionStorage.getItem("cg_employee_dashboard_cache");
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return !sessionStorage.getItem("cg_employee_dashboard_cache");
+      } catch {}
+    }
+    return true;
+  });
   const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [passkeyMessage, setPasskeyMessage] = useState<{
     text: string;
@@ -91,12 +106,19 @@ export default function EmployeeDashboardPage() {
   const loadDashboard = async () => {
     try {
       const res = await fetch("/api/employee/dashboard", { cache: "no-store" });
-      const d = await res.json();
-      setData(d);
-      if (d?.employee?.device?.credentialId) {
-        setIsOnboarding(false);
-        if (typeof window !== "undefined" && window.history.replaceState) {
-          window.history.replaceState({}, "", "/employee");
+      if (res.ok) {
+        const d = await res.json();
+        setData(d);
+        if (typeof window !== "undefined") {
+          try {
+            sessionStorage.setItem("cg_employee_dashboard_cache", JSON.stringify(d));
+          } catch {}
+        }
+        if (d?.employee?.device?.credentialId) {
+          setIsOnboarding(false);
+          if (typeof window !== "undefined" && window.history.replaceState) {
+            window.history.replaceState({}, "", "/employee");
+          }
         }
       }
     } catch (e) {

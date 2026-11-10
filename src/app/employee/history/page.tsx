@@ -24,13 +24,42 @@ interface HistoryRecord {
 }
 
 export default function EmployeeHistoryPage() {
-  const [records, setRecords] = useState<HistoryRecord[]>([]);
-  const [summary, setSummary] = useState({
-    totalCompletedDays: 0,
-    totalEarned: 0,
-    totalDeducted: 0,
+  const [records, setRecords] = useState<HistoryRecord[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = sessionStorage.getItem("cg_employee_history_cache");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && Array.isArray(parsed.records)) return parsed.records;
+        }
+      } catch {}
+    }
+    return [];
   });
-  const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = sessionStorage.getItem("cg_employee_history_cache");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && parsed.summary) return parsed.summary;
+        }
+      } catch {}
+    }
+    return {
+      totalCompletedDays: 0,
+      totalEarned: 0,
+      totalDeducted: 0,
+    };
+  });
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return !sessionStorage.getItem("cg_employee_history_cache");
+      } catch {}
+    }
+    return true;
+  });
 
   useEffect(() => {
     fetch("/api/employee/history")
@@ -38,6 +67,11 @@ export default function EmployeeHistoryPage() {
       .then((data) => {
         setRecords(data.records || []);
         if (data.summary) setSummary(data.summary);
+        if (typeof window !== "undefined") {
+          try {
+            sessionStorage.setItem("cg_employee_history_cache", JSON.stringify(data));
+          } catch {}
+        }
       })
       .catch(console.error)
       .finally(() => setLoading(false));
