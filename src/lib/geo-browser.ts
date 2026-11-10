@@ -7,9 +7,9 @@
  */
 
 export const DEFAULT_OFFICE_COORDS = {
-  latitude: -6.928715,
-  longitude: 109.655502,
-  address: "Starblak Seblak Basah, Kertijayan, Buaran, Pekalongan, Jawa Tengah 51171",
+  latitude: -6.2088,
+  longitude: 106.8456,
+  address: "Pusat Kota Jakarta",
 };
 
 export interface PrecisionLocationResult {
@@ -102,7 +102,7 @@ export async function acquirePrecisionLocation(
         const ipLoc = await acquireIpLocationFallback();
         finish(ipLoc);
       } else {
-        const errorMsg = "Sinyal satelit GPS belum terkunci (terhalang gedung atau izin lokasi belum aktif). Silakan geser pin manual pada peta atau pilih preset 'Pekalongan (Starblak)'.";
+        const errorMsg = "Sinyal satelit GPS belum terkunci (terhalang gedung atau izin lokasi belum aktif). Silakan geser pin manual pada peta atau pilih preset kota terdekat.";
         finish({
           latitude: DEFAULT_OFFICE_COORDS.latitude,
           longitude: DEFAULT_OFFICE_COORDS.longitude,

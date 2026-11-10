@@ -7,18 +7,27 @@ import {
   Camera,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
   ArrowLeft,
   Zap,
   ShieldCheck,
   SwitchCamera,
   X,
   RotateCcw,
+  RotateCw,
   MapPin,
   Crosshair,
+  Satellite,
+  Radio,
 } from "lucide-react";
 import Link from "next/link";
 import { formatIDR } from "@/lib/utils";
 import { getClientDeviceIdentity } from "@/lib/device-client";
+import {
+  startGpsWarmUp,
+  GpsStreamDiagnostic,
+  GpsStreamSubscription,
+} from "@/lib/geo-stream";
 
 export default function EmployeeScanPage() {
   const router = useRouter();
@@ -33,9 +42,20 @@ export default function EmployeeScanPage() {
     longitude: number;
     accuracy: number;
   } | null>(null);
-  const [gpsStatus, setGpsStatus] = useState<"idle" | "acquiring" | "ready" | "denied" | "error">("idle");
+  const [gpsDiagnostic, setGpsDiagnostic] = useState<GpsStreamDiagnostic>({
+    stage: "idle" as any,
+    accuracy: null,
+    bestAccuracy: null,
+    latitude: null,
+    longitude: null,
+    elapsedSeconds: 0,
+    isCellularBts: false,
+  });
+  const [gpsStatus, setGpsStatus] = useState<"idle" | "acquiring" | "ready" | "denied" | "error" | "timeout">("idle");
   const [gpsError, setGpsError] = useState<string | null>(null);
+  const [gpsErrorCode, setGpsErrorCode] = useState<string | null>(null);
   const [isDev, setIsDev] = useState(false);
+  const gpsSubscriptionRef = useRef<GpsStreamSubscription | null>(null);
 
   // Camera Stream & Live Scanner State
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -49,7 +69,6 @@ export default function EmployeeScanPage() {
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [torchSupported, setTorchSupported] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
-  const watchIdRef = useRef<number | null>(null);
 
   const startGpsWatch = () => {
     const isDevelopment =
@@ -58,75 +77,80 @@ export default function EmployeeScanPage() {
         (window.location.hostname === "localhost" ||
           window.location.hostname === "127.0.0.1"));
 
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setGpsStatus("error");
-      setGpsError(
-        isDevelopment
-          ? "[GPS-UNAVAILABLE] Pastikan Location Services macOS dan Wi-Fi aktif. Pada mode development, gunakan koordinat mock jika hardware tidak memiliki GPS."
-          : "Geolocation is not supported by your browser."
-      );
-      return;
-    }
-
-    if (watchIdRef.current !== null) {
-      navigator.geolocation.clearWatch(watchIdRef.current);
-      watchIdRef.current = null;
+    if (gpsSubscriptionRef.current) {
+      gpsSubscriptionRef.current.stop();
+      gpsSubscriptionRef.current = null;
     }
 
     setGpsStatus("acquiring");
     setGpsError(null);
+    setGpsErrorCode(null);
 
-    // Continuous watchPosition for precision convergence (improves accuracy as satellites lock)
-    watchIdRef.current = navigator.geolocation.watchPosition(
-      (pos) => {
-        setGpsCoords((prev) => {
-          // Keep the fix with best accuracy
-          if (!prev || pos.coords.accuracy <= prev.accuracy) {
-            return {
-              latitude: Number(pos.coords.latitude.toFixed(6)),
-              longitude: Number(pos.coords.longitude.toFixed(6)),
-              accuracy: Math.round(pos.coords.accuracy),
-            };
-          }
-          return prev;
-        });
+    const subscription = startGpsWarmUp({
+      targetAccuracyMeters: 50,
+      discardThresholdMeters: 80,
+      maxWaitSeconds: 12,
+      btsWarningSeconds: 5,
+      onDiagnostic: (diag) => {
+        setGpsDiagnostic(diag);
+        if (diag.stage === "locked" && diag.latitude && diag.longitude && diag.accuracy) {
+          setGpsCoords({
+            latitude: diag.latitude,
+            longitude: diag.longitude,
+            accuracy: diag.accuracy,
+          });
+          setGpsStatus("ready");
+          setGpsError(null);
+          setGpsErrorCode(null);
+        } else if (diag.stage === "timeout") {
+          setGpsStatus("timeout");
+          setGpsErrorCode("GPS_INDOOR_TIMEOUT");
+          setGpsError(diag.errorMessage || "Sinyal satelit GPS terhalang atap ruangan.");
+        } else if (diag.stage === "denied") {
+          setGpsStatus("denied");
+          setGpsErrorCode("GPS_PERMISSION_DENIED");
+          setGpsError(
+            isDevelopment
+              ? "[GPS-UNAVAILABLE] Pastikan Location Services dan Wi-Fi aktif. Pada mode development, gunakan koordinat mock jika hardware tidak memiliki GPS."
+              : diag.errorMessage || "Geolocation access is mandatory for attendance check-in."
+          );
+        } else if (diag.stage === "error") {
+          setGpsStatus("error");
+          setGpsErrorCode(diag.errorCode || "GPS_ERROR");
+          setGpsError(diag.errorMessage || "Gagal memperoleh sinyal GPS.");
+        }
+      },
+    });
+
+    gpsSubscriptionRef.current = subscription;
+
+    subscription.promise
+      .then((locked) => {
+        setGpsCoords(locked);
         setGpsStatus("ready");
         setGpsError(null);
-      },
-      (err) => {
-        setGpsCoords((current) => {
-          if (current) return current;
-          if (err.code === 1) {
-            setGpsStatus("denied");
-            setGpsError(
-              isDevelopment
-                ? "[GPS-UNAVAILABLE] Pastikan Location Services macOS dan Wi-Fi aktif. Pada mode development, gunakan koordinat mock jika hardware tidak memiliki GPS."
-                : "Geolocation access is mandatory for attendance check-in. Please enable location permissions in your browser."
-            );
-          } else if (err.code === 3) {
-            setGpsStatus("error");
-            setGpsError("Waktu permintaan lokasi GPS habis (timeout). Pastikan Wi-Fi atau GPS aktif lalu coba lagi.");
-          } else {
-            setGpsStatus("error");
-            setGpsError(err.message || "Failed to acquire GPS location.");
-          }
-          return null;
-        });
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-    );
+        setGpsErrorCode(null);
+      })
+      .catch((err) => {
+        if (err.code === "GPS_INDOOR_TIMEOUT") {
+          setGpsStatus("timeout");
+          setGpsErrorCode("GPS_INDOOR_TIMEOUT");
+          setGpsError(err.message);
+        }
+      });
   };
 
   const acquireGpsLocation = startGpsWatch;
 
   const handleUseMockGps = () => {
     setGpsCoords({
-      latitude: -6.928715,
-      longitude: 109.655502,
+      latitude: -6.2088,
+      longitude: 106.8456,
       accuracy: 10,
     });
     setGpsStatus("ready");
     setGpsError(null);
+    setGpsErrorCode(null);
   };
 
   // Mount initialization: Acquire GPS & Environment detection
@@ -140,9 +164,9 @@ export default function EmployeeScanPage() {
     startGpsWatch();
     return () => {
       stopCamera();
-      if (watchIdRef.current !== null && typeof navigator !== "undefined" && navigator.geolocation) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
+      if (gpsSubscriptionRef.current) {
+        gpsSubscriptionRef.current.stop();
+        gpsSubscriptionRef.current = null;
       }
     };
   }, []);
@@ -489,30 +513,23 @@ export default function EmployeeScanPage() {
                 <span className="text-neutral-600 dark:text-neutral-400 font-medium">GPS Location:</span>
               </div>
               {gpsStatus === "acquiring" && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-                  <Crosshair className="w-3 h-3 animate-spin text-blue-500" />
-                  <span>[ACQUIRING GPS...]</span>
-                </span>
+                <div className="flex items-center gap-1.5 font-mono text-[10px] text-blue-600 dark:text-blue-400 text-right">
+                  <span className="relative flex h-2 w-2 shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                  </span>
+                  <span className="font-semibold">
+                    {gpsDiagnostic.accuracy !== null
+                      ? `[MENCARI SATELIT GPS... AKURASI SAAT INI: ±${gpsDiagnostic.accuracy}m (TARGET <= 50m)]`
+                      : `[MENCARI SATELIT GPS... (TARGET <= 50m)]`}
+                  </span>
+                </div>
               )}
               {gpsStatus === "ready" && gpsCoords && (
                 <div className="flex items-center gap-1.5">
-                  <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border ${
-                      gpsCoords.accuracy <= 25
-                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
-                        : gpsCoords.accuracy <= 80
-                        ? "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800"
-                        : "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800"
-                    }`}
-                  >
-                    {gpsCoords.accuracy <= 25
-                      ? "[GPS-PRESISI]"
-                      : gpsCoords.accuracy <= 80
-                      ? "[GPS-ACQUIRED]"
-                      : "[GPS-CALIBRATING]"}
-                  </span>
-                  <span className="text-[11px] text-neutral-500 tabular-nums font-mono">
-                    ±{Math.round(gpsCoords.accuracy)}m
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-mono font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                    <span>[GPS TERKUNCI: ±{Math.round(gpsCoords.accuracy)}m]</span>
                   </span>
                   <button
                     type="button"
@@ -523,6 +540,12 @@ export default function EmployeeScanPage() {
                     <RotateCcw className="w-3 h-3" />
                   </button>
                 </div>
+              )}
+              {gpsStatus === "timeout" && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                  <AlertTriangle className="w-3 h-3 text-amber-500" />
+                  <span>[TIMEOUT SATELIT]</span>
+                </span>
               )}
               {(gpsStatus === "denied" || gpsStatus === "error" || gpsStatus === "idle") && (
                 <button
@@ -535,6 +558,42 @@ export default function EmployeeScanPage() {
                 </button>
               )}
             </div>
+
+            {/* Cellular BTS / High Inaccuracy Warning Card */}
+            {gpsStatus === "acquiring" && gpsDiagnostic.isCellularBts && gpsDiagnostic.elapsedSeconds >= 5 && (
+              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-2.5 text-left">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                <div className="space-y-1">
+                  <span className="font-semibold block font-mono text-[11px]">[BTS CELLULAR DETECTED]</span>
+                  <p className="leading-relaxed">
+                    Sinyal satelit GPS lemah (terdeteksi BTS seluler ±{gpsDiagnostic.accuracy}m). Pastikan izin &apos;Lokasi Akurat / Precise Location&apos; aktif di setelan browser dan geser ke dekat pintu/jendela.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Indoor Satellite Timeout Action Card */}
+            {gpsStatus === "timeout" && (
+              <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-3 text-left">
+                <Satellite className="w-5 h-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                <div className="space-y-2.5 flex-1">
+                  <div>
+                    <span className="font-semibold text-sm block">Satelit GPS Tidak Terkunci</span>
+                    <p className="leading-relaxed mt-1 text-neutral-700 dark:text-neutral-300">
+                      Sinyal satelit GPS terhalang atap ruangan. Silakan melangkah beberapa meter ke dekat pintu atau jendela, lalu tekan Coba Lagi.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={startGpsWatch}
+                    className="apple-btn-secondary text-xs px-3 py-1.5 font-medium inline-flex items-center gap-1.5 bg-white dark:bg-neutral-800 border-amber-300 dark:border-amber-700 hover:bg-neutral-50 dark:hover:bg-neutral-700"
+                  >
+                    <RotateCw className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                    <span>Coba Lagi</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* 1. Geolocation Permission / Timeout Error Card */}
             {(gpsStatus === "denied" || (gpsStatus === "error" && gpsError)) && (

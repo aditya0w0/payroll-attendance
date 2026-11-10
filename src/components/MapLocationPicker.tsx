@@ -66,8 +66,8 @@ export default function MapLocationPicker({
 
       if (!isMounted || !mapContainerRef.current) return;
 
-      const initialLat = latitude || -6.928715;
-      const initialLon = longitude || 109.655502;
+      const initialLat = latitude || -6.2088;
+      const initialLon = longitude || 106.8456;
 
       const map = L.map(mapContainerRef.current, {
         center: [initialLat, initialLon],
