@@ -324,8 +324,8 @@ export default function EmployeeDashboardPage() {
         </div>
       )}
 
-      {/* Apple Wallet / Liquid Glass Style Daily Wage Card */}
-      <div className="p-5 rounded-3xl bg-gradient-to-br from-slate-900/95 via-neutral-900/90 to-indigo-950/85 backdrop-blur-2xl text-white border border-white/20 shadow-[0_16px_36px_-10px_rgba(0,0,0,0.35),inset_0_1px_1.5px_rgba(255,255,255,0.25)] relative overflow-hidden">
+      {/* Apple Wallet / Obsidian Liquid Glass Daily Wage Card */}
+      <div className="p-5 rounded-3xl liquid-glass-obsidian text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 -mr-12 -mt-12 w-32 h-32 rounded-full bg-blue-500/20 blur-2xl pointer-events-none" />
         <div className="flex items-center justify-between relative z-10">
           <span className="text-[11px] font-medium uppercase tracking-wider text-neutral-300">

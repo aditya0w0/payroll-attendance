@@ -367,14 +367,14 @@ export default function LoginPage() {
 
         {/* Liquid Glass Form Card */}
         <form onSubmit={handleLogin} className="liquid-glass-elevated p-6 space-y-4">
-          {/* Segmented Control */}
-          <div className="flex bg-black/5 dark:bg-white/5 backdrop-blur-md p-1 rounded-2xl text-xs font-medium border border-white/20 dark:border-white/5">
+          {/* Liquid Glass Segmented Control */}
+          <div className="flex bg-black/5 dark:bg-white/5 backdrop-blur-md p-1 rounded-2xl text-xs font-medium border border-white/30 dark:border-white/10">
             <button
               type="button"
               onClick={() => handleModeChange("owner")}
               className={`flex-1 py-1.5 rounded-xl transition-all ${
                 mode === "owner"
-                  ? "bg-white dark:bg-neutral-800 shadow-[0_2px_10px_rgba(0,0,0,0.08)] text-neutral-900 dark:text-neutral-100 font-semibold"
+                  ? "bg-white/90 dark:bg-white/15 shadow-[0_2px_8px_rgba(0,0,0,0.1)] border border-white/50 dark:border-white/15 text-neutral-900 dark:text-neutral-100 font-semibold backdrop-blur-md"
                   : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
               }`}
             >
@@ -385,7 +385,7 @@ export default function LoginPage() {
               onClick={() => handleModeChange("employee")}
               className={`flex-1 py-1.5 rounded-xl transition-all ${
                 mode === "employee"
-                  ? "bg-white dark:bg-neutral-800 shadow-[0_2px_10px_rgba(0,0,0,0.08)] text-neutral-900 dark:text-neutral-100 font-semibold"
+                  ? "bg-white/90 dark:bg-white/15 shadow-[0_2px_8px_rgba(0,0,0,0.1)] border border-white/50 dark:border-white/15 text-neutral-900 dark:text-neutral-100 font-semibold backdrop-blur-md"
                   : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
               }`}
             >
@@ -396,7 +396,7 @@ export default function LoginPage() {
               onClick={() => handleModeChange("rogue")}
               className={`flex-1 py-1.5 rounded-xl transition-all ${
                 mode === "rogue"
-                  ? "bg-white dark:bg-neutral-800 shadow-[0_2px_10px_rgba(0,0,0,0.08)] text-red-600 dark:text-red-400 font-semibold"
+                  ? "bg-white/90 dark:bg-white/15 shadow-[0_2px_8px_rgba(0,0,0,0.1)] border border-white/50 dark:border-white/15 text-red-600 dark:text-red-400 font-semibold backdrop-blur-md"
                   : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
               }`}
             >

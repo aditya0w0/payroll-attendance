@@ -468,23 +468,25 @@ async function runQASecuritySuite() {
       passwordHash: concHash,
       role: "EMPLOYEE",
       status: "ACTIVE",
-      employeeProfile: {
-        create: {
-          fullName: "Concurrent Test Alpha",
-          employeeId: "CONC-001",
-          dailySalary: 150000,
-          shiftId: morningShift.id,
-        },
-      },
-      deviceRegistration: {
-        create: {
-          deviceFingerprint: "fp_conc_a",
-          deviceName: "Terminal A",
-          isActive: true,
-        },
-      },
     },
-    include: { employeeProfile: true },
+  });
+
+  const profileA = await prisma.employeeProfile.upsert({
+    where: { userId: concUserA.id },
+    update: { shiftId: morningShift.id },
+    create: {
+      userId: concUserA.id,
+      fullName: "Concurrent Test Alpha",
+      employeeId: "CONC-001",
+      dailySalary: 150000,
+      shiftId: morningShift.id,
+    },
+  });
+
+  await prisma.deviceRegistration.upsert({
+    where: { userId: concUserA.id },
+    update: { deviceFingerprint: "fp_conc_a", deviceName: "Terminal A", isActive: true, status: "ACTIVE", credentialId: null },
+    create: { userId: concUserA.id, deviceFingerprint: "fp_conc_a", deviceName: "Terminal A", isActive: true, status: "ACTIVE" },
   });
 
   const concUserB = await prisma.user.upsert({
@@ -496,28 +498,30 @@ async function runQASecuritySuite() {
       passwordHash: concHash,
       role: "EMPLOYEE",
       status: "ACTIVE",
-      employeeProfile: {
-        create: {
-          fullName: "Concurrent Test Beta",
-          employeeId: "CONC-002",
-          dailySalary: 150000,
-          shiftId: morningShift.id,
-        },
-      },
-      deviceRegistration: {
-        create: {
-          deviceFingerprint: "fp_conc_b",
-          deviceName: "Terminal B",
-          isActive: true,
-        },
-      },
     },
-    include: { employeeProfile: true },
+  });
+
+  const profileB = await prisma.employeeProfile.upsert({
+    where: { userId: concUserB.id },
+    update: { shiftId: morningShift.id },
+    create: {
+      userId: concUserB.id,
+      fullName: "Concurrent Test Beta",
+      employeeId: "CONC-002",
+      dailySalary: 150000,
+      shiftId: morningShift.id,
+    },
+  });
+
+  await prisma.deviceRegistration.upsert({
+    where: { userId: concUserB.id },
+    update: { deviceFingerprint: "fp_conc_b", deviceName: "Terminal B", isActive: true, status: "ACTIVE", credentialId: null },
+    create: { userId: concUserB.id, deviceFingerprint: "fp_conc_b", deviceName: "Terminal B", isActive: true, status: "ACTIVE" },
   });
 
   // Clear any existing attendance records for synthetic test accounts
   await prisma.attendanceRecord.deleteMany({
-    where: { employeeId: { in: [concUserA.employeeProfile.id, concUserB.employeeProfile.id] } },
+    where: { employeeId: { in: [profileA.id, profileB.id] } },
   });
 
   const aLoginRes = await fetch(`${BASE_URL}/api/auth/login`, {
@@ -593,7 +597,7 @@ async function runQASecuritySuite() {
 
   // 4.4 Forged Token Submission Check
   await prisma.attendanceRecord.deleteMany({
-    where: { employeeId: { in: [concUserA.employeeProfile.id, concUserB.employeeProfile.id] } },
+    where: { employeeId: { in: [profileA.id, profileB.id] } },
   });
 
   const forgedRes = await fetch(`${BASE_URL}/api/qr/scan`, {
@@ -616,9 +620,13 @@ async function runQASecuritySuite() {
   );
 
   // 4.5 Expired Token Submission Check
+  await prisma.attendanceRecord.deleteMany({
+    where: { employeeId: profileA.id },
+  });
+
   const expiredDbChallenge = await prisma.qRChallenge.create({
     data: {
-      token: "qr_test_expired_audit_" + Date.now(),
+      token: "qr_test_expired_audit_" + Date.now() + "_" + Math.floor(Math.random() * 100000),
       issuedAt: new Date(Date.now() - 30000),
       expiresAt: new Date(Date.now() - 10000), // Expired 10 seconds ago
       isActive: true,

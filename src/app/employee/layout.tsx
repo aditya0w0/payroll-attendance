@@ -54,8 +54,8 @@ export default async function EmployeeLayout({
       {/* Main Content View */}
       <main className="flex-1 p-3 pt-3">{children}</main>
 
-      {/* Liquid Glass Floating Dock Bottom Navigation */}
-      <nav className="fixed bottom-4 left-4 right-4 max-w-sm mx-auto z-40 liquid-glass-pill px-6 py-2 flex justify-around items-center shadow-[0_12px_40px_rgba(0,0,0,0.15)]">
+      {/* Liquid Glass Floating Dock Bottom Navigation (macOS Dock Style) */}
+      <nav className="fixed bottom-4 left-4 right-4 max-w-sm mx-auto z-40 liquid-glass-dock px-6 py-2 flex justify-around items-center">
         <Link
           href="/employee"
           className="flex flex-col items-center gap-1 text-[11px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"

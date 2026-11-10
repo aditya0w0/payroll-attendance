@@ -791,7 +791,7 @@ export default function EmployeeScanPage() {
             </div>
 
             {/* GPS Diagnostic & Status */}
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-white/40 dark:bg-black/25 backdrop-blur-md border border-white/50 dark:border-white/5 text-xs">
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-white/30 dark:bg-black/20 backdrop-blur-md border border-white/40 dark:border-white/10 text-xs shadow-inner">
               <div className="flex items-center gap-2">
                 <MapPin className="w-3.5 h-3.5 text-neutral-500" />
                 <span className="text-neutral-500 text-[11px]">GPS Location:</span>
