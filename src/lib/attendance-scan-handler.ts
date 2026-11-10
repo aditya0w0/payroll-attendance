@@ -72,9 +72,9 @@ export async function handleAttendanceScan(req: Request) {
     });
 
     const activeConfig = officeConfig || {
-      officeName: "Starblak Pekalongan",
-      latitude: -6.928715,
-      longitude: 109.655502,
+      officeName: "Kantor Utama",
+      latitude: -6.2088,
+      longitude: 106.8456,
       radiusMeters: 50,
       officePublicIp: "127.0.0.1",
       enforceWifiIp: false,
@@ -83,15 +83,20 @@ export async function handleAttendanceScan(req: Request) {
     };
 
     // 3. Office WiFi WAN IP Verification (if enforceWifiIp == true)
+    const isWifiMatched = Boolean(
+      activeConfig.officePublicIp &&
+      clientIp &&
+      clientIp.trim() === activeConfig.officePublicIp.trim()
+    );
+
     if (activeConfig.enforceWifiIp && activeConfig.officePublicIp) {
-      const allowedIp = activeConfig.officePublicIp.trim();
-      if (clientIp !== allowedIp) {
+      if (!isWifiMatched) {
         return NextResponse.json(
           {
             error: "Perangkat wajib terhubung ke jaringan WiFi kantor untuk presensi.",
             code: "WIFI_IP_MISMATCH",
             clientIp,
-            expectedIp: allowedIp,
+            expectedIp: activeConfig.officePublicIp.trim(),
           },
           { status: 403 }
         );
@@ -116,14 +121,24 @@ export async function handleAttendanceScan(req: Request) {
         );
       }
 
+      // Indoor Ruko Fallback (WiFi Priority Balancing):
+      // When an employee is genuinely inside the shop and satellites cannot penetrate the roof:
+      // If WiFi matches 100% and enforceWifiIp == true, tolerate up to 150m accuracy window
+      // because physical attachment to the workplace WiFi network already validates on-site presence.
+      // If WiFi is NOT enforced or does not match, keep the strict configured maxGpsAccuracy (default: 80m).
+      const maxAllowedAccuracy = (activeConfig.enforceWifiIp && isWifiMatched)
+        ? Math.max(activeConfig.maxGpsAccuracy, 150)
+        : activeConfig.maxGpsAccuracy;
+
       // GPS Spoofing & Cell Tower Guard: Check accuracy threshold
-      if (typeof accuracy === "number" && accuracy > activeConfig.maxGpsAccuracy) {
+      if (typeof accuracy === "number" && accuracy > maxAllowedAccuracy) {
         return NextResponse.json(
           {
             error: "Sinyal GPS terlalu lemah atau tidak akurat. Harap tunggu hingga sinyal GPS stabil.",
             code: "GPS_LOW_ACCURACY",
             accuracy,
-            maxAllowedAccuracy: activeConfig.maxGpsAccuracy,
+            maxAllowedAccuracy,
+            wifiValidated: isWifiMatched,
           },
           { status: 403 }
         );
@@ -136,9 +151,10 @@ export async function handleAttendanceScan(req: Request) {
         activeConfig.longitude
       );
 
-      // Account for standard GPS measurement uncertainty (up to 50% of reported accuracy, capped at 25m)
+      // Account for standard GPS measurement uncertainty (up to 50% of reported accuracy, capped at 25m or 50m if WiFi verified)
       // This prevents false rejections when employees are inside the building or under concrete roofs
-      const measurementBuffer = Math.min(Math.max(0, (accuracy || 0) * 0.5), 25);
+      const maxBuffer = (activeConfig.enforceWifiIp && isWifiMatched) ? 50 : 25;
+      const measurementBuffer = Math.min(Math.max(0, (accuracy || 0) * 0.5), maxBuffer);
       const effectiveDistance = Math.max(0, distanceMeters - measurementBuffer);
 
       if (effectiveDistance > activeConfig.radiusMeters) {

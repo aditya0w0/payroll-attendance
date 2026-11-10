@@ -39,21 +39,21 @@ interface OfficeConfigData {
 }
 
 const INDONESIA_CITY_PRESETS = [
-  { name: "Pekalongan (Starblak)", lat: -6.928715, lon: 109.655502 },
-  { name: "Buaran", lat: -6.9338, lon: 109.6541 },
   { name: "Semarang", lat: -6.9904, lon: 110.4229 },
   { name: "Jakarta", lat: -6.2088, lon: 106.8456 },
   { name: "Surabaya", lat: -7.2575, lon: 112.7521 },
   { name: "Bandung", lat: -6.9175, lon: 107.6191 },
   { name: "Yogyakarta", lat: -7.7956, lon: 110.3695 },
+  { name: "Pekalongan", lat: -6.8886, lon: 109.6753 },
+  { name: "Medan", lat: 3.5952, lon: 98.6722 },
 ];
 
 export default function OwnerSettingsPage() {
   const [config, setConfig] = useState<OfficeConfigData>({
     id: "",
-    officeName: "Starblak Pekalongan",
-    latitude: -6.928715,
-    longitude: 109.655502,
+    officeName: "Kantor Utama",
+    latitude: -6.9904,
+    longitude: 110.4229,
     radiusMeters: 50,
     officePublicIp: "",
     enforceWifiIp: false,
@@ -304,23 +304,16 @@ export default function OwnerSettingsPage() {
               </label>
               <div className="flex items-center gap-1.5 text-xs flex-wrap">
                 <span className="text-neutral-500 dark:text-neutral-400 text-[11px]">Kota Cepat:</span>
-                {INDONESIA_CITY_PRESETS.map((city) => {
-                  const isStarblak = city.name.includes("Starblak");
-                  return (
-                    <button
-                      key={city.name}
-                      type="button"
-                      onClick={() => setConfig({ ...config, latitude: city.lat, longitude: city.lon })}
-                      className={`text-[11px] px-2 py-0.5 rounded border transition-colors ${
-                        isStarblak
-                          ? "border-blue-500/40 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-semibold shadow-xs"
-                          : "border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700"
-                      }`}
-                    >
-                      {city.name}
-                    </button>
-                  );
-                })}
+                {INDONESIA_CITY_PRESETS.map((city) => (
+                  <button
+                    key={city.name}
+                    type="button"
+                    onClick={() => setConfig({ ...config, latitude: city.lat, longitude: city.lon })}
+                    className="text-[11px] px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                  >
+                    {city.name}
+                  </button>
+                ))}
               </div>
             </div>
 
