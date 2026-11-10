@@ -55,6 +55,12 @@ export async function handleAttendanceScan(req: Request) {
     }
 
     let token = (parseRes.data.token || parseRes.data.qrToken)!.trim();
+    if (
+      (token.startsWith('"') && token.endsWith('"')) ||
+      (token.startsWith("'") && token.endsWith("'"))
+    ) {
+      token = token.slice(1, -1).trim();
+    }
     if (token.startsWith("{") && (token.includes('"t"') || token.includes("'t'"))) {
       try {
         const parsed = JSON.parse(token);

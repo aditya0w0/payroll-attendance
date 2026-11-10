@@ -55,6 +55,7 @@ export default function EmployeeScanPage() {
   // Scan & Processing State
   const [loading, setLoading] = useState(false);
   const [scanningPulse, setScanningPulse] = useState(false);
+  const [scanStatusHint, setScanStatusHint] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [scanResult, setScanResult] = useState<any | null>(null);
 
@@ -72,12 +73,22 @@ export default function EmployeeScanPage() {
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
 
+  // Active Refs to prevent React Stale Closure bugs inside requestAnimationFrame
+  const gpsCoordsRef = useRef<{
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+  } | null>(null);
+  const isSubmittingRef = useRef(false);
+  const pendingTokenRef = useRef<string | null>(null);
+  const lastScannedTokenRef = useRef<string | null>(null);
+  const lastScannedTimeRef = useRef<number>(0);
+
   // Camera Stream & Live Scanner State
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animFrameRef = useRef<number | null>(null);
-  const isDetectingRef = useRef(false);
 
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraStarting, setCameraStarting] = useState(false);
@@ -102,6 +113,25 @@ export default function EmployeeScanPage() {
     }
   };
 
+  // Helper to commit GPS coordinates to both React state and ref
+  const commitGpsCoordinates = (coords: {
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+  }) => {
+    gpsCoordsRef.current = coords;
+    setGpsCoords(coords);
+    setGpsError(null);
+    setGpsLoading(false);
+
+    // If a token was waiting for GPS acquisition, submit immediately
+    if (pendingTokenRef.current) {
+      const queuedToken = pendingTokenRef.current;
+      pendingTokenRef.current = null;
+      submitToken(queuedToken);
+    }
+  };
+
   // 2. Direct Native Geolocation Trigger (Synchronous browser call)
   const triggerNativeGpsPrompt = () => {
     if (typeof window === "undefined" || !("geolocation" in window.navigator)) {
@@ -114,24 +144,22 @@ export default function EmployeeScanPage() {
 
     window.navigator.geolocation.getCurrentPosition(
       (position) => {
-        setGpsLoading(false);
-        setGpsError(null);
-        setGpsCoords({
+        commitGpsCoordinates({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           accuracy: Math.round(position.coords.accuracy),
         });
       },
-      (error) => {
+      (geoErr) => {
         setGpsLoading(false);
-        const rawReason = `[CODE ${error.code}] ${error.message || "Unknown geolocation error"}`;
-        if (error.code === 1) {
+        const rawReason = `[CODE ${geoErr.code}] ${geoErr.message || "Unknown geolocation error"}`;
+        if (geoErr.code === 1) {
           setGpsError(
             `${rawReason} — Izin lokasi belum aktif. Klik ikon Gembok di kiri URL bar browser -> Izinkan Lokasi (Precise Location).`
           );
-        } else if (error.code === 2) {
+        } else if (geoErr.code === 2) {
           setGpsError(`${rawReason} — Sinyal GPS satelit tidak terdeteksi.`);
-        } else if (error.code === 3) {
+        } else if (geoErr.code === 3) {
           setGpsError(`${rawReason} — Timeout mencari koordinat GPS.`);
         } else {
           setGpsError(rawReason);
@@ -151,24 +179,20 @@ export default function EmployeeScanPage() {
       const res = await fetch("/api/owner/office-config");
       const data = await res.json();
       if (data.config && data.config.latitude && data.config.longitude) {
-        setGpsCoords({
+        commitGpsCoordinates({
           latitude: data.config.latitude,
           longitude: data.config.longitude,
           accuracy: 10,
         });
-        setGpsLoading(false);
-        setGpsError(null);
         return;
       }
     } catch {}
 
-    setGpsCoords({
+    commitGpsCoordinates({
       latitude: -6.928715,
       longitude: 109.655502,
       accuracy: 10,
     });
-    setGpsLoading(false);
-    setGpsError(null);
   };
 
   // Mount initialization: Load Shift Status, GPS, and Start Camera
@@ -203,7 +227,7 @@ export default function EmployeeScanPage() {
     }
     setCameraActive(false);
     setTorchOn(false);
-    isDetectingRef.current = false;
+    isSubmittingRef.current = false;
   };
 
   const startCamera = async (targetFacing: "environment" | "user" = facingMode) => {
@@ -284,7 +308,7 @@ export default function EmployeeScanPage() {
     }
   };
 
-  // Continuous Auto-Scanning Engine
+  // Continuous Auto-Scanning Engine with Sub-50ms Canvas Downscaling
   const startScanningLoop = () => {
     if (animFrameRef.current) {
       cancelAnimationFrame(animFrameRef.current);
@@ -292,8 +316,8 @@ export default function EmployeeScanPage() {
     }
 
     const scanFrame = async () => {
-      // If currently submitting or camera stopped, wait for next frame
-      if (!videoRef.current || !streamRef.current || isDetectingRef.current) {
+      // If currently submitting or camera stream stopped, schedule next check
+      if (!videoRef.current || !streamRef.current || isSubmittingRef.current) {
         animFrameRef.current = requestAnimationFrame(scanFrame);
         return;
       }
@@ -307,7 +331,7 @@ export default function EmployeeScanPage() {
       ) {
         let foundRawToken: string | null = null;
 
-        // 1. Try native BarcodeDetector if supported (very fast on Android/Chrome)
+        // 1. Try native BarcodeDetector if supported (instant hardware-accelerated decode)
         if (typeof window !== "undefined" && "BarcodeDetector" in window) {
           try {
             const detector =
@@ -321,17 +345,26 @@ export default function EmployeeScanPage() {
           } catch {}
         }
 
-        // 2. Fallback to jsQR canvas scanner
+        // 2. High-Performance Fallback: Downscaled jsQR Canvas
         if (!foundRawToken && canvasRef.current) {
           try {
             const canvas = canvasRef.current;
             const ctx = canvas.getContext("2d", { willReadFrequently: true });
             if (ctx) {
-              canvas.width = video.videoWidth;
-              canvas.height = video.videoHeight;
-              ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-              const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-              const code = jsQR(imageData.data, imageData.width, imageData.height, {
+              // Downscale to max 480px to avoid 1080p CPU thrashing on mobile browsers
+              const maxDim = 480;
+              const scale = Math.min(1, maxDim / Math.max(video.videoWidth, video.videoHeight));
+              const scanWidth = Math.round(video.videoWidth * scale);
+              const scanHeight = Math.round(video.videoHeight * scale);
+
+              if (canvas.width !== scanWidth || canvas.height !== scanHeight) {
+                canvas.width = scanWidth;
+                canvas.height = scanHeight;
+              }
+
+              ctx.drawImage(video, 0, 0, scanWidth, scanHeight);
+              const imageData = ctx.getImageData(0, 0, scanWidth, scanHeight);
+              const code = jsQR(imageData.data, scanWidth, scanHeight, {
                 inversionAttempts: "dontInvert",
               });
               if (code && code.data) {
@@ -341,19 +374,34 @@ export default function EmployeeScanPage() {
           } catch {}
         }
 
-        // 3. Process detected QR code automatically
+        // 3. Process detected QR code
         if (foundRawToken && foundRawToken.length > 3) {
-          // Pause scanner while verifying this frame
-          isDetectingRef.current = true;
+          const cleanToken = extractCleanToken(foundRawToken);
+          const now = Date.now();
+
+          // Prevent double-submitting the exact same token within 4 seconds
+          if (
+            lastScannedTokenRef.current === cleanToken &&
+            now - lastScannedTimeRef.current < 4000
+          ) {
+            animFrameRef.current = requestAnimationFrame(scanFrame);
+            return;
+          }
+
+          lastScannedTokenRef.current = cleanToken;
+          lastScannedTimeRef.current = now;
+          isSubmittingRef.current = true;
           setScanningPulse(true);
 
-          // Haptic tick on QR acquisition
+          // Haptic tick on QR lock
           if (typeof navigator !== "undefined" && navigator.vibrate) {
             navigator.vibrate(60);
           }
 
-          // Submit automatically without stopping video stream
-          await submitToken(foundRawToken);
+          // Keep animation frame running so loop persists and waits on isSubmittingRef
+          animFrameRef.current = requestAnimationFrame(scanFrame);
+
+          submitToken(cleanToken);
           return;
         }
       }
@@ -386,7 +434,13 @@ export default function EmployeeScanPage() {
 
   // Clean and extract QR Token (Handles JSON payload { t: "qr_..." } & plain string)
   const extractCleanToken = (raw: string): string => {
-    const trimmed = (raw || "").trim();
+    let trimmed = (raw || "").trim();
+    if (
+      (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+      (trimmed.startsWith("'") && trimmed.endsWith("'"))
+    ) {
+      trimmed = trimmed.slice(1, -1).trim();
+    }
     if (trimmed.startsWith("{") && (trimmed.includes('"t"') || trimmed.includes("'t'"))) {
       try {
         const parsed = JSON.parse(trimmed);
@@ -401,21 +455,30 @@ export default function EmployeeScanPage() {
   const submitToken = async (tokenToSubmit: string) => {
     const cleanToken = extractCleanToken(tokenToSubmit);
 
-    if (!gpsCoords) {
+    // Read LIVE GPS from ref to guarantee freshness and prevent stale closure
+    const currentGps = gpsCoordsRef.current;
+
+    if (!currentGps) {
+      // If GPS is currently acquiring, store token as pending and display soft hint
+      if (gpsLoading) {
+        pendingTokenRef.current = cleanToken;
+        setScanStatusHint("QR terbaca! Menunggu sinyal GPS satelit mengunci...");
+        return;
+      }
+
       setGpsError(
         isDev
           ? "Koordinat GPS belum terkunci. Klik tombol 'Gunakan Lokasi Kantor (Mode Tes Lokal)' di bawah."
           : "Koordinat GPS diperlukan untuk presensi. Klik 'Minta Izin Lokasi' di bawah."
       );
+      isSubmittingRef.current = false;
       setLoading(false);
       setScanningPulse(false);
-      // Re-enable scanner loop after 2 seconds
-      setTimeout(() => {
-        isDetectingRef.current = false;
-      }, 2000);
+      lastScannedTokenRef.current = null;
       return;
     }
 
+    setScanStatusHint("Memverifikasi kehadiran...");
     setLoading(true);
     setError(null);
 
@@ -427,9 +490,9 @@ export default function EmployeeScanPage() {
         body: JSON.stringify({
           token: cleanToken,
           deviceFingerprint: dev.deviceFingerprint,
-          latitude: gpsCoords.latitude,
-          longitude: gpsCoords.longitude,
-          accuracy: gpsCoords.accuracy,
+          latitude: currentGps.latitude,
+          longitude: currentGps.longitude,
+          accuracy: currentGps.accuracy,
         }),
       });
 
@@ -450,7 +513,7 @@ export default function EmployeeScanPage() {
         throw new Error(errorMsg);
       }
 
-      // Success: Play confirmation haptic and stop camera
+      // Success: Double haptic confirmation and stop camera
       if (typeof navigator !== "undefined" && navigator.vibrate) {
         navigator.vibrate([100, 50, 100]);
       }
@@ -458,14 +521,16 @@ export default function EmployeeScanPage() {
       setScanResult(data);
       loadShiftStatus();
     } catch (err: any) {
-      // Error: Keep camera stream alive, show error, and re-arm after 2.5s
+      // Error: Keep camera stream alive, show error, and re-arm scanner after 2.5s
       setError(err.message || "Gagal memproses presensi.");
       if (typeof navigator !== "undefined" && navigator.vibrate) {
         navigator.vibrate([200, 100, 200]);
       }
       setTimeout(() => {
-        isDetectingRef.current = false;
+        isSubmittingRef.current = false;
         setScanningPulse(false);
+        setScanStatusHint(null);
+        lastScannedTokenRef.current = null;
       }, 2500);
     } finally {
       setLoading(false);
@@ -554,7 +619,7 @@ export default function EmployeeScanPage() {
             <div
               className={`relative w-full max-w-[300px] aspect-square mx-auto rounded-3xl overflow-hidden bg-neutral-950 border transition-all duration-300 shadow-inner flex items-center justify-center ${
                 scanningPulse
-                  ? "border-emerald-500 ring-4 ring-emerald-500/20 shadow-emerald-500/30"
+                  ? "border-emerald-500 ring-4 ring-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
                   : error
                   ? "border-red-500/80 ring-2 ring-red-500/20"
                   : "border-neutral-200 dark:border-neutral-800"
@@ -572,7 +637,7 @@ export default function EmployeeScanPage() {
 
               {cameraActive ? (
                 <>
-                  {/* Decorative Overlays */}
+                  {/* Decorative Viewfinder Overlays */}
                   <div className="absolute inset-0 pointer-events-none select-none z-10">
                     <div className="absolute inset-0 border-[26px] border-black/40" />
 
@@ -593,7 +658,9 @@ export default function EmployeeScanPage() {
                   {loading && (
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-30 flex flex-col items-center justify-center gap-2 text-white">
                       <div className="w-9 h-9 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span className="text-xs font-medium tracking-wide">Memverifikasi QR...</span>
+                      <span className="text-xs font-medium tracking-wide">
+                        {scanStatusHint || "Memverifikasi QR..."}
+                      </span>
                     </div>
                   )}
 
@@ -653,10 +720,16 @@ export default function EmployeeScanPage() {
             {/* Viewfinder Caption */}
             <div className="space-y-1">
               <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 block">
-                {isCheckedIn ? "Absen Pulang (Check-Out)" : "Absen Masuk (Check-In)"}
+                {isCompleted
+                  ? "Presensi Hari Ini Selesai"
+                  : isCheckedIn
+                  ? "Absen Pulang (Check-Out)"
+                  : "Absen Masuk (Check-In)"}
               </span>
               <p className="text-[11px] text-neutral-500 max-w-xs mx-auto">
-                Dekatkan kamera ke layar terminal QR di kantor. Pemindaian akan berjalan otomatis tanpa perlu menekan tombol.
+                {isCompleted
+                  ? "Presensi masuk dan pulang untuk shift hari ini sudah lengkap."
+                  : "Dekatkan kamera ke layar terminal QR di kantor. Pemindaian akan berjalan otomatis tanpa perlu menekan tombol."}
               </p>
             </div>
 

@@ -140,6 +140,12 @@ export async function validateAndConsumeQRToken(
 
   // Parse token if it's encoded as JSON { t: "qr_...", exp: ... }
   let cleanToken = (token || "").trim();
+  if (
+    (cleanToken.startsWith('"') && cleanToken.endsWith('"')) ||
+    (cleanToken.startsWith("'") && cleanToken.endsWith("'"))
+  ) {
+    cleanToken = cleanToken.slice(1, -1).trim();
+  }
   if (cleanToken.startsWith("{") && (cleanToken.includes('"t"') || cleanToken.includes("'t'"))) {
     try {
       const parsed = JSON.parse(cleanToken);
