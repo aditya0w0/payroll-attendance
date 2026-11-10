@@ -621,13 +621,13 @@ export default function EmployeeScanPage() {
       <div className="flex items-center justify-between">
         <Link
           href="/employee"
-          className="text-xs text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 flex items-center gap-1.5 font-medium"
+          className="liquid-glass-pill px-3 py-1.5 text-xs text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white flex items-center gap-1.5 font-medium transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Dashboard</span>
         </Link>
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded font-semibold bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
+          <span className="liquid-glass-pill text-[10px] font-mono uppercase px-2.5 py-1 font-bold tracking-tight bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/25">
             {isCheckedIn ? "MODE: ABSEN PULANG" : isCompleted ? "SHIFT SELESAI" : "MODE: ABSEN MASUK"}
           </span>
         </div>
@@ -636,18 +636,18 @@ export default function EmployeeScanPage() {
       {!scanResult ? (
         <div className="space-y-4">
           {/* Shift State Header Banner */}
-          <div className="p-3.5 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
+          <div className="p-4 rounded-3xl liquid-glass flex items-center justify-between">
+            <div className="flex items-center gap-3">
               <div
-                className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                className={`w-10 h-10 rounded-2xl flex items-center justify-center ${
                   isCheckedIn
-                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                    ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25 shadow-inner"
                     : isCompleted
-                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                    : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 shadow-inner"
+                    : "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25 shadow-inner"
                 }`}
               >
-                <Clock className="w-4 h-4" />
+                <Clock className="w-5 h-5" />
               </div>
               <div>
                 <span className="text-[10px] uppercase tracking-wider font-semibold text-neutral-400 block">
@@ -671,15 +671,15 @@ export default function EmployeeScanPage() {
           </div>
 
           {/* Apple Style Seamless Viewfinder Card */}
-          <div className="apple-card p-5 text-center space-y-4">
+          <div className="liquid-glass p-5 rounded-3xl text-center space-y-4">
             {/* Viewfinder Viewport */}
             <div
               className={`relative w-full max-w-[300px] aspect-square mx-auto rounded-3xl overflow-hidden bg-neutral-950 border transition-all duration-300 shadow-inner flex items-center justify-center ${
                 scanningPulse
-                  ? "border-emerald-500 ring-4 ring-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+                  ? "border-emerald-500 ring-4 ring-emerald-500/30 shadow-[0_0_25px_rgba(16,185,129,0.4)]"
                   : error
                   ? "border-red-500/80 ring-2 ring-red-500/20"
-                  : "border-neutral-200 dark:border-neutral-800"
+                  : "border-white/20 dark:border-white/10"
               }`}
             >
               {/* Live Video Feed & Offscreen Canvas */}
@@ -713,7 +713,7 @@ export default function EmployeeScanPage() {
 
                   {/* Processing Status Overlay */}
                   {loading && (
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-30 flex flex-col items-center justify-center gap-2 text-white">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-md z-30 flex flex-col items-center justify-center gap-2 text-white">
                       <div className="w-9 h-9 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       <span className="text-xs font-medium tracking-wide">
                         {scanStatusHint || "Memverifikasi QR..."}
@@ -727,10 +727,10 @@ export default function EmployeeScanPage() {
                       <button
                         type="button"
                         onClick={toggleTorch}
-                        className={`p-2 rounded-full backdrop-blur-md transition-colors ${
+                        className={`p-2.5 rounded-full backdrop-blur-xl border border-white/30 transition-all ${
                           torchOn
-                            ? "bg-amber-400 text-black shadow-md"
-                            : "bg-black/50 hover:bg-black/70 text-white"
+                            ? "bg-amber-400 text-black shadow-lg scale-105"
+                            : "bg-black/40 hover:bg-black/60 text-white"
                         }`}
                         title={torchOn ? "Matikan Flash" : "Nyalakan Flash"}
                       >
@@ -744,7 +744,7 @@ export default function EmployeeScanPage() {
                       <button
                         type="button"
                         onClick={switchCamera}
-                        className="p-2 rounded-full bg-black/50 hover:bg-black/70 text-white backdrop-blur-md transition-colors"
+                        className="p-2.5 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-xl border border-white/30 transition-all hover:scale-105"
                         title="Ganti Kamera Depan/Belakang"
                       >
                         <SwitchCamera className="w-3.5 h-3.5" />
@@ -755,14 +755,14 @@ export default function EmployeeScanPage() {
               ) : (
                 /* Camera Inactive / Permission Prompt */
                 <div className="flex flex-col items-center justify-center p-6 text-center space-y-3 z-20 pointer-events-auto">
-                  <div className="w-14 h-14 rounded-2xl bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 flex items-center justify-center shadow-sm">
+                  <div className="w-14 h-14 rounded-2xl bg-white/10 text-white flex items-center justify-center shadow-inner border border-white/10">
                     <Camera className="w-7 h-7 stroke-[1.5]" />
                   </div>
                   <button
                     type="button"
                     onClick={() => startCamera("environment")}
                     disabled={cameraStarting}
-                    className="apple-btn-primary text-xs px-4 py-2 font-medium flex items-center gap-1.5 z-20 pointer-events-auto"
+                    className="liquid-glass-btn-primary text-xs px-4 py-2 font-medium flex items-center gap-1.5 z-20 pointer-events-auto rounded-xl"
                   >
                     <Camera className="w-3.5 h-3.5" />
                     <span>{cameraStarting ? "Menghubungkan Kamera..." : "Aktifkan Kamera"}</span>
@@ -791,7 +791,7 @@ export default function EmployeeScanPage() {
             </div>
 
             {/* GPS Diagnostic & Status */}
-            <div className="flex items-center justify-between p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-xs">
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-white/40 dark:bg-black/25 backdrop-blur-md border border-white/50 dark:border-white/5 text-xs">
               <div className="flex items-center gap-2">
                 <MapPin className="w-3.5 h-3.5 text-neutral-500" />
                 <span className="text-neutral-500 text-[11px]">GPS Location:</span>
@@ -799,7 +799,7 @@ export default function EmployeeScanPage() {
 
               {gpsCoords ? (
                 <div className="flex items-center gap-1.5">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1">
+                  <span className="liquid-glass-pill px-3 py-1 text-[10px] font-mono font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 inline-flex items-center gap-1.5 shadow-sm">
                     <CheckCircle2 className="w-3 h-3 text-emerald-500" />
                     <span>LOKASI DIDAPAT: +/-{gpsCoords.accuracy}m</span>
                   </span>
@@ -807,7 +807,7 @@ export default function EmployeeScanPage() {
                     type="button"
                     onClick={() => triggerNativeGpsPrompt()}
                     title="Refresh GPS"
-                    className="p-1 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded transition-colors"
+                    className="p-1.5 hover:bg-white/50 dark:hover:bg-white/10 rounded-full transition-colors"
                   >
                     <RotateCcw className="w-3 h-3 text-neutral-400" />
                   </button>
@@ -817,7 +817,7 @@ export default function EmployeeScanPage() {
                   type="button"
                   onClick={() => triggerNativeGpsPrompt()}
                   disabled={gpsLoading}
-                  className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-medium inline-flex items-center gap-1 shadow-sm transition-all"
+                  className="liquid-glass-btn-primary px-3 py-1.5 rounded-xl text-white text-[11px] font-medium inline-flex items-center gap-1 shadow-sm transition-all"
                 >
                   <span>{gpsLoading ? "Mengunci GPS..." : "Aktifkan Izin GPS"}</span>
                 </button>

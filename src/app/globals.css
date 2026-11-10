@@ -155,194 +155,238 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Apple HIG Surfaces */
+/* ==========================================================================
+   LIQUID GLASS DESIGN SYSTEM (VisionOS & iOS 18 Glassmorphism)
+   ========================================================================== */
+
+/* Liquid Glass Cards */
+.liquid-glass,
+.apple-card,
 .hig-card {
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-hairline);
-  border-radius: 12px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 20px;
+  box-shadow: 0 10px 32px 0 rgba(0, 0, 0, 0.05),
+              inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.9),
+              inset 0 -1px 1px 0 rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.dark .liquid-glass,
+.dark .apple-card,
+.dark .hig-card {
+  background: rgba(18, 20, 28, 0.72);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.45),
+              inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.15),
+              inset 0 -1px 1px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Liquid Glass Elevated Panels */
+.liquid-glass-elevated,
 .hig-card-elevated {
-  background-color: var(--card-elevated);
-  border: 1px solid var(--border-hairline);
-  border-radius: 14px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 24px;
+  box-shadow: 0 20px 48px -10px rgba(0, 0, 0, 0.08),
+              inset 0 1.5px 2px 0 rgba(255, 255, 255, 1);
 }
 
-/* Apple HIG Buttons */
+.dark .liquid-glass-elevated,
+.dark .hig-card-elevated {
+  background: rgba(22, 25, 36, 0.85);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 24px;
+  box-shadow: 0 24px 50px -10px rgba(0, 0, 0, 0.55),
+              inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Liquid Glass Pill / Capsule */
+.liquid-glass-pill {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 9999px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06),
+              inset 0 1px 1px rgba(255, 255, 255, 0.9);
+}
+
+.dark .liquid-glass-pill {
+  background: rgba(24, 27, 38, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4),
+              inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+/* Liquid Glass Interactive Primary Button */
+.liquid-glass-btn-primary,
+.apple-btn-primary,
 .hig-button-primary {
-  background-color: var(--accent);
+  background: linear-gradient(135deg, #0071e3 0%, #0056b3 100%);
   color: #ffffff;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1;
-  border-radius: 8px;
-  padding: 8px 16px;
-  border: none;
+  border-radius: 12px;
+  padding: 10px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 20px -4px rgba(0, 113, 227, 0.4),
+              inset 0 1px 1px rgba(255, 255, 255, 0.4);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  transition: opacity 0.12s ease;
-}
-.hig-button-primary:hover {
-  opacity: 0.92;
-}
-.hig-button-primary:active {
-  opacity: 0.78;
-}
-.hig-button-primary:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+  gap: 7px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
+.liquid-glass-btn-primary:hover,
+.apple-btn-primary:hover,
+.hig-button-primary:hover {
+  background: linear-gradient(135deg, #1480f0 0%, #0062c4 100%);
+  box-shadow: 0 10px 25px -4px rgba(0, 113, 227, 0.5),
+              inset 0 1px 1.5px rgba(255, 255, 255, 0.55);
+  transform: translateY(-1px);
+}
+
+.liquid-glass-btn-primary:active,
+.apple-btn-primary:active,
+.hig-button-primary:active {
+  transform: translateY(0.5px) scale(0.99);
+  box-shadow: 0 4px 12px -2px rgba(0, 113, 227, 0.35);
+}
+
+.liquid-glass-btn-primary:disabled,
+.apple-btn-primary:disabled,
+.hig-button-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Liquid Glass Secondary Frosted Button */
+.liquid-glass-btn-secondary,
+.apple-btn-secondary,
 .hig-button-secondary {
-  background-color: rgba(142, 142, 147, 0.12);
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   color: var(--text-primary);
   font-size: 13px;
   font-weight: 500;
   line-height: 1;
-  border-radius: 8px;
-  padding: 8px 14px;
-  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 9px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04),
+              inset 0 1px 1px rgba(255, 255, 255, 0.7);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  transition: background-color 0.12s ease;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+.dark .liquid-glass-btn-secondary,
+.dark .apple-btn-secondary,
+.dark .hig-button-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3),
+              inset 0 1px 1px rgba(255, 255, 255, 0.12);
+}
+
+.liquid-glass-btn-secondary:hover,
+.apple-btn-secondary:hover,
 .hig-button-secondary:hover {
-  background-color: rgba(142, 142, 147, 0.2);
-}
-.hig-button-secondary:active {
-  background-color: rgba(142, 142, 147, 0.28);
+  background: rgba(255, 255, 255, 0.75);
+  transform: translateY(-0.5px);
 }
 
-.hig-button-destructive {
-  background-color: var(--system-red-tint);
-  color: var(--system-red);
-  font-size: 12px;
-  font-weight: 500;
-  border-radius: 6px;
-  padding: 6px 12px;
-  border: none;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: opacity 0.12s ease;
-}
-.hig-button-destructive:hover {
-  opacity: 0.85;
+.dark .liquid-glass-btn-secondary:hover,
+.dark .apple-btn-secondary:hover,
+.dark .hig-button-secondary:hover {
+  background: rgba(255, 255, 255, 0.14);
 }
 
-/* Apple HIG Inputs */
-.hig-input {
-  background-color: var(--card-bg);
+.liquid-glass-btn-secondary:disabled,
+.apple-btn-secondary:disabled,
+.hig-button-secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Liquid Glass Input Fields */
+.liquid-glass-input,
+.hig-input,
+.apple-input {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   color: var(--text-primary);
-  border: 1px solid var(--separator);
-  border-radius: 8px;
-  padding: 8px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 10px 14px;
   font-size: 13px;
   line-height: 1.4;
   outline: none;
   width: 100%;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-.hig-input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-tint);
-}
-.hig-input::placeholder {
-  color: var(--text-tertiary);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.18s ease;
 }
 
-/* Apple Design Aliases for UI Resilience */
-.apple-card {
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-hairline);
-  border-radius: 12px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+.dark .liquid-glass-input,
+.dark .hig-input,
+.dark .apple-input {
+  background: rgba(20, 24, 35, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.apple-input {
-  background-color: var(--card-elevated);
-  color: var(--text-primary);
-  border: 1px solid var(--separator);
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 13px;
-  line-height: 1.4;
-  outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
+.liquid-glass-input:focus,
+.hig-input:focus,
 .apple-input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-tint);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 0 0 3px var(--accent-tint),
+              0 6px 18px rgba(0, 113, 227, 0.12);
 }
+
+.dark .liquid-glass-input:focus,
+.dark .hig-input:focus,
+.dark .apple-input:focus {
+  background: rgba(26, 30, 44, 0.88);
+  box-shadow: 0 0 0 3px var(--accent-tint),
+              0 6px 20px rgba(41, 151, 255, 0.2);
+}
+
+.liquid-glass-input::placeholder,
+.hig-input::placeholder,
 .apple-input::placeholder {
   color: var(--text-tertiary);
 }
-.apple-input option {
+
+.apple-input option,
+.hig-input option {
   background-color: var(--card-elevated);
   color: var(--text-primary);
-}
-
-.apple-btn-primary {
-  background-color: var(--accent);
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1;
-  border-radius: 8px;
-  padding: 8px 16px;
-  border: 1px solid transparent;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: opacity 0.12s ease;
-}
-.apple-btn-primary:hover {
-  opacity: 0.92;
-}
-.apple-btn-primary:active {
-  opacity: 0.78;
-}
-.apple-btn-primary:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.apple-btn-secondary {
-  background-color: rgba(142, 142, 147, 0.12);
-  color: var(--text-primary);
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1;
-  border-radius: 8px;
-  padding: 8px 14px;
-  border: 1px solid var(--separator);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: background-color 0.12s ease;
-}
-.apple-btn-secondary:hover {
-  background-color: rgba(142, 142, 147, 0.2);
-}
-.apple-btn-secondary:active {
-  background-color: rgba(142, 142, 147, 0.28);
-}
-.apple-btn-secondary:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 
 /* Apple HIG Segmented Control */

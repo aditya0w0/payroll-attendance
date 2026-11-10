@@ -177,6 +177,23 @@ async function runQASecuritySuite() {
     include: { employeeProfile: true },
   });
 
+  // Ensure employee profile exists regardless of whether user was newly created or updated
+  await prisma.employeeProfile.upsert({
+    where: { userId: rbacEmpUser.id },
+    update: {
+      fullName: "RBAC Test Employee",
+      dailySalary: 150000,
+      shiftId: morningShiftRbac.id,
+    },
+    create: {
+      userId: rbacEmpUser.id,
+      fullName: "RBAC Test Employee",
+      employeeId: "EMP-RBAC-001",
+      dailySalary: 150000,
+      shiftId: morningShiftRbac.id,
+    },
+  });
+
   // Ensure clean device registration matching the test fingerprint and without passkey
   await prisma.deviceRegistration.upsert({
     where: { userId: rbacEmpUser.id },

@@ -299,14 +299,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[var(--system-bg)]">
-      <div className="w-full max-w-[340px] space-y-5">
-        {/* Apple Style Monogram Header */}
-        <div className="text-center space-y-1.5">
-          <div className="w-10 h-10 rounded-xl bg-[var(--text-primary)] text-[var(--system-bg)] flex items-center justify-center mx-auto shadow-sm">
-            <Shield className="w-5 h-5 stroke-[2]" />
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-transparent relative">
+      <div className="w-full max-w-[360px] space-y-6">
+        {/* Apple / Liquid Glass Monogram Header */}
+        <div className="text-center space-y-2">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-500 text-white flex items-center justify-center mx-auto shadow-[0_8px_24px_rgba(37,99,235,0.4)] border border-white/40">
+            <Shield className="w-6 h-6 stroke-[2]" />
           </div>
-          <h1 className="text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+          <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
             Sign In
           </h1>
           <p className="text-xs text-[var(--text-secondary)]">
@@ -316,7 +316,7 @@ export default function LoginPage() {
 
         {/* In-App Browser (WebView) Warning Banner */}
         {webViewInfo && (webViewInfo.isInApp || !webViewInfo.isWebAuthnSupported) && (
-          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs space-y-2.5 animate-in fade-in duration-200">
+          <div className="p-4 rounded-2xl liquid-glass border-amber-500/30 text-xs space-y-2.5 animate-in fade-in duration-200">
             <div className="flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <div className="space-y-1 flex-1">
@@ -324,7 +324,7 @@ export default function LoginPage() {
                   <span className="font-semibold text-neutral-900 dark:text-neutral-100 text-[11px]">
                     Buka di Browser Utama (Safari / Chrome)
                   </span>
-                  <span className="px-1.5 py-0.2 rounded text-[9px] font-bold tracking-wider uppercase bg-amber-500/20 text-amber-800 dark:text-amber-200">
+                  <span className="liquid-glass-pill px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase bg-amber-500/20 text-amber-800 dark:text-amber-200 border border-amber-500/30">
                     {webViewInfo.appName ? `[${webViewInfo.appName.toUpperCase()}]` : "[WEBVIEW]"}
                   </span>
                 </div>
@@ -347,7 +347,7 @@ export default function LoginPage() {
                     setTimeout(() => setLinkCopied(false), 2500);
                   }
                 }}
-                className="apple-btn-secondary px-2.5 py-1 text-[11px] font-medium flex items-center gap-1.5"
+                className="liquid-glass-btn-secondary px-2.5 py-1 text-[11px] font-medium flex items-center gap-1.5 rounded-xl"
               >
                 {linkCopied ? (
                   <>
@@ -365,16 +365,16 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Apple HIG Form Card */}
-        <form onSubmit={handleLogin} className="hig-card p-5 space-y-4">
+        {/* Liquid Glass Form Card */}
+        <form onSubmit={handleLogin} className="liquid-glass-elevated p-6 space-y-4">
           {/* Segmented Control */}
-          <div className="flex bg-neutral-200/60 dark:bg-neutral-800 p-0.5 rounded-lg text-xs font-medium">
+          <div className="flex bg-black/5 dark:bg-white/5 backdrop-blur-md p-1 rounded-2xl text-xs font-medium border border-white/20 dark:border-white/5">
             <button
               type="button"
               onClick={() => handleModeChange("owner")}
-              className={`flex-1 py-1 rounded-md transition-all ${
+              className={`flex-1 py-1.5 rounded-xl transition-all ${
                 mode === "owner"
-                  ? "bg-white dark:bg-neutral-900 shadow-sm text-neutral-900 dark:text-neutral-100 font-semibold"
+                  ? "bg-white dark:bg-neutral-800 shadow-[0_2px_10px_rgba(0,0,0,0.08)] text-neutral-900 dark:text-neutral-100 font-semibold"
                   : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
               }`}
             >
@@ -383,9 +383,9 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => handleModeChange("employee")}
-              className={`flex-1 py-1 rounded-md transition-all ${
+              className={`flex-1 py-1.5 rounded-xl transition-all ${
                 mode === "employee"
-                  ? "bg-white dark:bg-neutral-900 shadow-sm text-neutral-900 dark:text-neutral-100 font-semibold"
+                  ? "bg-white dark:bg-neutral-800 shadow-[0_2px_10px_rgba(0,0,0,0.08)] text-neutral-900 dark:text-neutral-100 font-semibold"
                   : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
               }`}
             >
@@ -394,9 +394,9 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => handleModeChange("rogue")}
-              className={`flex-1 py-1 rounded-md transition-all ${
+              className={`flex-1 py-1.5 rounded-xl transition-all ${
                 mode === "rogue"
-                  ? "bg-white dark:bg-neutral-900 shadow-sm text-red-600 dark:text-red-400 font-semibold"
+                  ? "bg-white dark:bg-neutral-800 shadow-[0_2px_10px_rgba(0,0,0,0.08)] text-red-600 dark:text-red-400 font-semibold"
                   : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
               }`}
             >
@@ -405,7 +405,7 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div className="p-2.5 rounded-lg bg-[var(--system-red-tint)] text-[var(--system-red)] text-xs flex items-start gap-2">
+            <div className="p-2.5 rounded-xl bg-[var(--system-red-tint)] text-[var(--system-red)] text-xs flex items-start gap-2 border border-red-500/20">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
@@ -421,7 +421,7 @@ export default function LoginPage() {
               onChange={(e) => setIdentifier(e.target.value)}
               placeholder="Username or email"
               required
-              className="hig-input text-xs"
+              className="liquid-glass-input text-xs"
             />
           </div>
 
@@ -435,14 +435,14 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
               required
-              className="hig-input text-xs"
+              className="liquid-glass-input text-xs"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="hig-button-primary w-full py-2.5 text-xs font-medium"
+            className="liquid-glass-btn-primary w-full py-3 text-xs font-semibold rounded-xl"
           >
             {loading
               ? "Authenticating..."

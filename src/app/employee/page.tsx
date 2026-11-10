@@ -272,16 +272,18 @@ export default function EmployeeDashboardPage() {
 
       {/* Biometric Passkey Enrollment Banner / Onboarding Card */}
       {!hasPasskey && (
-        <div className="apple-card p-4 bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/60 space-y-2.5 animate-in fade-in duration-200">
-          <div className="flex items-start gap-2.5">
-            <Fingerprint className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+        <div className="liquid-glass p-4 rounded-3xl bg-blue-500/10 dark:bg-blue-950/40 border border-blue-400/30 dark:border-blue-600/30 space-y-3 animate-in fade-in duration-200">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-2xl bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/30">
+              <Fingerprint className="w-5 h-5" />
+            </div>
             <div className="space-y-1 flex-1">
               <div className="flex items-center gap-2">
                 <h3 className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
                   {isOnboarding ? "Pendaftaran Perangkat Pertama Kali" : "Enroll Biometric Passkey"}
                 </h3>
                 {isOnboarding && (
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium">
+                  <span className="liquid-glass-pill text-[9px] font-mono px-2 py-0.5 bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold border border-blue-500/30">
                     [MUST_BIND_DEVICE]
                   </span>
                 )}
@@ -296,24 +298,24 @@ export default function EmployeeDashboardPage() {
 
           {passkeyMessage && (
             <div
-              className={`p-2 rounded text-[11px] ${
+              className={`p-2.5 rounded-xl text-[11px] border ${
                 passkeyMessage.type === "success"
-                  ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300"
-                  : "bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300"
+                  ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-800 dark:text-emerald-300"
+                  : "bg-red-500/15 border-red-500/30 text-red-800 dark:text-red-300"
               }`}
             >
               {passkeyMessage.text}
             </div>
           )}
 
-          <div className="pt-1 flex items-center justify-between border-t border-blue-200/50 dark:border-blue-900/40">
-            <span className="text-[10px] text-neutral-500">
+          <div className="pt-2 flex items-center justify-between border-t border-blue-500/20">
+            <span className="text-[10px] text-neutral-500 font-medium">
               Sensor Biometrik Platform
             </span>
             <button
               onClick={handleEnrollPasskey}
               disabled={passkeyLoading}
-              className="apple-btn-primary text-xs px-3 py-1.5 flex items-center gap-1.5"
+              className="liquid-glass-btn-primary text-xs px-3.5 py-2 flex items-center gap-1.5 rounded-xl"
             >
               <Fingerprint className="w-3.5 h-3.5" />
               <span>{passkeyLoading ? "Memproses Biometrik..." : isOnboarding ? "Daftarkan Perangkat Ini" : "Enroll Passkey"}</span>
@@ -322,24 +324,25 @@ export default function EmployeeDashboardPage() {
         </div>
       )}
 
-      {/* Apple Wallet / Apple Cash Style Daily Wage Card */}
-      <div className="apple-card p-5 bg-gradient-to-br from-neutral-900 to-neutral-800 text-white shadow-sm border border-neutral-700/60">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-neutral-400">
+      {/* Apple Wallet / Liquid Glass Style Daily Wage Card */}
+      <div className="p-5 rounded-3xl bg-gradient-to-br from-slate-900/95 via-neutral-900/90 to-indigo-950/85 backdrop-blur-2xl text-white border border-white/20 shadow-[0_16px_36px_-10px_rgba(0,0,0,0.35),inset_0_1px_1.5px_rgba(255,255,255,0.25)] relative overflow-hidden">
+        <div className="absolute top-0 right-0 -mr-12 -mt-12 w-32 h-32 rounded-full bg-blue-500/20 blur-2xl pointer-events-none" />
+        <div className="flex items-center justify-between relative z-10">
+          <span className="text-[11px] font-medium uppercase tracking-wider text-neutral-300">
             Daily Wage Rate
           </span>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/10 text-neutral-300">
+          <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-white/15 backdrop-blur-md text-neutral-200 border border-white/10">
             Per Completed Shift
           </span>
         </div>
 
-        <div className="text-3xl font-semibold tracking-tight mt-2 tabular-nums">
+        <div className="text-3xl font-semibold tracking-tight mt-2.5 tabular-nums relative z-10">
           {formatIDR(employee.dailySalary)}
         </div>
 
-        <div className="text-xs text-neutral-300 mt-4 flex items-center justify-between pt-3 border-t border-white/10">
+        <div className="text-xs text-neutral-300 mt-4 flex items-center justify-between pt-3 border-t border-white/15 relative z-10">
           <div className="flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-neutral-400" />
+            <Clock className="w-3.5 h-3.5 text-blue-400" />
             <span>{employee.shift.name}</span>
           </div>
           <span className="font-mono text-neutral-300">
@@ -349,23 +352,23 @@ export default function EmployeeDashboardPage() {
       </div>
 
       {/* Today's Attendance State Card */}
-      <div className="apple-card p-5 space-y-4">
+      <div className="liquid-glass p-5 rounded-3xl space-y-4">
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
             Shift Status
           </span>
           {isNotCheckedIn && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
+            <span className="liquid-glass-pill px-2.5 py-0.5 text-[10px] font-medium text-neutral-600 dark:text-neutral-400">
               Not Checked In
             </span>
           )}
           {isCheckedIn && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60">
+            <span className="liquid-glass-pill px-2.5 py-0.5 text-[10px] font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
               Shift in Progress
             </span>
           )}
           {isCompleted && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60">
+            <span className="liquid-glass-pill px-2.5 py-0.5 text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
               Completed
             </span>
           )}
@@ -388,14 +391,14 @@ export default function EmployeeDashboardPage() {
             <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 text-sm">
               Currently Working
             </h3>
-            <div className="flex items-center justify-between text-xs bg-neutral-50 dark:bg-neutral-900 p-2.5 rounded-lg border border-neutral-100 dark:border-neutral-800">
+            <div className="flex items-center justify-between text-xs bg-white/40 dark:bg-black/20 backdrop-blur-md p-2.5 rounded-xl border border-white/50 dark:border-white/5">
               <span className="text-neutral-500">Check-In Time:</span>
               <span className="font-mono font-medium text-neutral-800 dark:text-neutral-200">
                 {today.activeRecord?.checkInTime}
               </span>
             </div>
             {today.activeRecord && today.activeRecord.lateMinutes > 0 && (
-              <div className="flex items-center justify-between text-xs bg-red-50 dark:bg-red-950/30 p-2.5 rounded-lg border border-red-100 dark:border-red-900/40 text-red-700 dark:text-red-300">
+              <div className="flex items-center justify-between text-xs bg-red-50/70 dark:bg-red-950/30 p-2.5 rounded-xl border border-red-200/50 dark:border-red-900/40 text-red-700 dark:text-red-300">
                 <span>Late Duration:</span>
                 <span className="font-medium">
                   {today.activeRecord.lateMinutes} mins (-{formatIDR(today.activeRecord.lateDeduction)})
@@ -421,13 +424,13 @@ export default function EmployeeDashboardPage() {
         {!isCompleted ? (
           <Link
             href="/employee/scan"
-            className="apple-btn-primary w-full py-2.5 text-xs font-medium flex items-center justify-center gap-2"
+            className="liquid-glass-btn-primary w-full py-3 text-xs font-semibold flex items-center justify-center gap-2 rounded-xl"
           >
             <QrCode className="w-4 h-4" />
             <span>{isNotCheckedIn ? "Scan QR to Check In" : "Scan QR to Check Out"}</span>
           </Link>
         ) : (
-          <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 flex justify-between items-center text-xs text-neutral-500">
+          <div className="pt-2 border-t border-white/40 dark:border-white/5 flex justify-between items-center text-xs text-neutral-500">
             <span>Shift completed for {today.shiftDate}</span>
             <span className="font-medium text-emerald-600 dark:text-emerald-400">Authoritative</span>
           </div>
@@ -436,8 +439,8 @@ export default function EmployeeDashboardPage() {
 
       {/* Immediate Daily Salary Receipt */}
       {latestCompletedPayslip && (
-        <div className="apple-card p-5 space-y-4 border border-neutral-200 dark:border-neutral-800">
-          <div className="flex items-center justify-between pb-3 border-b border-neutral-100 dark:border-neutral-800">
+        <div className="liquid-glass p-5 rounded-3xl space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-white/40 dark:border-white/10">
             <div>
               <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block">
                 Daily Salary Receipt
@@ -446,7 +449,7 @@ export default function EmployeeDashboardPage() {
                 {latestCompletedPayslip.shiftName}
               </h3>
             </div>
-            <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+            <span className="liquid-glass-pill px-2.5 py-0.5 text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
               {latestCompletedPayslip.status}
             </span>
           </div>
@@ -491,7 +494,7 @@ export default function EmployeeDashboardPage() {
             </div>
 
             {latestCompletedPayslip.lateDeduction > 0 && (
-              <div className="flex justify-between items-center text-red-600 dark:text-red-400 font-medium pt-1.5 border-t border-neutral-100 dark:border-neutral-800">
+              <div className="flex justify-between items-center text-red-600 dark:text-red-400 font-medium pt-1.5 border-t border-white/40 dark:border-white/10">
                 <span>Late Deduction</span>
                 <span className="tabular-nums">
                   -{formatIDR(latestCompletedPayslip.lateDeduction)}
@@ -499,7 +502,7 @@ export default function EmployeeDashboardPage() {
               </div>
             )}
 
-            <div className="flex justify-between items-baseline pt-3 border-t border-neutral-200 dark:border-neutral-800">
+            <div className="flex justify-between items-baseline pt-3 border-t border-white/60 dark:border-white/10">
               <span className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">
                 Net Daily Earnings
               </span>
@@ -509,21 +512,21 @@ export default function EmployeeDashboardPage() {
             </div>
           </div>
 
-          <div className="text-[10px] text-neutral-400 text-center pt-2 border-t border-neutral-100 dark:border-neutral-800">
+          <div className="text-[10px] text-neutral-400 text-center pt-2 border-t border-white/40 dark:border-white/10">
             Session Date: {latestCompletedPayslip.shiftDate} • Authoritative Server Snapshot
           </div>
         </div>
       )}
 
       {/* Device & Passkey Verification Status */}
-      <div className="apple-card p-3 flex items-center justify-between text-xs text-neutral-500">
+      <div className="liquid-glass p-3.5 rounded-2xl flex items-center justify-between text-xs text-neutral-500">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-emerald-600" />
+          <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           <span>Authorized Device:</span>
         </div>
         <div className="flex items-center gap-2 font-medium text-neutral-800 dark:text-neutral-200">
           {hasPasskey && (
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shrink-0">
+            <span className="liquid-glass-pill px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shrink-0">
               [ACTIVE PASSKEY]
             </span>
           )}
