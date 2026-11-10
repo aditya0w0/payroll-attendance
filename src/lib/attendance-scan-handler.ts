@@ -136,12 +136,18 @@ export async function handleAttendanceScan(req: Request) {
         activeConfig.longitude
       );
 
-      if (distanceMeters > activeConfig.radiusMeters) {
+      // Account for standard GPS measurement uncertainty (up to 50% of reported accuracy, capped at 25m)
+      // This prevents false rejections when employees are inside the building or under concrete roofs
+      const measurementBuffer = Math.min(Math.max(0, (accuracy || 0) * 0.5), 25);
+      const effectiveDistance = Math.max(0, distanceMeters - measurementBuffer);
+
+      if (effectiveDistance > activeConfig.radiusMeters) {
         return NextResponse.json(
           {
             error: `Lokasi Anda berada di luar area kantor (${distanceMeters}m dari batas ${activeConfig.radiusMeters}m).`,
             code: "GEO_OUT_OF_BOUNDS",
             distance: distanceMeters,
+            effectiveDistance,
             maxRadius: activeConfig.radiusMeters,
           },
           { status: 403 }

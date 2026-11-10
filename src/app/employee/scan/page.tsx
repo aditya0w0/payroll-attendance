@@ -49,8 +49,9 @@ export default function EmployeeScanPage() {
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [torchSupported, setTorchSupported] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
+  const watchIdRef = useRef<number | null>(null);
 
-  const acquireGpsLocation = () => {
+  const startGpsWatch = () => {
     const isDevelopment =
       process.env.NODE_ENV === "development" ||
       (typeof window !== "undefined" &&
@@ -67,48 +68,56 @@ export default function EmployeeScanPage() {
       return;
     }
 
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+
     setGpsStatus("acquiring");
     setGpsError(null);
 
-    navigator.geolocation.getCurrentPosition(
+    // Continuous watchPosition for precision convergence (improves accuracy as satellites lock)
+    watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
-        setGpsCoords({
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
+        setGpsCoords((prev) => {
+          // Keep the fix with best accuracy
+          if (!prev || pos.coords.accuracy <= prev.accuracy) {
+            return {
+              latitude: Number(pos.coords.latitude.toFixed(6)),
+              longitude: Number(pos.coords.longitude.toFixed(6)),
+              accuracy: Math.round(pos.coords.accuracy),
+            };
+          }
+          return prev;
         });
         setGpsStatus("ready");
         setGpsError(null);
       },
       (err) => {
-        if (err.code === 1) {
-          // PERMISSION_DENIED
-          setGpsStatus("denied");
-          setGpsError(
-            isDevelopment
-              ? "[GPS-UNAVAILABLE] Pastikan Location Services macOS dan Wi-Fi aktif. Pada mode development, gunakan koordinat mock jika hardware tidak memiliki GPS."
-              : "Geolocation access is mandatory for attendance check-in. Please enable location permissions in your browser."
-          );
-        } else if (err.code === 3) {
-          // TIMEOUT (15000ms elapsed)
-          setGpsStatus("error");
-          setGpsError(
-            isDevelopment
-              ? "[GPS-UNAVAILABLE] Pastikan Location Services macOS dan Wi-Fi aktif. Pada mode development, gunakan koordinat mock jika hardware tidak memiliki GPS."
-              : "Waktu permintaan lokasi GPS habis (timeout). Pastikan Wi-Fi atau GPS aktif lalu coba lagi."
-          );
-        } else {
-          setGpsStatus("error");
-          setGpsError(
-            isDevelopment
-              ? "[GPS-UNAVAILABLE] Pastikan Location Services macOS dan Wi-Fi aktif. Pada mode development, gunakan koordinat mock jika hardware tidak memiliki GPS."
-              : (err.message || "Failed to acquire GPS location.")
-          );
-        }
+        setGpsCoords((current) => {
+          if (current) return current;
+          if (err.code === 1) {
+            setGpsStatus("denied");
+            setGpsError(
+              isDevelopment
+                ? "[GPS-UNAVAILABLE] Pastikan Location Services macOS dan Wi-Fi aktif. Pada mode development, gunakan koordinat mock jika hardware tidak memiliki GPS."
+                : "Geolocation access is mandatory for attendance check-in. Please enable location permissions in your browser."
+            );
+          } else if (err.code === 3) {
+            setGpsStatus("error");
+            setGpsError("Waktu permintaan lokasi GPS habis (timeout). Pastikan Wi-Fi atau GPS aktif lalu coba lagi.");
+          } else {
+            setGpsStatus("error");
+            setGpsError(err.message || "Failed to acquire GPS location.");
+          }
+          return null;
+        });
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   };
+
+  const acquireGpsLocation = startGpsWatch;
 
   const handleUseMockGps = () => {
     setGpsCoords({
@@ -128,9 +137,13 @@ export default function EmployeeScanPage() {
           (window.location.hostname === "localhost" ||
             window.location.hostname === "127.0.0.1"))
     );
-    acquireGpsLocation();
+    startGpsWatch();
     return () => {
       stopCamera();
+      if (watchIdRef.current !== null && typeof navigator !== "undefined" && navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
     };
   }, []);
 
@@ -477,23 +490,44 @@ export default function EmployeeScanPage() {
               </div>
               {gpsStatus === "acquiring" && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-                  [ACQUIRING GPS...]
+                  <Crosshair className="w-3 h-3 animate-spin text-blue-500" />
+                  <span>[ACQUIRING GPS...]</span>
                 </span>
               )}
               {gpsStatus === "ready" && gpsCoords && (
                 <div className="flex items-center gap-1.5">
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                    [GPS-ACQUIRED]
+                  <span
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border ${
+                      gpsCoords.accuracy <= 25
+                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                        : gpsCoords.accuracy <= 80
+                        ? "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                        : "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                    }`}
+                  >
+                    {gpsCoords.accuracy <= 25
+                      ? "[GPS-PRESISI]"
+                      : gpsCoords.accuracy <= 80
+                      ? "[GPS-ACQUIRED]"
+                      : "[GPS-CALIBRATING]"}
                   </span>
                   <span className="text-[11px] text-neutral-500 tabular-nums font-mono">
                     ±{Math.round(gpsCoords.accuracy)}m
                   </span>
+                  <button
+                    type="button"
+                    onClick={startGpsWatch}
+                    title="Kalibrasi ulang satelit GPS"
+                    className="p-1 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                  </button>
                 </div>
               )}
               {(gpsStatus === "denied" || gpsStatus === "error" || gpsStatus === "idle") && (
                 <button
                   type="button"
-                  onClick={acquireGpsLocation}
+                  onClick={startGpsWatch}
                   className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800 hover:bg-red-100"
                 >
                   <Crosshair className="w-3 h-3" />
