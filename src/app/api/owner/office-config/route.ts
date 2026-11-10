@@ -31,8 +31,8 @@ export async function GET(req: Request) {
     config = await prisma.officeConfig.create({
       data: {
         officeName: "Kantor Utama",
-        latitude: -6.2088,
-        longitude: 106.8456,
+        latitude: -6.9338,
+        longitude: 109.6541,
         radiusMeters: 50,
         officePublicIp: "127.0.0.1",
         enforceWifiIp: false,

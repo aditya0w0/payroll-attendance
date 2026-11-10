@@ -7,9 +7,9 @@
  */
 
 export const DEFAULT_OFFICE_COORDS = {
-  latitude: -6.2088,
-  longitude: 106.8456,
-  address: "Pusat Kota Jakarta",
+  latitude: -6.9338,
+  longitude: 109.6541,
+  address: "Buaran, Pekalongan, Jawa Tengah",
 };
 
 export interface PrecisionLocationResult {
@@ -35,11 +35,13 @@ export async function acquirePrecisionLocation(
   onProgress?: PrecisionProgressCallback,
   options: {
     targetAccuracyMeters?: number; // Stop immediately once accuracy <= target (default: 20m)
+    discardThresholdMeters?: number; // Discard readings coarser than this (default: 80m)
     maxAcquisitionMs?: number;     // Max time to wait for satellite lock (default: 15000ms)
     allowIpFallback?: boolean;     // Fallback to IP geolocation ONLY if user explicitly permits (default: false)
   } = {}
 ): Promise<PrecisionLocationResult> {
   const targetAccuracy = options.targetAccuracyMeters ?? 20;
+  const discardThreshold = options.discardThresholdMeters ?? 80;
   const maxWait = options.maxAcquisitionMs ?? 15000;
   // CRITICAL: Default to false to prevent cellular IP (e.g. Tegal gateway) from silently overriding Pekalongan GPS
   const allowIp = options.allowIpFallback ?? false;
@@ -58,6 +60,7 @@ export async function acquirePrecisionLocation(
 
   return new Promise<PrecisionLocationResult>((resolve, reject) => {
     let bestFix: GeolocationCoordinates | null = null;
+    let lastSeenAccuracy: number | null = null;
     let watchId: number | null = null;
     let isDone = false;
 
@@ -83,10 +86,10 @@ export async function acquirePrecisionLocation(
       resolve(result);
     };
 
-    // Timeout timer: Stop watching and use the best fix acquired
+    // Timeout timer: Stop watching and use the best fix acquired ONLY if within discardThreshold (<= 80m)
     const timer = setTimeout(async () => {
       if (isDone) return;
-      if (bestFix) {
+      if (bestFix && bestFix.accuracy <= discardThreshold) {
         finish({
           latitude: Number(bestFix.latitude.toFixed(6)),
           longitude: Number(bestFix.longitude.toFixed(6)),
@@ -102,7 +105,9 @@ export async function acquirePrecisionLocation(
         const ipLoc = await acquireIpLocationFallback();
         finish(ipLoc);
       } else {
-        const errorMsg = "Sinyal satelit GPS belum terkunci (terhalang gedung atau izin lokasi belum aktif). Silakan geser pin manual pada peta atau pilih preset kota terdekat.";
+        const errorMsg = lastSeenAccuracy && lastSeenAccuracy > discardThreshold
+          ? `Satelit GPS presisi belum terkunci (hanya terdeteksi BTS seluler +/- ${Math.round(lastSeenAccuracy)}m yang kurang presisi). Silakan geser pin manual pada peta atau pilih preset Pekalongan.`
+          : "Sinyal satelit GPS belum terkunci (terhalang atap ruangan atau izin lokasi belum aktif). Silakan geser pin manual pada peta atau pilih preset kota terdekat.";
         finish({
           latitude: DEFAULT_OFFICE_COORDS.latitude,
           longitude: DEFAULT_OFFICE_COORDS.longitude,
@@ -120,20 +125,25 @@ export async function acquirePrecisionLocation(
           if (isDone) return;
           const coords = pos.coords;
           const acc = coords.accuracy;
+          lastSeenAccuracy = acc;
 
-          if (!bestFix || acc < bestFix.accuracy) {
+          // Discard coarse cellular BTS guesses (> 80m) from becoming bestFix
+          if (acc <= discardThreshold && (!bestFix || acc < bestFix.accuracy)) {
             bestFix = coords;
           }
 
+          const isCellularBts = acc > 300;
           onProgress?.({
             stage: "sampling",
             currentAccuracy: Math.round(acc),
-            bestAccuracy: Math.round(bestFix.accuracy),
-            message: `Mengkalibrasi sinyal satelit GPS... (Akurasi: +/- ${Math.round(acc)}m, terbaik: +/- ${Math.round(bestFix.accuracy)}m)`,
+            bestAccuracy: bestFix ? Math.round(bestFix.accuracy) : undefined,
+            message: isCellularBts
+              ? `Terdeteksi sinyal BTS seluler +/- ${Math.round(acc)}m (terlalu kasar). Mengkalibrasi satelit GPS presisi...`
+              : `Mengkalibrasi sinyal satelit GPS... (Akurasi: +/- ${Math.round(acc)}m${bestFix ? `, terbaik: +/- ${Math.round(bestFix.accuracy)}m` : ""})`,
           });
 
           // If reached target high accuracy (e.g. <= 20m), lock immediately
-          if (bestFix.accuracy <= targetAccuracy) {
+          if (bestFix && bestFix.accuracy <= targetAccuracy) {
             finish({
               latitude: Number(bestFix.latitude.toFixed(6)),
               longitude: Number(bestFix.longitude.toFixed(6)),
@@ -153,13 +163,21 @@ export async function acquirePrecisionLocation(
               const ipLoc = await acquireIpLocationFallback();
               finish(ipLoc);
             } else {
+              let errorMsg = `Gagal membaca GPS: ${err.message}`;
+              if (err.code === 1) {
+                errorMsg = "Izin lokasi belum diizinkan di browser ini. Buka setelan browser dan izinkan akses lokasi (Precise Location) untuk situs ini.";
+              } else if (err.code === 2) {
+                errorMsg = "Sinyal GPS fisik tidak tersedia pada perangkat saat ini.";
+              } else if (err.code === 3) {
+                errorMsg = "Mencari sinyal GPS satelit memakan waktu terlalu lama. Pastikan GPS aktif dan berada di dekat jendela/luar ruangan.";
+              }
               finish({
                 latitude: DEFAULT_OFFICE_COORDS.latitude,
                 longitude: DEFAULT_OFFICE_COORDS.longitude,
                 accuracy: 100,
                 source: "gps_standard",
                 isHighPrecision: false,
-                error: `Izin lokasi belum diberikan atau sinyal terhalang: ${err.message}`,
+                error: errorMsg,
               });
             }
           }
@@ -167,7 +185,7 @@ export async function acquirePrecisionLocation(
         {
           enableHighAccuracy: true,
           timeout: maxWait,
-          maximumAge: 5000,
+          maximumAge: 0, // Force fresh satellite acquisition, never use cached coordinates
         }
       );
     } catch (err: any) {

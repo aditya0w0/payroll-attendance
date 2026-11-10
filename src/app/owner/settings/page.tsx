@@ -39,12 +39,13 @@ interface OfficeConfigData {
 }
 
 const INDONESIA_CITY_PRESETS = [
+  { name: "Buaran (Pekalongan)", lat: -6.9338, lon: 109.6541 },
+  { name: "Pekalongan Kota", lat: -6.8886, lon: 109.6753 },
   { name: "Semarang", lat: -6.9904, lon: 110.4229 },
   { name: "Jakarta", lat: -6.2088, lon: 106.8456 },
   { name: "Surabaya", lat: -7.2575, lon: 112.7521 },
   { name: "Bandung", lat: -6.9175, lon: 107.6191 },
   { name: "Yogyakarta", lat: -7.7956, lon: 110.3695 },
-  { name: "Pekalongan", lat: -6.8886, lon: 109.6753 },
   { name: "Medan", lat: 3.5952, lon: 98.6722 },
 ];
 
@@ -52,8 +53,8 @@ export default function OwnerSettingsPage() {
   const [config, setConfig] = useState<OfficeConfigData>({
     id: "",
     officeName: "Kantor Utama",
-    latitude: -6.9904,
-    longitude: 110.4229,
+    latitude: -6.9338,
+    longitude: 109.6541,
     radiusMeters: 50,
     officePublicIp: "",
     enforceWifiIp: false,
@@ -109,6 +110,14 @@ export default function OwnerSettingsPage() {
       if (res.error) {
         setMessage({
           text: res.error,
+          type: "error",
+        });
+        return;
+      }
+
+      if (res.accuracy > 80) {
+        setMessage({
+          text: `Satelit GPS belum terkunci (akurasi seluler +/- ${res.accuracy}m terlalu kasar). Geser pin manual ke titik kantor atau pilih preset Buaran (Pekalongan).`,
           type: "error",
         });
         return;
