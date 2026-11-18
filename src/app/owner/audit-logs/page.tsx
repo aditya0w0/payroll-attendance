@@ -139,6 +139,18 @@ export default function OwnerAuditLogsPage() {
     checkHealth();
   }, [actionFilter]);
 
+  // Modal keyboard Escape listener (R-32)
+  useEffect(() => {
+    if (!selectedLog) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelectedLog(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedLog]);
+
   const isChainValid = health?.chainIntegrity.valid ?? true;
 
   return (

@@ -72,6 +72,20 @@ export default function LoginPage() {
     setWebViewInfo(detectInAppWebView());
   }, []);
 
+  // Modal keyboard Escape listener (R-32)
+  useEffect(() => {
+    if (!lockoutData && !showReplaceModal && !webAuthnPrompt) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setLockoutData(null);
+        setShowReplaceModal(false);
+        setWebAuthnPrompt(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [lockoutData, showReplaceModal, webAuthnPrompt]);
+
   const handleModeChange = (newMode: ProfileMode) => {
     setMode(newMode);
     setError(null);

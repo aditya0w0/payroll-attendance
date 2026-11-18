@@ -148,6 +148,20 @@ export default function OwnerDevicesPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Modal keyboard Escape listener (R-32)
+  useEffect(() => {
+    if (!revokeTarget) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setRevokeTarget(null);
+        setRevokeReason("");
+        setRevokeError(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [revokeTarget]);
+
   const handleApproveUnlock = async (requestId: string) => {
     try {
       const res = await fetch("/api/owner/devices", {

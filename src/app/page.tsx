@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Shield, Smartphone, ArrowRight, UserCheck, QrCode } from "lucide-react";
+import { Shield, Smartphone, UserCheck, QrCode } from "lucide-react";
 
 export default function HomePage() {
   return (
@@ -26,11 +26,6 @@ export default function HomePage() {
 
       {/* Main Hero */}
       <main className="my-auto py-16 max-w-2xl mx-auto text-center">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-[var(--text-secondary)] bg-[var(--card-bg)] border border-[var(--separator)] mb-6 shadow-sm">
-          <Smartphone className="w-3.5 h-3.5 text-[var(--accent)]" />
-          Single-Device Authorization & Dynamic QR
-        </div>
-
         <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-[var(--text-primary)] mb-4">
           Attendance and Daily Payroll.
         </h1>
@@ -50,7 +45,6 @@ export default function HomePage() {
             </div>
             <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-1 flex items-center justify-between">
               Owner Console
-              <ArrowRight className="w-4 h-4 text-[var(--text-tertiary)] group-hover:text-[var(--accent)] transition-colors" />
             </h2>
             <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
               Manage workforce profiles, set daily wages, configure daytime and overnight shifts, review attendance, and inspect append-only audit logs.
@@ -66,7 +60,6 @@ export default function HomePage() {
             </div>
             <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-1 flex items-center justify-between">
               Employee Portal
-              <ArrowRight className="w-4 h-4 text-[var(--text-tertiary)] group-hover:text-[var(--accent)] transition-colors" />
             </h2>
             <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
               Mobile-first interface. Scan workplace QR to record check-in and check-out, with immediate salary breakdowns and deduction reporting.

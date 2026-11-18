@@ -48,6 +48,18 @@ export default function OwnerPayrollPage() {
     loadPayroll();
   }, [year, month]);
 
+  // Modal keyboard Escape listener (R-32)
+  useEffect(() => {
+    if (!showPdfModal) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setShowPdfModal(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showPdfModal]);
+
   const handleFinalize = async () => {
     if (!confirm(`Finalize and lock the payroll period for ${year}-${String(month).padStart(2, "0")}? This creates an immutable snapshot. Future salary or policy updates will not alter finalized records.`)) {
       return;
