@@ -245,12 +245,14 @@ export default function OwnerDevicesPage() {
       {/* Title */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
-            Manajemen Perangkat & Kunci Akses
-          </h1>
-          <p className="text-xs text-neutral-500 mt-1">
-            Kelola perangkat resmi yang terdaftar dan verifikasi permohonan penggantian perangkat kerja karyawan.
-          </p>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
+              Keamanan Perangkat
+            </h1>
+            <span className="hig-badge hig-badge-neutral text-xs font-semibold px-2.5 py-0.5">
+              {devices.length} terdaftar
+            </span>
+          </div>
         </div>
 
         <button onClick={loadData} className="apple-btn-secondary text-xs">

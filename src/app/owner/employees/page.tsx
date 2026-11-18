@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { formatIDR } from "@/lib/utils";
-import { Plus, Smartphone, Banknote, RotateCcw, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Plus, Smartphone, Banknote, RotateCcw, AlertCircle, CheckCircle2, Search } from "lucide-react";
 
 interface ShiftItem {
   id: string;
@@ -62,6 +62,10 @@ export default function OwnerEmployeesPage() {
 
   const [editSalaryVal, setEditSalaryVal] = useState<number>(0);
   const [editSalaryReason, setEditSalaryReason] = useState("");
+
+  // Search & Filter
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
 
   const loadData = async () => {
     try {
@@ -181,26 +185,69 @@ export default function OwnerEmployeesPage() {
     }
   };
 
+  const filteredEmployees = employees.filter((emp) => {
+    const query = searchQuery.trim().toLowerCase();
+    const matchesSearch =
+      query === "" ||
+      emp.fullName.toLowerCase().includes(query) ||
+      emp.employeeId.toLowerCase().includes(query) ||
+      emp.user.email.toLowerCase().includes(query) ||
+      emp.shift.name.toLowerCase().includes(query);
+
+    const matchesStatus =
+      statusFilter === "ALL" ||
+      (statusFilter === "PERMANENT" && emp.employmentStatus === "PERMANENT") ||
+      (statusFilter === "CONTRACT" && emp.employmentStatus === "CONTRACT") ||
+      (statusFilter === "UNBOUND" && !emp.user.deviceRegistration);
+
+    return matchesSearch && matchesStatus;
+  });
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-2.5">
           <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
-            Daftar Karyawan & Gaji Harian
+            Karyawan
           </h1>
-          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-            Kelola profil karyawan, tarif upah harian, jadwal shift kerja, dan status binding perangkat.
-          </p>
+          <span className="hig-badge hig-badge-neutral text-xs font-semibold px-2.5 py-0.5">
+            {employees.length} terdaftar
+          </span>
         </div>
 
         <button
           onClick={() => setShowAddModal(true)}
-          className="hig-button-primary text-xs"
+          className="hig-button-primary text-xs self-start sm:self-auto"
         >
           <Plus className="w-3.5 h-3.5 stroke-[2]" />
           Tambah Karyawan
         </button>
+      </div>
+
+      {/* Search & Quick Filter Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+        <div className="relative flex-1">
+          <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Cari nama, ID karyawan, atau shift..."
+            className="hig-input pl-8 py-1.5 text-xs w-full"
+          />
+        </div>
+
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="hig-input py-1.5 px-3 text-xs w-auto self-start sm:self-auto"
+        >
+          <option value="ALL">Semua Status ({employees.length})</option>
+          <option value="PERMANENT">Karyawan Tetap</option>
+          <option value="CONTRACT">Kontrak</option>
+          <option value="UNBOUND">Belum Terhubung</option>
+        </select>
       </div>
 
       {message && (
@@ -224,21 +271,25 @@ export default function OwnerEmployeesPage() {
       <div className="hig-card overflow-hidden">
         {loading ? (
           <div className="text-center py-12 text-xs text-[var(--text-tertiary)]">Memuat data karyawan...</div>
+        ) : filteredEmployees.length === 0 ? (
+          <div className="text-center py-12 text-xs text-[var(--text-tertiary)]">
+            Tidak ada karyawan yang sesuai dengan filter.
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="hig-table">
               <thead>
                 <tr>
                   <th>Karyawan</th>
-                  <th>Gaji Pokok / Hari</th>
+                  <th>Gaji Harian</th>
                   <th>Shift Kerja</th>
-                  <th>Status Kerja</th>
-                  <th>Perangkat Terdaftar</th>
+                  <th>Status</th>
+                  <th>Perangkat</th>
                   <th className="text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="tabular-numbers">
-                {employees.map((emp) => {
+                {filteredEmployees.map((emp) => {
                   const dev = emp.user.deviceRegistration;
                   const statusLabel =
                     emp.employmentStatus === "PERMANENT"
@@ -246,6 +297,8 @@ export default function OwnerEmployeesPage() {
                       : emp.employmentStatus === "CONTRACT"
                       ? "Kontrak"
                       : emp.employmentStatus;
+
+                  const cleanShiftName = emp.shift.name.replace(/\s*\(\d{2}:\d{2}\s*-\s*\d{2}:\d{2}\)/, "");
 
                   return (
                     <tr key={emp.id}>
@@ -263,9 +316,9 @@ export default function OwnerEmployeesPage() {
                       </td>
 
                       <td>
-                        <div className="font-medium text-[var(--text-primary)]">{emp.shift.name}</div>
+                        <div className="font-medium text-[var(--text-primary)]">{cleanShiftName}</div>
                         <div className="text-[11px] text-[var(--text-secondary)] font-mono">
-                          {emp.shift.startTime} - {emp.shift.endTime} {emp.shift.isOvernight && "(Shift Malam)"}
+                          {emp.shift.startTime} – {emp.shift.endTime} WIB
                         </div>
                       </td>
 
@@ -277,9 +330,9 @@ export default function OwnerEmployeesPage() {
 
                       <td>
                         {dev ? (
-                          <div className="flex items-center gap-1.5 text-[var(--system-green)]">
+                          <div className="flex items-center gap-1.5 text-[var(--system-green)] text-xs">
                             <Smartphone className="w-3.5 h-3.5 stroke-[1.75]" />
-                            <span className="font-medium">{dev.deviceName}</span>
+                            <span className="font-medium truncate max-w-[140px]">{dev.deviceName}</span>
                           </div>
                         ) : (
                           <span className="text-amber-600 dark:text-amber-400 font-medium text-xs">
@@ -289,27 +342,26 @@ export default function OwnerEmployeesPage() {
                       </td>
 
                       <td className="text-right">
-                        <div className="inline-flex items-center gap-1.5">
+                        <div className="inline-flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => {
                               setEditingEmployee(emp);
                               setEditSalaryVal(emp.dailySalary);
                               setEditSalaryReason("");
                             }}
-                            className="hig-button-secondary text-[11px] py-1 px-2.5"
+                            className="hig-button-secondary text-[11px] py-1 px-2.5 flex items-center gap-1.5"
                           >
                             <Banknote className="w-3.5 h-3.5 stroke-[1.75]" />
-                            Atur Gaji
+                            <span>Atur Gaji</span>
                           </button>
 
                           {dev && (
                             <button
                               onClick={() => handleResetDevice(emp.user.id, emp.fullName)}
-                              className="hig-button-destructive text-[11px] py-1 px-2.5"
+                              className="p-1 rounded-md text-neutral-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 border border-neutral-200 dark:border-neutral-700 transition-colors"
                               title="Reset pengikatan perangkat"
                             >
                               <RotateCcw className="w-3.5 h-3.5 stroke-[1.75]" />
-                              Reset Perangkat
                             </button>
                           )}
                         </div>
@@ -327,12 +379,9 @@ export default function OwnerEmployeesPage() {
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="hig-card-elevated max-w-md w-full p-6 animate-in fade-in zoom-in-95">
-            <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-1">
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4">
               Tambah Karyawan Baru
             </h2>
-            <p className="text-xs text-[var(--text-secondary)] mb-4">
-              Masukkan data profil, upah harian dasar, dan shift kerja yang ditugaskan.
-            </p>
 
             <form onSubmit={handleCreateEmployee} className="space-y-3">
               <div>
@@ -449,12 +498,9 @@ export default function OwnerEmployeesPage() {
       {editingEmployee && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="hig-card-elevated max-w-sm w-full p-6 animate-in fade-in zoom-in-95">
-            <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-1">
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-3">
               Ubah Gaji Pokok Harian
             </h2>
-            <p className="text-xs text-[var(--text-secondary)] mb-4">
-              Perubahan tarif harian akan tercatat dalam riwayat penyesuaian gaji karyawan.
-            </p>
 
             <form onSubmit={handleUpdateSalary} className="space-y-3">
               <div className="bg-[var(--separator-subtle)] p-2.5 rounded-lg text-xs">
@@ -479,9 +525,6 @@ export default function OwnerEmployeesPage() {
                   onChange={(e) => setEditSalaryVal(parseInt(e.target.value) || 0)}
                   className="hig-input font-semibold tabular-numbers text-sm"
                 />
-                <span className="text-xs text-[var(--accent)] font-medium mt-1 block tabular-numbers">
-                  {formatIDR(editSalaryVal)} per hari kerja
-                </span>
               </div>
 
               <div>

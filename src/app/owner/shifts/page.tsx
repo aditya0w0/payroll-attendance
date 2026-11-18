@@ -134,12 +134,14 @@ export default function OwnerShiftsPage() {
       {/* Title */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
-            Shift Kerja & Kebijakan Denda
-          </h1>
-          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-            Atur jam operasional kerja, toleransi keterlambatan, dan formula pemotongan denda keterlambatan.
-          </p>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
+              Shift Kerja &amp; Kebijakan Denda
+            </h1>
+            <span className="hig-badge hig-badge-neutral text-xs font-semibold px-2.5 py-0.5">
+              {shifts.length} shift aktif
+            </span>
+          </div>
         </div>
 
         <div className="flex gap-2">
@@ -193,16 +195,16 @@ export default function OwnerShiftsPage() {
 
                 <div className="text-xs space-y-1.5 pt-2 border-t border-[var(--separator-subtle)] text-[var(--text-secondary)]">
                   <div className="flex justify-between">
-                    <span>Toleransi Keterlambatan:</span>
+                    <span>Toleransi:</span>
                     <span className="font-medium text-[var(--text-primary)] tabular-numbers">{s.gracePeriodMinutes} menit</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Kebijakan Denda:</span>
+                    <span>Denda:</span>
                     <span className="font-medium text-[var(--system-red)]">{s.deductionPolicy.name}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Staf Ditugaskan:</span>
-                    <span className="font-semibold text-[var(--text-primary)] tabular-numbers">{s._count.employees} karyawan</span>
+                    <span>Staf:</span>
+                    <span className="font-semibold text-[var(--text-primary)] tabular-numbers">{s._count.employees} orang</span>
                   </div>
                 </div>
               </div>
@@ -225,9 +227,9 @@ export default function OwnerShiftsPage() {
                 <th>Nama Kebijakan</th>
                 <th>Skema Hitung</th>
                 <th>Tarif Denda</th>
-                <th>Aturan Pembulatan Jam</th>
-                <th>Toleransi Keterlambatan</th>
-                <th>Batas Maksimal Potongan</th>
+                <th>Pembulatan Jam</th>
+                <th>Toleransi</th>
+                <th>Batas Maksimal</th>
               </tr>
             </thead>
             <tbody className="tabular-numbers">

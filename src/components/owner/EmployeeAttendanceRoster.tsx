@@ -197,13 +197,13 @@ export default function EmployeeAttendanceRoster() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
               <thead>
-                <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/75 dark:bg-neutral-800/40 text-neutral-500 dark:text-neutral-400 text-[11px] uppercase font-semibold">
+                <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/75 dark:bg-neutral-800/40 text-neutral-600 dark:text-neutral-400 font-medium">
                   <th className="py-3 px-4">Karyawan</th>
                   <th className="py-3 px-4">Hadir</th>
                   <th className="py-3 px-4">Terlambat</th>
-                  <th className="py-3 px-4">Alpa / Tidak Masuk</th>
-                  <th className="py-3 px-4">Tingkat Kehadiran</th>
-                  <th className="py-3 px-4">Estimasi Gaji Berjalan</th>
+                  <th className="py-3 px-4">Alpa</th>
+                  <th className="py-3 px-4">Kehadiran</th>
+                  <th className="py-3 px-4">Estimasi Gaji</th>
                   <th className="py-3 px-4 text-right">Aksi</th>
                 </tr>
               </thead>
@@ -249,34 +249,20 @@ export default function EmployeeAttendanceRoster() {
 
                       {/* 2. Hadir (Tepat Waktu) */}
                       <td className="py-3 px-4">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-neutral-900 dark:text-neutral-100">
-                            {emp.onTimeCount}
-                          </span>
-                          <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                            Tepat Waktu
-                          </span>
+                        <div className="flex items-center gap-1.5 tabular-numbers text-xs">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                          <span className="font-semibold text-neutral-900 dark:text-neutral-100">{emp.onTimeCount}</span>
+                          <span className="text-neutral-400 text-[11px]">/ {emp.assignedShiftCount}</span>
                         </div>
-                        <span className="text-[10px] text-neutral-400 block mt-0.5">
-                          dari {emp.assignedShiftCount} shift
-                        </span>
                       </td>
 
                       {/* 3. Terlambat */}
                       <td className="py-3 px-4">
                         {emp.lateCount > 0 ? (
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-amber-600 dark:text-amber-400">
-                                {emp.lateCount}x
-                              </span>
-                              <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                                Terlambat
-                              </span>
-                            </div>
-                            <span className="text-[10px] text-neutral-400 block mt-0.5">
-                              Total {emp.totalLateMinutes}m telat
-                            </span>
+                          <div className="flex items-center gap-1.5 tabular-numbers text-xs">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                            <span className="font-semibold text-amber-600 dark:text-amber-400">{emp.lateCount}x</span>
+                            <span className="text-neutral-400 text-[11px]">({emp.totalLateMinutes}m)</span>
                           </div>
                         ) : (
                           <span className="text-neutral-400 text-xs font-mono">0</span>
@@ -286,56 +272,39 @@ export default function EmployeeAttendanceRoster() {
                       {/* 4. Alpa / Tidak Masuk */}
                       <td className="py-3 px-4">
                         {emp.absentCount > 0 ? (
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-rose-600 dark:text-rose-400">
-                                {emp.absentCount}
-                              </span>
-                              <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
-                                Alpa
-                              </span>
-                            </div>
-                            <span className="text-[10px] text-rose-500/80 block mt-0.5">
-                              Shift dilewati
-                            </span>
+                          <div className="flex items-center gap-1.5 tabular-numbers text-xs">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
+                            <span className="font-semibold text-rose-600 dark:text-rose-400">{emp.absentCount} hari</span>
                           </div>
                         ) : (
-                          <span className="text-emerald-600 dark:text-emerald-400 text-xs font-medium">
-                            Nihil (0)
-                          </span>
+                          <span className="text-neutral-400 text-xs font-mono">0</span>
                         )}
                       </td>
 
                       {/* 5. Tingkat Kehadiran */}
-                      <td className="py-3 px-4 min-w-[130px]">
+                      <td className="py-3 px-4 min-w-[110px]">
                         {hasSchedule ? (
-                          <>
-                            <div className="flex items-center justify-between text-xs font-semibold mb-1">
+                          <div className="space-y-1">
+                            <div className="text-xs font-semibold tabular-numbers text-neutral-800 dark:text-neutral-200">
                               <span className={rateColor}>{emp.attendanceRate}%</span>
-                              <span className="text-[10px] text-neutral-400">
-                                {emp.presentCount}/{emp.assignedShiftCount}
-                              </span>
                             </div>
-                            <div className="w-full bg-neutral-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
+                            <div className="w-full max-w-[80px] bg-neutral-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
                               <div
                                 className={`h-full rounded-full transition-all duration-300 ${barBgColor}`}
                                 style={{ width: `${Math.min(100, emp.attendanceRate)}%` }}
                               />
                             </div>
-                          </>
+                          </div>
                         ) : (
-                          <span className="text-neutral-400 dark:text-neutral-500 text-xs">Belum ada shift</span>
+                          <span className="text-neutral-400 dark:text-neutral-500 text-xs">-</span>
                         )}
                       </td>
 
                       {/* 6. Estimasi Gaji Berjalan */}
                       <td className="py-3 px-4">
-                        <div className="font-bold font-mono text-neutral-900 dark:text-neutral-100">
+                        <div className="font-semibold font-mono text-xs text-neutral-900 dark:text-neutral-100">
                           {formatIDR(emp.accumulatedWage)}
                         </div>
-                        <span className="text-[10px] text-neutral-400 block mt-0.5">
-                          Tarif: {formatIDR(emp.dailySalary)}/hari
-                        </span>
                       </td>
 
                       {/* 7. Aksi */}
@@ -343,10 +312,10 @@ export default function EmployeeAttendanceRoster() {
                         <button
                           type="button"
                           onClick={() => setSelectedEmployee(emp)}
-                          className="bg-neutral-100 dark:bg-[#2C2C2E] text-neutral-700 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-[#3A3A3C] rounded-lg px-2.5 py-1 text-xs font-medium inline-flex items-center gap-1 transition-colors"
+                          className="hig-button-secondary text-xs py-1 px-2.5 inline-flex items-center gap-1"
                         >
-                          <Eye className="w-3 h-3 text-neutral-500" />
-                          <span>Lihat Detail</span>
+                          <Eye className="w-3.5 h-3.5 text-neutral-500" />
+                          <span>Detail</span>
                         </button>
                       </td>
                     </tr>

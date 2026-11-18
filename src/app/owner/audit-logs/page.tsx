@@ -158,12 +158,14 @@ export default function OwnerAuditLogsPage() {
       {/* Title */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
-            Log Aktivitas Audit & Integritas Sistem
-          </h1>
-          <p className="text-xs text-neutral-500 mt-1">
-            Catatan riwayat seluruh aktivitas operasional, penyesuaian gaji, dan pemantauan keamanan sistem.
-          </p>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
+              Log Audit &amp; Integritas
+            </h1>
+            <span className="hig-badge hig-badge-neutral text-xs font-semibold px-2.5 py-0.5">
+              Append-Only
+            </span>
+          </div>
         </div>
 
         {/* Action Controls */}

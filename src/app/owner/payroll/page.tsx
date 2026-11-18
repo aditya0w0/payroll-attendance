@@ -152,12 +152,14 @@ export default function OwnerPayrollPage() {
       {/* Title */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
-            Penggajian Bulanan & Rekap Denda
-          </h1>
-          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-            Rekapitulasi akumulasi gaji harian karyawan dan perhitungan potongan denda keterlambatan.
-          </p>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
+              Penggajian Bulanan
+            </h1>
+            <span className="hig-badge hig-badge-neutral text-xs font-semibold px-2.5 py-0.5">
+              {summaries.length} karyawan
+            </span>
+          </div>
         </div>
 
         {/* Controls */}
@@ -182,13 +184,13 @@ export default function OwnerPayrollPage() {
 
           <button onClick={() => setShowPdfModal(true)} className="hig-button-secondary text-xs" title="Cetak slip keuangan PDF">
             <Printer className="w-3.5 h-3.5 stroke-[2]" />
-            Cetak Slip Keuangan
+            Cetak Slip
           </button>
 
           {!isFinalized ? (
             <button onClick={handleFinalize} className="hig-button-primary text-xs">
               <Lock className="w-3.5 h-3.5 stroke-[2]" />
-              Kunci & Finalisasi Periode
+              Kunci Periode
             </button>
           ) : (
             <span className="hig-badge hig-badge-green text-xs">
@@ -219,7 +221,6 @@ export default function OwnerPayrollPage() {
           <div className="text-xl font-semibold text-[var(--text-primary)] mt-1 tabular-numbers">
             {formatIDR(totalGrossPayroll)}
           </div>
-          <span className="text-[11px] text-[var(--text-tertiary)] block mt-0.5">Akumulasi gaji sebelum potongan</span>
         </div>
 
         <div className="hig-card p-4">
@@ -227,15 +228,13 @@ export default function OwnerPayrollPage() {
           <div className="text-xl font-semibold text-[var(--system-red)] mt-1 tabular-numbers">
             -{formatIDR(totalDeductionsAll)}
           </div>
-          <span className="text-[11px] text-[var(--text-secondary)] block mt-0.5">Penalti keterlambatan terhitung</span>
         </div>
 
         <div className="hig-card p-4">
-          <span className="text-[11px] font-medium text-[var(--system-green)]">Total Gaji Bersih Siap Bayar</span>
+          <span className="text-[11px] font-medium text-[var(--system-green)]">Total Gaji Bersih</span>
           <div className="text-xl font-bold text-[var(--system-green)] mt-1 tabular-numbers">
             {formatIDR(totalNetPayroll)}
           </div>
-          <span className="text-[11px] text-[var(--text-secondary)] block mt-0.5">Nominal siap ditransfer</span>
         </div>
       </div>
 
@@ -249,12 +248,12 @@ export default function OwnerPayrollPage() {
               <thead>
                 <tr>
                   <th>Karyawan</th>
-                  <th>Gaji Pokok / Hari</th>
-                  <th>Hari Kerja Selesai</th>
-                  <th>Frekuensi Terlambat</th>
-                  <th>Total Menit Terlambat</th>
-                  <th>Potongan Denda</th>
-                  <th className="font-semibold">Gaji Bersih Diterima</th>
+                  <th>Gaji Harian</th>
+                  <th>Hari Kerja</th>
+                  <th>Terlambat</th>
+                  <th>Total Menit</th>
+                  <th>Potongan</th>
+                  <th className="font-semibold text-right">Gaji Bersih</th>
                 </tr>
               </thead>
               <tbody className="tabular-numbers">
@@ -266,20 +265,20 @@ export default function OwnerPayrollPage() {
                     </td>
                     <td>{formatIDR(s.dailySalary)}</td>
                     <td className="font-medium">
-                      {s.completedDays} hari
+                      {s.completedDays}
                     </td>
                     <td>
                       {s.lateArrivalCount > 0 ? (
-                        <span className="text-[var(--system-red)] font-medium">{s.lateArrivalCount} kali</span>
+                        <span className="text-[var(--system-red)] font-medium">{s.lateArrivalCount}x</span>
                       ) : (
                         <span className="text-[var(--system-green)]">0</span>
                       )}
                     </td>
-                    <td className="font-mono">{s.totalLateMinutes} menit</td>
+                    <td className="font-mono">{s.totalLateMinutes}m</td>
                     <td className="text-[var(--system-red)] font-medium">
                       {s.totalLateDeductions > 0 ? `-${formatIDR(s.totalLateDeductions)}` : "Rp0"}
                     </td>
-                    <td className="font-semibold text-sm text-[var(--system-green)]">
+                    <td className="font-semibold text-sm text-[var(--system-green)] text-right">
                       {formatIDR(s.netEarnings)}
                     </td>
                   </tr>
