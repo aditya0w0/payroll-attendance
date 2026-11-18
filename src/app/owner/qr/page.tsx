@@ -52,10 +52,6 @@ export default function OwnerQRDisplayPage() {
   return (
     <div className="max-w-md mx-auto text-center space-y-6 py-6">
       <div>
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium liquid-glass-pill mb-3">
-          <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-          Dynamic Cryptographic Attendance
-        </div>
         <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
           Workplace Terminal
         </h1>

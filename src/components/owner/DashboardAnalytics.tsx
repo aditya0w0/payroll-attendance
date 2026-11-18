@@ -18,7 +18,6 @@ import {
   UserX,
   BarChart3,
   RefreshCw,
-  ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
 import { formatIDR } from "@/lib/utils";
@@ -133,13 +132,13 @@ export default function DashboardAnalytics() {
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="inline-flex liquid-glass-pill p-1 text-xs border border-white/30 dark:border-white/10">
+          <div className="inline-flex hig-segmented p-1 text-xs">
             <button
               type="button"
               onClick={() => setRange("7d")}
-              className={`px-3 py-1 rounded-md font-medium transition-all ${
+              className={`min-h-[44px] px-3.5 py-2 rounded-md font-medium transition-colors flex items-center justify-center ${
                 range === "7d"
-                  ? "bg-white/90 dark:bg-white/15 text-neutral-900 dark:text-neutral-50 shadow-sm border border-white/50 dark:border-white/15 rounded-md"
+                  ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 shadow-xs font-semibold"
                   : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
               }`}
             >
@@ -148,9 +147,9 @@ export default function DashboardAnalytics() {
             <button
               type="button"
               onClick={() => setRange("14d")}
-              className={`px-3 py-1 rounded-md font-medium transition-all ${
+              className={`min-h-[44px] px-3.5 py-2 rounded-md font-medium transition-colors flex items-center justify-center ${
                 range === "14d"
-                  ? "bg-white/90 dark:bg-white/15 text-neutral-900 dark:text-neutral-50 shadow-sm border border-white/50 dark:border-white/15 rounded-md"
+                  ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 shadow-xs font-semibold"
                   : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
               }`}
             >
@@ -159,9 +158,9 @@ export default function DashboardAnalytics() {
             <button
               type="button"
               onClick={() => setRange("current_period")}
-              className={`px-3 py-1 rounded-md font-medium transition-all ${
+              className={`min-h-[44px] px-3.5 py-2 rounded-md font-medium transition-colors flex items-center justify-center ${
                 range === "current_period"
-                  ? "bg-white/90 dark:bg-white/15 text-neutral-900 dark:text-neutral-50 shadow-sm border border-white/50 dark:border-white/15 rounded-md"
+                  ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 shadow-xs font-semibold"
                   : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
               }`}
             >
@@ -173,10 +172,10 @@ export default function DashboardAnalytics() {
             type="button"
             onClick={fetchAnalytics}
             disabled={loading}
-            className="p-1.5 rounded-lg liquid-glass-btn-secondary text-neutral-600 dark:text-neutral-300 transition-colors"
+            className="min-h-[44px] min-w-[44px] p-2 rounded-lg hig-button-secondary text-neutral-600 dark:text-neutral-300 transition-colors flex items-center justify-center"
             title="Refresh Data"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           </button>
         </div>
       </div>
@@ -343,10 +342,9 @@ export default function DashboardAnalytics() {
           </span>
           <Link
             href="/owner/attendance"
-            className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 font-medium"
+            className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center font-medium"
           >
             Lihat Rincian Per Karyawan
-            <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
       </div>

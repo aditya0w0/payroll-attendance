@@ -66,6 +66,18 @@ export default function OwnerAttendancePage() {
     loadAttendance();
   }, [filterDate, filterStatus]);
 
+  // Modal keyboard Escape listener (R-32)
+  useEffect(() => {
+    if (!correctingRecord) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setCorrectingRecord(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [correctingRecord]);
+
   const handleManualCorrection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!correctingRecord || !correctionReason.trim()) return;
@@ -107,14 +119,14 @@ export default function OwnerAttendancePage() {
         </div>
 
         {/* Tab Switcher */}
-        <div className="inline-flex liquid-glass-pill p-1 text-xs font-medium self-start sm:self-auto border border-white/30 dark:border-white/10">
+        <div className="inline-flex hig-segmented p-1 text-xs font-medium self-start sm:self-auto">
           <button
             type="button"
             onClick={() => setActiveTab("ROSTER")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+            className={`min-h-[44px] flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-md transition-colors ${
               activeTab === "ROSTER"
-                ? "bg-white/90 dark:bg-white/15 text-neutral-900 dark:text-neutral-50 shadow-sm border border-white/50 dark:border-white/15 font-semibold"
-                : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+                ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 shadow-xs font-semibold"
+                : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
             }`}
           >
             <Users className="w-3.5 h-3.5" />
@@ -123,10 +135,10 @@ export default function OwnerAttendancePage() {
           <button
             type="button"
             onClick={() => setActiveTab("LOGS")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+            className={`min-h-[44px] flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-md transition-colors ${
               activeTab === "LOGS"
-                ? "bg-white/90 dark:bg-white/15 text-neutral-900 dark:text-neutral-50 shadow-sm border border-white/50 dark:border-white/15 font-semibold"
-                : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+                ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 shadow-xs font-semibold"
+                : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
             }`}
           >
             <FileText className="w-3.5 h-3.5" />

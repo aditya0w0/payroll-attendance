@@ -43,7 +43,7 @@ export default async function EmployeeLayout({
         <form action={handleLogout}>
           <button
             type="submit"
-            className="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-xs"
+            className="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-xs"
             title="Sign Out"
           >
             <LogOut className="w-4 h-4" />
@@ -58,7 +58,7 @@ export default async function EmployeeLayout({
       <nav className="fixed bottom-4 left-4 right-4 max-w-sm mx-auto z-40 liquid-glass-dock px-6 py-2 flex justify-around items-center">
         <Link
           href="/employee"
-          className="flex flex-col items-center gap-1 text-[11px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+          className="min-h-[44px] min-w-[44px] flex flex-col items-center justify-center gap-1 text-[11px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
         >
           <Home className="w-5 h-5 stroke-[1.75]" />
           <span>Home</span>
@@ -66,7 +66,7 @@ export default async function EmployeeLayout({
 
         <Link
           href="/employee/scan"
-          className="flex flex-col items-center -mt-5 group"
+          className="min-h-[44px] min-w-[44px] flex flex-col items-center justify-center -mt-5 group"
         >
           <div className="w-13 h-13 p-3 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-500 text-white flex items-center justify-center shadow-[0_8px_24px_rgba(37,99,235,0.45)] border-2 border-white/80 dark:border-white/25 group-hover:scale-105 group-active:scale-95 transition-all">
             <QrCode className="w-6 h-6 stroke-[2.2]" />
@@ -76,7 +76,7 @@ export default async function EmployeeLayout({
 
         <Link
           href="/employee/history"
-          className="flex flex-col items-center gap-1 text-[11px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+          className="min-h-[44px] min-w-[44px] flex flex-col items-center justify-center gap-1 text-[11px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
         >
           <History className="w-5 h-5 stroke-[1.75]" />
           <span>History</span>

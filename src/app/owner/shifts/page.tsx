@@ -78,6 +78,19 @@ export default function OwnerShiftsPage() {
     loadData();
   }, []);
 
+  // Modal keyboard Escape listener (R-32)
+  useEffect(() => {
+    if (!showShiftModal && !showPolicyModal) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setShowShiftModal(false);
+        setShowPolicyModal(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showShiftModal, showPolicyModal]);
+
   const handleCreateShift = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -354,8 +367,8 @@ export default function OwnerShiftsPage() {
                     onChange={(e) => setNewPolicy({ ...newPolicy, mode: e.target.value as any })}
                     className="hig-input"
                   >
-                    <option value="PER_MINUTE">Mode A — Per Minute</option>
-                    <option value="PER_HOUR">Mode B — Per Hour</option>
+                    <option value="PER_MINUTE">Mode A: Per Minute</option>
+                    <option value="PER_HOUR">Mode B: Per Hour</option>
                   </select>
                 </div>
 

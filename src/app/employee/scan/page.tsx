@@ -169,12 +169,12 @@ export default function EmployeeScanPage() {
         const rawReason = `[CODE ${geoErr.code}] ${geoErr.message || "Unknown geolocation error"}`;
         if (geoErr.code === 1) {
           setGpsError(
-            `${rawReason} — Izin lokasi belum aktif. Klik ikon Gembok di kiri URL bar browser -> Izinkan Lokasi (Precise Location).`
+            `${rawReason}: Izin lokasi belum aktif. Klik ikon Gembok di kiri URL bar browser -> Izinkan Lokasi (Precise Location).`
           );
         } else if (geoErr.code === 2) {
-          setGpsError(`${rawReason} — Sinyal GPS satelit tidak terdeteksi.`);
+          setGpsError(`${rawReason}: Sinyal GPS satelit tidak terdeteksi.`);
         } else if (geoErr.code === 3) {
-          setGpsError(`${rawReason} — Timeout mencari koordinat GPS.`);
+          setGpsError(`${rawReason}: Timeout mencari koordinat GPS.`);
         } else {
           setGpsError(rawReason);
         }
@@ -621,13 +621,13 @@ export default function EmployeeScanPage() {
       <div className="flex items-center justify-between">
         <Link
           href="/employee"
-          className="liquid-glass-pill px-3 py-1.5 text-xs text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white flex items-center gap-1.5 font-medium transition-colors"
+          className="min-h-[44px] px-3.5 py-2 text-xs text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white flex items-center gap-2 font-medium transition-colors rounded-lg border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Dashboard</span>
         </Link>
         <div className="flex items-center gap-1.5">
-          <span className="liquid-glass-pill text-[10px] font-mono uppercase px-2.5 py-1 font-bold tracking-tight bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/25">
+          <span className="hig-badge text-[10px] font-mono uppercase px-2.5 py-1 font-bold tracking-tight bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
             {isCheckedIn ? "MODE: ABSEN PULANG" : isCompleted ? "SHIFT SELESAI" : "MODE: ABSEN MASUK"}
           </span>
         </div>

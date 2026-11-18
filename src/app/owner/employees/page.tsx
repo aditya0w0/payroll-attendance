@@ -85,6 +85,19 @@ export default function OwnerEmployeesPage() {
     loadData();
   }, []);
 
+  // Modal keyboard Escape listener (R-32)
+  useEffect(() => {
+    if (!showAddModal && !editingEmployee) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setShowAddModal(false);
+        setEditingEmployee(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showAddModal, editingEmployee]);
+
   const handleCreateEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);

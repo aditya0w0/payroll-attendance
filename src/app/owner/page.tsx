@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { formatIDR } from "@/lib/utils";
 import { getJakartaDateString, formatJakartaDateTime } from "@/lib/timezone";
-import { Users, ClipboardList, AlertCircle, Smartphone, ArrowRight, QrCode, ShieldAlert } from "lucide-react";
+import { Users, ClipboardList, AlertCircle, Smartphone, QrCode, ShieldAlert } from "lucide-react";
 import DashboardAnalytics from "@/components/owner/DashboardAnalytics";
 
 export const dynamic = "force-dynamic";
@@ -71,9 +71,9 @@ export default async function OwnerOverviewPage() {
             </div>
             <Link
               href="/owner/audit-logs?action=CHEATING_ALERTS"
-              className="text-xs text-red-700 dark:text-red-300 font-medium hover:underline flex items-center gap-1"
+              className="text-xs text-red-700 dark:text-red-300 font-medium hover:underline flex items-center"
             >
-              Review Incidents <ArrowRight className="w-3 h-3" />
+              Review Incidents
             </Link>
           </div>
 
@@ -159,8 +159,8 @@ export default async function OwnerOverviewPage() {
                 Today&apos;s Live Punches
               </h2>
             </div>
-            <Link href="/owner/attendance" className="text-xs text-[var(--accent)] hover:underline flex items-center gap-1">
-              View All <ArrowRight className="w-3 h-3 stroke-[2]" />
+            <Link href="/owner/attendance" className="text-xs text-[var(--accent)] hover:underline flex items-center">
+              View All
             </Link>
           </div>
 

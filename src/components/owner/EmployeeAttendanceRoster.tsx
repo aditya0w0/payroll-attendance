@@ -54,6 +54,18 @@ export default function EmployeeAttendanceRoster() {
     fetchRoster();
   }, [range]);
 
+  // Modal keyboard Escape listener (R-32)
+  useEffect(() => {
+    if (!selectedEmployee) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelectedEmployee(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedEmployee]);
+
   const roster = data?.employeeRoster || [];
 
   // Filtered Roster
