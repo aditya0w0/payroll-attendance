@@ -153,10 +153,10 @@ export default function OwnerPayrollPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
-            Monthly Payroll & Late Deductions
+            Penggajian Bulanan & Rekap Denda
           </h1>
           <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-            Aggregation of completed daily salaries minus calculated lateness penalties.
+            Rekapitulasi akumulasi gaji harian karyawan dan perhitungan potongan denda keterlambatan.
           </p>
         </div>
 
@@ -175,25 +175,25 @@ export default function OwnerPayrollPage() {
             className="hig-input text-xs w-auto py-1 px-2.5 font-medium tabular-numbers"
           />
 
-          <button onClick={exportCSV} className="hig-button-secondary text-xs" title="Export Proper CSV Statement">
+          <button onClick={exportCSV} className="hig-button-secondary text-xs" title="Ekspor laporan CSV">
             <Download className="w-3.5 h-3.5 stroke-[2]" />
-            Export CSV
+            Ekspor CSV
           </button>
 
-          <button onClick={() => setShowPdfModal(true)} className="hig-button-secondary text-xs" title="Export PDF Financial Statement">
+          <button onClick={() => setShowPdfModal(true)} className="hig-button-secondary text-xs" title="Cetak slip keuangan PDF">
             <Printer className="w-3.5 h-3.5 stroke-[2]" />
-            Export PDF
+            Cetak Slip Keuangan
           </button>
 
           {!isFinalized ? (
             <button onClick={handleFinalize} className="hig-button-primary text-xs">
               <Lock className="w-3.5 h-3.5 stroke-[2]" />
-              Finalize & Lock Period
+              Kunci & Finalisasi Periode
             </button>
           ) : (
             <span className="hig-badge hig-badge-green text-xs">
               <Lock className="w-3 h-3 stroke-[2]" />
-              Snapshot Finalized
+              Periode Terkunci
             </span>
           )}
         </div>
@@ -215,46 +215,46 @@ export default function OwnerPayrollPage() {
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="hig-card p-4">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--text-secondary)]">Total Gross Earned</span>
+          <span className="text-[11px] font-medium text-[var(--text-secondary)]">Total Gaji Kotor</span>
           <div className="text-xl font-semibold text-[var(--text-primary)] mt-1 tabular-numbers">
             {formatIDR(totalGrossPayroll)}
           </div>
-          <span className="text-[11px] text-[var(--text-tertiary)] block mt-0.5">Base daily salary sum</span>
+          <span className="text-[11px] text-[var(--text-tertiary)] block mt-0.5">Akumulasi gaji sebelum potongan</span>
         </div>
 
         <div className="hig-card p-4">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--system-red)]">Late Deductions</span>
+          <span className="text-[11px] font-medium text-[var(--system-red)]">Total Potongan Denda</span>
           <div className="text-xl font-semibold text-[var(--system-red)] mt-1 tabular-numbers">
             -{formatIDR(totalDeductionsAll)}
           </div>
-          <span className="text-[11px] text-[var(--text-secondary)] block mt-0.5">Automated lateness penalties</span>
+          <span className="text-[11px] text-[var(--text-secondary)] block mt-0.5">Penalti keterlambatan terhitung</span>
         </div>
 
         <div className="hig-card p-4">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--system-green)]">Net Payout</span>
+          <span className="text-[11px] font-medium text-[var(--system-green)]">Total Gaji Bersih Siap Bayar</span>
           <div className="text-xl font-bold text-[var(--system-green)] mt-1 tabular-numbers">
             {formatIDR(totalNetPayroll)}
           </div>
-          <span className="text-[11px] text-[var(--text-secondary)] block mt-0.5">Payable balance</span>
+          <span className="text-[11px] text-[var(--text-secondary)] block mt-0.5">Nominal siap ditransfer</span>
         </div>
       </div>
 
       {/* Payroll Table */}
       <div className="hig-card overflow-hidden">
         {loading ? (
-          <div className="text-center py-12 text-xs text-[var(--text-tertiary)]">Loading payroll ledger...</div>
+          <div className="text-center py-12 text-xs text-[var(--text-tertiary)]">Memuat rekapitulasi penggajian...</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="hig-table">
               <thead>
                 <tr>
-                  <th>Employee</th>
-                  <th>Daily Salary</th>
-                  <th>Completed Days</th>
-                  <th>Late Count</th>
-                  <th>Total Late Mins</th>
-                  <th>Late Deductions</th>
-                  <th className="font-semibold">Net Payout</th>
+                  <th>Karyawan</th>
+                  <th>Gaji Pokok / Hari</th>
+                  <th>Hari Kerja Selesai</th>
+                  <th>Frekuensi Terlambat</th>
+                  <th>Total Menit Terlambat</th>
+                  <th>Potongan Denda</th>
+                  <th className="font-semibold">Gaji Bersih Diterima</th>
                 </tr>
               </thead>
               <tbody className="tabular-numbers">
@@ -266,16 +266,16 @@ export default function OwnerPayrollPage() {
                     </td>
                     <td>{formatIDR(s.dailySalary)}</td>
                     <td className="font-medium">
-                      {s.completedDays} days
+                      {s.completedDays} hari
                     </td>
                     <td>
                       {s.lateArrivalCount > 0 ? (
-                        <span className="text-[var(--system-red)] font-medium">{s.lateArrivalCount} times</span>
+                        <span className="text-[var(--system-red)] font-medium">{s.lateArrivalCount} kali</span>
                       ) : (
                         <span className="text-[var(--system-green)]">0</span>
                       )}
                     </td>
-                    <td className="font-mono">{s.totalLateMinutes} mins</td>
+                    <td className="font-mono">{s.totalLateMinutes} menit</td>
                     <td className="text-[var(--system-red)] font-medium">
                       {s.totalLateDeductions > 0 ? `-${formatIDR(s.totalLateDeductions)}` : "Rp0"}
                     </td>
@@ -301,7 +301,7 @@ export default function OwnerPayrollPage() {
             <div className="flex items-center justify-between border-b pb-4 print:hidden">
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-neutral-700" />
-                <span className="text-sm font-semibold">Printable Financial Statement</span>
+                <span className="text-sm font-semibold">Lembar Rekapitulasi Penggajian Resmi</span>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -309,7 +309,7 @@ export default function OwnerPayrollPage() {
                   className="hig-button-primary text-xs flex items-center gap-1.5"
                 >
                   <Printer className="w-3.5 h-3.5" />
-                  Print / Save as PDF
+                  Cetak / Simpan PDF
                 </button>
                 <button
                   onClick={() => setShowPdfModal(false)}
@@ -326,21 +326,21 @@ export default function OwnerPayrollPage() {
               <div className="flex justify-between items-start border-b pb-6">
                 <div>
                   <h2 className="text-xl font-bold tracking-tight text-neutral-900">
-                    CYBERGUARD ENTERPRISE
+                    LAPORAN PENGGAJIAN &amp; REKAPITULASI UPAH
                   </h2>
                   <p className="text-xs text-neutral-500 mt-0.5">
-                    Monthly Financial Payroll Statement & Wage Reconciliation
+                    Rekapitulasi gaji bulanan dan potongan penalti absensi karyawan
                   </p>
                 </div>
                 <div className="text-right text-xs space-y-1">
                   <div className="font-mono font-bold text-neutral-800">
-                    PERIOD: {year}-{String(month).padStart(2, "0")}
+                    PERIODE: {year}-{String(month).padStart(2, "0")}
                   </div>
                   <div className="text-neutral-500">
-                    Generated: {new Date().toLocaleDateString("id-ID")}
+                    Diterbitkan: {new Date().toLocaleDateString("id-ID")}
                   </div>
                   <div className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-neutral-100 text-neutral-700 border">
-                    {isFinalized ? "FINALIZED & AUDITED" : "PROVISIONAL STATEMENT"}
+                    {isFinalized ? "FINAL & TERVERIFIKASI" : "DRAF SEMENTARA"}
                   </div>
                 </div>
               </div>
@@ -348,19 +348,19 @@ export default function OwnerPayrollPage() {
               {/* KPI Summary Grid */}
               <div className="grid grid-cols-3 gap-4 p-4 rounded-xl bg-neutral-50 border border-neutral-200 text-center">
                 <div>
-                  <span className="text-[10px] uppercase font-semibold text-neutral-400 block tracking-wider">Gross Wages</span>
+                  <span className="text-[10px] font-semibold text-neutral-500 block">Gaji Kotor</span>
                   <span className="text-lg font-bold text-neutral-900 tabular-nums">
                     {formatIDR(totalGrossPayroll)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-semibold text-red-500 block tracking-wider">Total Deductions</span>
+                  <span className="text-[10px] font-semibold text-red-500 block">Total Potongan Denda</span>
                   <span className="text-lg font-bold text-red-600 tabular-nums">
                     -{formatIDR(totalDeductionsAll)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-semibold text-emerald-600 block tracking-wider">Net Payable</span>
+                  <span className="text-[10px] font-semibold text-emerald-600 block">Gaji Bersih Siap Bayar</span>
                   <span className="text-xl font-extrabold text-emerald-600 tabular-nums">
                     {formatIDR(totalNetPayroll)}
                   </span>
@@ -371,14 +371,14 @@ export default function OwnerPayrollPage() {
               <div className="border border-neutral-200 rounded-xl overflow-hidden">
                 <table className="w-full text-xs text-left">
                   <thead>
-                    <tr className="bg-neutral-100/70 border-b border-neutral-200 text-neutral-600 font-semibold uppercase tracking-wider text-[10px]">
-                      <th className="py-2.5 px-3">Emp ID</th>
-                      <th className="py-2.5 px-3">Full Name</th>
-                      <th className="py-2.5 px-3">Daily Salary</th>
-                      <th className="py-2.5 px-3">Days</th>
-                      <th className="py-2.5 px-3">Late Mins</th>
-                      <th className="py-2.5 px-3">Deduction</th>
-                      <th className="py-2.5 px-3 text-right">Net Payout</th>
+                    <tr className="bg-neutral-100/70 border-b border-neutral-200 text-neutral-600 font-semibold text-[10px]">
+                      <th className="py-2.5 px-3">ID Karyawan</th>
+                      <th className="py-2.5 px-3">Nama Lengkap</th>
+                      <th className="py-2.5 px-3">Gaji Harian</th>
+                      <th className="py-2.5 px-3">Hari Kerja</th>
+                      <th className="py-2.5 px-3">Menit Terlambat</th>
+                      <th className="py-2.5 px-3">Potongan</th>
+                      <th className="py-2.5 px-3 text-right">Gaji Bersih</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-200 tabular-nums">
@@ -387,8 +387,8 @@ export default function OwnerPayrollPage() {
                         <td className="py-2.5 px-3 font-mono font-medium text-neutral-600">{s.code}</td>
                         <td className="py-2.5 px-3 font-semibold text-neutral-900">{s.fullName}</td>
                         <td className="py-2.5 px-3">{formatIDR(s.dailySalary)}</td>
-                        <td className="py-2.5 px-3">{s.completedDays}d</td>
-                        <td className="py-2.5 px-3">{s.totalLateMinutes}m</td>
+                        <td className="py-2.5 px-3">{s.completedDays} hari</td>
+                        <td className="py-2.5 px-3">{s.totalLateMinutes} menit</td>
                         <td className="py-2.5 px-3 text-red-600 font-medium">
                           {s.totalLateDeductions > 0 ? `-${formatIDR(s.totalLateDeductions)}` : "Rp0"}
                         </td>
@@ -404,15 +404,15 @@ export default function OwnerPayrollPage() {
               {/* Authorization & Signoff Block */}
               <div className="pt-6 border-t border-neutral-200 grid grid-cols-2 gap-8 text-xs text-neutral-500">
                 <div className="space-y-1">
-                  <span className="font-semibold text-neutral-800 block">System Verification:</span>
-                  <p>Authoritative server-side snapshot computed from immutable attendance audit records.</p>
+                  <span className="font-semibold text-neutral-800 block">Verifikasi Sistem:</span>
+                  <p>Rekapitulasi resmi dihitung otomatis dari catatan presensi audit server yang tidak dapat dimanipulasi.</p>
                   <p className="font-mono text-[10px] text-neutral-400">Checksum: SHA256-SNAP-{year}{month}-{summaries.length}</p>
                 </div>
                 <div className="text-right space-y-6">
                   <div>
-                    <span className="font-semibold text-neutral-800 block">Owner / Finance Approver:</span>
+                    <span className="font-semibold text-neutral-800 block">Pemilik / Pejabat Keuangan:</span>
                     <div className="h-10 border-b border-dashed border-neutral-300 w-48 ml-auto mt-2"></div>
-                    <span className="text-[10px] text-neutral-400 mt-1 block">Authorized Signature & Date</span>
+                    <span className="text-[10px] text-neutral-400 mt-1 block">Tanda Tangan Resmi &amp; Tanggal</span>
                   </div>
                 </div>
               </div>

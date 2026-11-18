@@ -245,22 +245,17 @@ export default function OwnerDevicesPage() {
       {/* Title */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
-              Device Management & Passkey Binding
-            </h1>
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
-              FIDO2 Passkeys & W3C WebAuthn
-            </span>
-          </div>
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
+            Manajemen Perangkat & Kunci Akses
+          </h1>
           <p className="text-xs text-neutral-500 mt-1">
-            Employees are cryptographically bound to a single registered passkey credential. Unrecognized terminals require owner authorization or passkey biometric assertion.
+            Kelola perangkat resmi yang terdaftar dan verifikasi permohonan penggantian perangkat kerja karyawan.
           </p>
         </div>
 
         <button onClick={loadData} className="apple-btn-secondary text-xs">
           <RefreshCw className="w-3.5 h-3.5" />
-          Refresh
+          Muat Ulang
         </button>
       </div>
 
@@ -417,21 +412,21 @@ export default function OwnerDevicesPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
             <thead>
-              <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 text-neutral-500">
-                <th className="py-3 px-4 font-semibold uppercase tracking-wider">Employee</th>
-                <th className="py-3 px-4 font-semibold uppercase tracking-wider">Terminal Hardware</th>
-                <th className="py-3 px-4 font-semibold uppercase tracking-wider">Assurance Tier</th>
-                <th className="py-3 px-4 font-semibold uppercase tracking-wider">Status</th>
-                <th className="py-3 px-4 font-semibold uppercase tracking-wider">Credential ID / Hash</th>
-                <th className="py-3 px-4 font-semibold uppercase tracking-wider">Registered</th>
-                <th className="py-3 px-4 font-semibold uppercase tracking-wider text-right">Action</th>
+              <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 text-neutral-500 font-medium">
+                <th className="py-3 px-4">Karyawan</th>
+                <th className="py-3 px-4">Perangkat Keras</th>
+                <th className="py-3 px-4">Tingkat Keamanan</th>
+                <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4">ID Kredensial</th>
+                <th className="py-3 px-4">Terdaftar Pada</th>
+                <th className="py-3 px-4 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
               {devices.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-8 text-neutral-400">
-                    No registered devices or passkeys yet.
+                    Belum ada perangkat atau passkey yang terdaftar.
                   </td>
                 </tr>
               ) : (
@@ -462,37 +457,37 @@ export default function OwnerDevicesPage() {
                         {isHardware ? (
                           <div className="space-y-0.5">
                             <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                              HARDWARE BOUND
+                              Hardware Terikat
                             </span>
-                            <div className="text-[10px] text-neutral-400">Device Bound</div>
+                            <div className="text-[10px] text-neutral-400">Biometrik Perangkat</div>
                           </div>
                         ) : isSynced ? (
                           <div className="space-y-0.5">
                             <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                              PASSKEY SYNCED
+                              Passkey Sinkron
                             </span>
                             <div className="text-[10px] text-neutral-400">
-                              {dev.credentialBackedUp ? "Keychain Synced" : "Platform Passkey"}
+                              {dev.credentialBackedUp ? "Keychain Cloud" : "Passkey Platform"}
                             </div>
                           </div>
                         ) : (
                           <div className="space-y-0.5">
                             <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-                              LEGACY FP
+                              Kripto Web
                             </span>
-                            <div className="text-[10px] text-neutral-400">Web Crypto</div>
+                            <div className="text-[10px] text-neutral-400">Fingerprint Standar</div>
                           </div>
                         )}
                       </td>
 
                       <td className="py-3 px-4">
                         {isRevoked ? (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20">
-                            [REVOKED]
+                          <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20">
+                            Dicabut
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-                            [ACTIVE]
+                          <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                            Aktif
                           </span>
                         )}
                       </td>

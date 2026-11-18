@@ -111,10 +111,10 @@ export default function OwnerAttendancePage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
-            Attendance &amp; Absence Management
+            Manajemen Presensi & Absensi
           </h1>
           <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-            Breakdown performa kehadiran per karyawan, keterlambatan, alpa, dan log presensi mentah.
+            Rekapitulasi kehadiran, keterlambatan, alpa, dan log presensi harian karyawan.
           </p>
         </div>
 
@@ -142,7 +142,7 @@ export default function OwnerAttendancePage() {
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
-            <span>Log Presensi Mentah</span>
+            <span>Log Presensi Harian</span>
           </button>
         </div>
       </div>
@@ -166,11 +166,11 @@ export default function OwnerAttendancePage() {
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="hig-input py-1 px-2.5 w-auto"
               >
-                <option value="">All Statuses</option>
-                <option value="CHECKED_IN">In Progress (Checked In)</option>
-                <option value="COMPLETED">Completed (On-Time)</option>
-                <option value="LATE_COMPLETED">Completed (Late)</option>
-                <option value="EXCEPTION">Exception</option>
+                <option value="">Semua Status</option>
+                <option value="CHECKED_IN">Sedang Bekerja (Check-In)</option>
+                <option value="COMPLETED">Selesai (Tepat Waktu)</option>
+                <option value="LATE_COMPLETED">Selesai (Terlambat)</option>
+                <option value="EXCEPTION">Pengecualian Khusus</option>
               </select>
               {(filterDate || filterStatus) && (
                 <button
@@ -180,7 +180,7 @@ export default function OwnerAttendancePage() {
                   }}
                   className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] underline text-xs"
                 >
-                  Reset
+                  Reset Filter
                 </button>
               )}
             </div>
@@ -202,24 +202,24 @@ export default function OwnerAttendancePage() {
       {/* Attendance Table */}
       <div className="hig-card overflow-hidden">
         {loading ? (
-          <div className="text-center py-12 text-xs text-[var(--text-tertiary)]">Loading attendance ledger...</div>
+          <div className="text-center py-12 text-xs text-[var(--text-tertiary)]">Memuat log presensi...</div>
         ) : records.length === 0 ? (
-          <div className="text-center py-12 text-xs text-[var(--text-tertiary)]">No attendance records found.</div>
+          <div className="text-center py-12 text-xs text-[var(--text-tertiary)]">Tidak ada data presensi yang ditemukan.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="hig-table">
               <thead>
                 <tr>
-                  <th>Shift Date</th>
-                  <th>Employee</th>
-                  <th>Shift</th>
-                  <th>Check-In</th>
-                  <th>Check-Out</th>
-                  <th>Lateness</th>
-                  <th>Daily Salary</th>
-                  <th>Deduction</th>
-                  <th>Net Earned</th>
-                  <th className="text-right">Action</th>
+                  <th>Tanggal Shift</th>
+                  <th>Karyawan</th>
+                  <th>Shift Kerja</th>
+                  <th>Jam Masuk</th>
+                  <th>Jam Keluar</th>
+                  <th>Keterlambatan</th>
+                  <th>Gaji Pokok</th>
+                  <th>Potongan Denda</th>
+                  <th>Gaji Bersih</th>
+                  <th className="text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="tabular-numbers">
@@ -242,14 +242,14 @@ export default function OwnerAttendancePage() {
                         {r.checkOutTime ? (
                           formatJakartaDateTime(r.checkOutTime).split(", ")[1] || formatJakartaDateTime(r.checkOutTime)
                         ) : (
-                          <span className="text-[var(--system-orange)] font-medium">In Progress</span>
+                          <span className="text-amber-600 dark:text-amber-400 font-medium text-xs">Sedang Bekerja</span>
                         )}
                       </td>
                       <td>
                         {r.lateMinutes > 0 ? (
-                          <span className="hig-badge hig-badge-red">{r.lateMinutes}m late</span>
+                          <span className="hig-badge hig-badge-red">{r.lateMinutes}m terlambat</span>
                         ) : (
-                          <span className="hig-badge hig-badge-green">On Time</span>
+                          <span className="hig-badge hig-badge-green">Tepat Waktu</span>
                         )}
                       </td>
                       <td>{formatIDR(r.dailySalarySnapshot)}</td>
@@ -267,10 +267,10 @@ export default function OwnerAttendancePage() {
                             setCorrectionReason("");
                           }}
                           className="hig-button-secondary text-[11px] py-1 px-2.5"
-                          title="Manual attendance correction with mandatory audit reason"
+                          title="Koreksi presensi manual dengan catatan audit wajib"
                         >
                           <Edit2 className="w-3 h-3 stroke-[2]" />
-                          Correct
+                          Koreksi
                         </button>
                       </td>
                     </tr>
@@ -288,42 +288,42 @@ export default function OwnerAttendancePage() {
       {correctingRecord && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="hig-card-elevated max-w-sm w-full p-6 animate-in fade-in zoom-in-95">
-            <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-1">Manual Correction</h2>
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-1">Koreksi Presensi Manual</h2>
             <p className="text-xs text-[var(--text-secondary)] mb-4">
-              Owner override. Requires a mandatory audit reason.
+              Penyesuaian status oleh pemilik. Wajib mencantumkan alasan untuk log audit.
             </p>
 
             <form onSubmit={handleManualCorrection} className="space-y-3">
               <div className="bg-[var(--separator-subtle)] p-2.5 rounded-lg text-xs">
-                <span className="text-[var(--text-secondary)]">Employee:</span>
+                <span className="text-[var(--text-secondary)]">Karyawan:</span>
                 <div className="font-semibold text-[var(--text-primary)]">
                   {correctingRecord.employee.fullName} ({correctingRecord.shiftDate})
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Status Override</label>
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Ubah Status Presensi</label>
                 <select
                   value={correctedStatus}
                   onChange={(e) => setCorrectedStatus(e.target.value)}
                   className="hig-input"
                 >
-                  <option value="COMPLETED">COMPLETED (Pardon / Waive Lateness)</option>
-                  <option value="LATE_COMPLETED">LATE_COMPLETED (Keep Deduction)</option>
-                  <option value="EXCEPTION">EXCEPTION</option>
+                  <option value="COMPLETED">Selesai (Bebaskan Denda / Tepat Waktu)</option>
+                  <option value="LATE_COMPLETED">Selesai Terlambat (Pertahankan Denda)</option>
+                  <option value="EXCEPTION">Pengecualian Khusus</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
-                  Mandatory Correction Reason
+                  Alasan Koreksi (Wajib Diisi)
                 </label>
                 <textarea
                   required
                   rows={3}
                   value={correctionReason}
                   onChange={(e) => setCorrectionReason(e.target.value)}
-                  placeholder="Reason for manual adjustment..."
+                  placeholder="Alasan penyesuaian manual..."
                   className="hig-input"
                 />
               </div>
@@ -334,10 +334,10 @@ export default function OwnerAttendancePage() {
                   onClick={() => setCorrectingRecord(null)}
                   className="hig-button-secondary text-xs"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button type="submit" className="hig-button-primary text-xs">
-                  Save Correction
+                  Simpan Koreksi
                 </button>
               </div>
             </form>

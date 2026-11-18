@@ -234,7 +234,7 @@ export default function OwnerSettingsPage() {
           className="bg-neutral-100 dark:bg-[#2C2C2E] text-neutral-700 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-[#3A3A3C] rounded-lg px-3 py-2 text-xs font-medium inline-flex items-center gap-1.5 transition-colors disabled:opacity-50"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-          <span>Refresh</span>
+          <span>Muat Ulang</span>
         </button>
       </div>
 
@@ -263,16 +263,16 @@ export default function OwnerSettingsPage() {
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               <h2 className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
-                1. GPS Geofence Radius
+                1. Radius Geofence GPS
               </h2>
             </div>
             {config.enforceGeofence ? (
-              <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                [GEOFENCE ENFORCED]
+              <span className="text-xs font-medium px-2.5 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                Geofence Aktif
               </span>
             ) : (
-              <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-800/50 text-neutral-500 dark:text-neutral-400">
-                [DISABLED]
+              <span className="text-xs font-medium px-2.5 py-0.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-800/50 text-neutral-500 dark:text-neutral-400">
+                Nonaktif
               </span>
             )}
           </div>
@@ -452,16 +452,16 @@ export default function OwnerSettingsPage() {
             <div className="flex items-center gap-2">
               <Wifi className="w-4 h-4 text-purple-600 dark:text-purple-400" />
               <h2 className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
-                2. Office WiFi Public IP Matching
+                2. Pencocokan IP Publik WiFi Kantor
               </h2>
             </div>
             {config.enforceWifiIp ? (
-              <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                [WIFI ENFORCED]
+              <span className="text-xs font-medium px-2.5 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                Wajib WiFi
               </span>
             ) : (
-              <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-800/50 text-neutral-500 dark:text-neutral-400">
-                [OPTIONAL]
+              <span className="text-xs font-medium px-2.5 py-0.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-800/50 text-neutral-500 dark:text-neutral-400">
+                Opsional
               </span>
             )}
           </div>

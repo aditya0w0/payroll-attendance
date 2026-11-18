@@ -127,7 +127,7 @@ export default function DashboardAnalytics() {
         <div className="flex items-center gap-2">
           <BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-50 tracking-tight">
-            Attendance Performance &amp; Absence Trends
+            Performa Kehadiran &amp; Tren Absensi
           </h2>
         </div>
 
@@ -173,7 +173,7 @@ export default function DashboardAnalytics() {
             onClick={fetchAnalytics}
             disabled={loading}
             className="min-h-[44px] min-w-[44px] p-2 rounded-lg hig-button-secondary text-neutral-600 dark:text-neutral-300 transition-colors flex items-center justify-center"
-            title="Refresh Data"
+            title="Muat Ulang Data"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           </button>
@@ -185,7 +185,7 @@ export default function DashboardAnalytics() {
         {/* 1. Tingkat Kehadiran */}
         <div className="liquid-glass p-5 rounded-2xl">
           <div className="flex items-center justify-between text-neutral-500 dark:text-neutral-400 mb-1.5">
-            <span className="text-[11px] font-semibold tracking-wider uppercase">
+            <span className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
               Tingkat Kehadiran
             </span>
             <TrendingUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
@@ -201,7 +201,7 @@ export default function DashboardAnalytics() {
         {/* 2. Total Hadir Tepat Waktu */}
         <div className="liquid-glass p-5 rounded-2xl">
           <div className="flex items-center justify-between text-neutral-500 dark:text-neutral-400 mb-1.5">
-            <span className="text-[11px] font-semibold tracking-wider uppercase">
+            <span className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
               Total Hadir
             </span>
             <UserCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
@@ -210,14 +210,14 @@ export default function DashboardAnalytics() {
             {kpi.totalPresentOnTime}
           </div>
           <span className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-1 block tabular-numbers">
-            Tepat waktu (on-time punch)
+            Kehadiran tepat waktu
           </span>
         </div>
 
         {/* 3. Terlambat */}
         <div className="liquid-glass p-5 rounded-2xl">
           <div className="flex items-center justify-between text-neutral-500 dark:text-neutral-400 mb-1.5">
-            <span className="text-[11px] font-semibold tracking-wider uppercase">
+            <span className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
               Terlambat
             </span>
             <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
@@ -233,7 +233,7 @@ export default function DashboardAnalytics() {
         {/* 4. Tidak Masuk / Alpa */}
         <div className="liquid-glass p-5 rounded-2xl">
           <div className="flex items-center justify-between text-neutral-500 dark:text-neutral-400 mb-1.5">
-            <span className="text-[11px] font-semibold tracking-wider uppercase">
+            <span className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
               Tidak Masuk / Alpa
             </span>
             <UserX className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />

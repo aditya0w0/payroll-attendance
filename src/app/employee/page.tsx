@@ -279,18 +279,18 @@ export default function EmployeeDashboardPage() {
             <div className="space-y-1 flex-1">
               <div className="flex items-center gap-2">
                 <h3 className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
-                  {isOnboarding ? "Pendaftaran Perangkat Pertama Kali" : "Enroll Biometric Passkey"}
+                  {isOnboarding ? "Pendaftaran Perangkat Pertama Kali" : "Daftarkan Biometrik Passkey"}
                 </h3>
                 {isOnboarding && (
-                  <span className="liquid-glass-pill text-[9px] font-mono px-2 py-0.5 bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold border border-blue-500/30">
-                    [MUST_BIND_DEVICE]
+                  <span className="liquid-glass-pill text-[9px] px-2 py-0.5 bg-blue-500/20 text-blue-700 dark:text-blue-300 font-medium border border-blue-500/30">
+                    Wajib Daftar Perangkat
                   </span>
                 )}
               </div>
               <p className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-normal">
                 {isOnboarding
                   ? "Untuk mengaktifkan sistem kehadiran, daftarkan sensor biometrik (Touch ID / Face ID / PIN Perangkat) ini sebagai identitas fisik resmi Anda."
-                  : "Bind Touch ID, Face ID, or your device Passkey. This enables instant zero-lockout logins even if your browser cache or cookies are cleared."}
+                  : "Daftarkan Touch ID, Face ID, atau PIN perangkat ini untuk mempermudah login tanpa terblokir saat data penjelajah dihapus."}
               </p>
             </div>
           </div>

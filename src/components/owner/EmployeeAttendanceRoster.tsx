@@ -209,19 +209,22 @@ export default function EmployeeAttendanceRoster() {
               </thead>
               <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800/80 tabular-numbers">
                 {filteredRoster.map((emp) => {
-                  const rateColor =
-                    emp.attendanceRate >= 90
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : emp.attendanceRate >= 75
-                      ? "text-amber-600 dark:text-amber-400"
-                      : "text-rose-600 dark:text-rose-400";
+                  const hasSchedule = emp.assignedShiftCount > 0;
+                  const rateColor = !hasSchedule
+                    ? "text-neutral-400 dark:text-neutral-500"
+                    : emp.attendanceRate >= 90
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : emp.attendanceRate >= 75
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-rose-600 dark:text-rose-400";
 
-                  const barBgColor =
-                    emp.attendanceRate >= 90
-                      ? "bg-emerald-500"
-                      : emp.attendanceRate >= 75
-                      ? "bg-amber-500"
-                      : "bg-rose-500";
+                  const barBgColor = !hasSchedule
+                    ? "bg-neutral-200 dark:bg-neutral-700"
+                    : emp.attendanceRate >= 90
+                    ? "bg-emerald-500"
+                    : emp.attendanceRate >= 75
+                    ? "bg-amber-500"
+                    : "bg-rose-500";
 
                   return (
                     <tr
@@ -250,8 +253,8 @@ export default function EmployeeAttendanceRoster() {
                           <span className="font-bold text-neutral-900 dark:text-neutral-100">
                             {emp.onTimeCount}
                           </span>
-                          <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                            [ON-TIME]
+                          <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                            Tepat Waktu
                           </span>
                         </div>
                         <span className="text-[10px] text-neutral-400 block mt-0.5">
@@ -267,8 +270,8 @@ export default function EmployeeAttendanceRoster() {
                               <span className="font-bold text-amber-600 dark:text-amber-400">
                                 {emp.lateCount}x
                               </span>
-                              <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                                [LATE]
+                              <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                Terlambat
                               </span>
                             </div>
                             <span className="text-[10px] text-neutral-400 block mt-0.5">
@@ -288,8 +291,8 @@ export default function EmployeeAttendanceRoster() {
                               <span className="font-bold text-rose-600 dark:text-rose-400">
                                 {emp.absentCount}
                               </span>
-                              <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
-                                [ALPA]
+                              <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                                Alpa
                               </span>
                             </div>
                             <span className="text-[10px] text-rose-500/80 block mt-0.5">
@@ -305,18 +308,24 @@ export default function EmployeeAttendanceRoster() {
 
                       {/* 5. Tingkat Kehadiran */}
                       <td className="py-3 px-4 min-w-[130px]">
-                        <div className="flex items-center justify-between text-xs font-semibold mb-1">
-                          <span className={rateColor}>{emp.attendanceRate}%</span>
-                          <span className="text-[10px] text-neutral-400">
-                            {emp.presentCount}/{emp.assignedShiftCount}
-                          </span>
-                        </div>
-                        <div className="w-full bg-neutral-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-300 ${barBgColor}`}
-                            style={{ width: `${Math.min(100, emp.attendanceRate)}%` }}
-                          />
-                        </div>
+                        {hasSchedule ? (
+                          <>
+                            <div className="flex items-center justify-between text-xs font-semibold mb-1">
+                              <span className={rateColor}>{emp.attendanceRate}%</span>
+                              <span className="text-[10px] text-neutral-400">
+                                {emp.presentCount}/{emp.assignedShiftCount}
+                              </span>
+                            </div>
+                            <div className="w-full bg-neutral-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-300 ${barBgColor}`}
+                                style={{ width: `${Math.min(100, emp.attendanceRate)}%` }}
+                              />
+                            </div>
+                          </>
+                        ) : (
+                          <span className="text-neutral-400 dark:text-neutral-500 text-xs">Belum ada shift</span>
+                        )}
                       </td>
 
                       {/* 6. Estimasi Gaji Berjalan */}

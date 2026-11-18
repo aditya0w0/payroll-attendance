@@ -102,7 +102,7 @@ export default function OwnerShiftsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      setMessage({ text: "Work shift schedule created successfully.", type: "success" });
+      setMessage({ text: "Jadwal shift kerja berhasil ditambahkan.", type: "success" });
       setShowShiftModal(false);
       loadData();
     } catch (err: any) {
@@ -121,7 +121,7 @@ export default function OwnerShiftsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      setMessage({ text: "Deduction policy created successfully.", type: "success" });
+      setMessage({ text: "Kebijakan denda keterlambatan berhasil disimpan.", type: "success" });
       setShowPolicyModal(false);
       loadData();
     } catch (err: any) {
@@ -135,21 +135,21 @@ export default function OwnerShiftsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
-            Shifts & Deduction Policies
+            Shift Kerja & Kebijakan Denda
           </h1>
           <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-            Configure daytime, evening, and overnight shift hours alongside lateness deduction rates.
+            Atur jam operasional kerja, toleransi keterlambatan, dan formula pemotongan denda keterlambatan.
           </p>
         </div>
 
         <div className="flex gap-2">
           <button onClick={() => setShowPolicyModal(true)} className="hig-button-secondary text-xs">
             <Plus className="w-3.5 h-3.5 stroke-[2]" />
-            New Policy
+            Buat Kebijakan Denda
           </button>
           <button onClick={() => setShowShiftModal(true)} className="hig-button-primary text-xs">
             <Plus className="w-3.5 h-3.5 stroke-[2]" />
-            New Shift
+            Tambah Shift Baru
           </button>
         </div>
       </div>
@@ -169,79 +169,96 @@ export default function OwnerShiftsPage() {
 
       {/* Shifts Grid */}
       <div>
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-3">
-          Configured Work Shifts
+        <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-3">
+          Daftar Shift Kerja
         </h2>
         <div className="grid md:grid-cols-3 gap-4">
-          {shifts.map((s) => (
-            <div key={s.id} className="hig-card p-4 space-y-3">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-semibold text-sm text-[var(--text-primary)]">{s.name}</h3>
-                  <div className="text-xs font-mono tabular-numbers text-[var(--text-secondary)] mt-0.5">
-                    {s.startTime} - {s.endTime}
+          {shifts.map((s) => {
+            const cleanShiftName = s.name.replace(/\s*\(\d{2}:\d{2}\s*-\s*\d{2}:\d{2}\)/, "");
+            return (
+              <div key={s.id} className="hig-card p-4 space-y-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-semibold text-sm text-[var(--text-primary)]">{cleanShiftName}</h3>
+                    <div className="text-xs font-mono tabular-numbers text-[var(--text-secondary)] mt-0.5">
+                      {s.startTime} – {s.endTime} WIB
+                    </div>
+                  </div>
+                  {s.isOvernight && (
+                    <span className="hig-badge hig-badge-neutral text-[10px] font-semibold">
+                      Lintas Hari (Malam)
+                    </span>
+                  )}
+                </div>
+
+                <div className="text-xs space-y-1.5 pt-2 border-t border-[var(--separator-subtle)] text-[var(--text-secondary)]">
+                  <div className="flex justify-between">
+                    <span>Toleransi Keterlambatan:</span>
+                    <span className="font-medium text-[var(--text-primary)] tabular-numbers">{s.gracePeriodMinutes} menit</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Kebijakan Denda:</span>
+                    <span className="font-medium text-[var(--system-red)]">{s.deductionPolicy.name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Staf Ditugaskan:</span>
+                    <span className="font-semibold text-[var(--text-primary)] tabular-numbers">{s._count.employees} karyawan</span>
                   </div>
                 </div>
-                {s.isOvernight && (
-                  <span className="hig-badge hig-badge-neutral text-[10px] font-semibold">
-                    Overnight (Next Day)
-                  </span>
-                )}
               </div>
-
-              <div className="text-xs space-y-1.5 pt-2 border-t border-[var(--separator-subtle)] text-[var(--text-secondary)]">
-                <div className="flex justify-between">
-                  <span>Grace Period:</span>
-                  <span className="font-medium text-[var(--text-primary)] tabular-numbers">{s.gracePeriodMinutes} mins</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Deduction:</span>
-                  <span className="font-medium text-[var(--system-red)]">{s.deductionPolicy.name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Assigned Staff:</span>
-                  <span className="font-semibold text-[var(--text-primary)] tabular-numbers">{s._count.employees} employees</span>
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
       {/* Deduction Policies Table */}
       <div className="hig-card overflow-hidden">
         <div className="p-4 border-b border-[var(--separator)]">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
-            Deduction Policies
+          <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+            Kebijakan Pemotongan Denda
           </h2>
         </div>
         <div className="overflow-x-auto">
           <table className="hig-table">
             <thead>
               <tr>
-                <th>Policy Title</th>
-                <th>Mode</th>
-                <th>Rate</th>
-                <th>Hourly Rounding</th>
-                <th>Grace Window</th>
-                <th>Max Limit</th>
+                <th>Nama Kebijakan</th>
+                <th>Skema Hitung</th>
+                <th>Tarif Denda</th>
+                <th>Aturan Pembulatan Jam</th>
+                <th>Toleransi Keterlambatan</th>
+                <th>Batas Maksimal Potongan</th>
               </tr>
             </thead>
             <tbody className="tabular-numbers">
-              {policies.map((p) => (
-                <tr key={p.id}>
-                  <td className="font-medium text-[var(--text-primary)]">{p.name}</td>
-                  <td>
-                    <span className="hig-badge hig-badge-neutral font-mono text-[10px]">
-                      {p.mode}
-                    </span>
-                  </td>
-                  <td className="font-semibold text-[var(--system-red)]">{formatIDR(p.rate)}</td>
-                  <td>{p.mode === "PER_HOUR" ? p.hourlyRounding : "Exact"}</td>
-                  <td>{p.gracePeriodMinutes} mins</td>
-                  <td>{p.maxDeductionPercent}% daily wage</td>
-                </tr>
-              ))}
+              {policies.map((p) => {
+                const modeLabel = p.mode === "PER_MINUTE" ? "Per Menit" : p.mode === "PER_HOUR" ? "Per Jam" : p.mode;
+                const roundingLabel =
+                  p.mode !== "PER_HOUR"
+                    ? "Proporsional Riil"
+                    : p.hourlyRounding === "ROUND_UP"
+                    ? "Bulatkan ke Atas"
+                    : p.hourlyRounding === "ROUND_DOWN"
+                    ? "Bulatkan ke Bawah"
+                    : p.hourlyRounding === "ROUND_NEAREST"
+                    ? "Bulatkan Terdekat"
+                    : "Proporsional Riil";
+
+                return (
+                  <tr key={p.id}>
+                    <td className="font-medium text-[var(--text-primary)]">{p.name}</td>
+                    <td>
+                      <span className="hig-badge hig-badge-neutral text-[10px]">
+                        {modeLabel}
+                      </span>
+                    </td>
+                    <td className="font-semibold text-[var(--system-red)]">{formatIDR(p.rate)}</td>
+                    <td>{roundingLabel}</td>
+                    <td>{p.gracePeriodMinutes} menit</td>
+                    <td>{p.maxDeductionPercent}% upah harian</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -251,14 +268,14 @@ export default function OwnerShiftsPage() {
       {showShiftModal && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="hig-card-elevated max-w-md w-full p-6">
-            <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-1">New Work Shift Schedule</h2>
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-1">Tambah Shift Kerja Baru</h2>
             <form onSubmit={handleCreateShift} className="space-y-3 mt-4">
               <div>
-                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Shift Name</label>
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Nama Shift</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Night Shift (22:00 - 06:00)"
+                  placeholder="Misal: Shift Pagi"
                   value={newShift.name}
                   onChange={(e) => setNewShift({ ...newShift, name: e.target.value })}
                   className="hig-input"
@@ -267,7 +284,7 @@ export default function OwnerShiftsPage() {
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Start Time (HH:mm)</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Jam Mulai (WIB)</label>
                   <input
                     type="time"
                     required
@@ -277,7 +294,7 @@ export default function OwnerShiftsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">End Time (HH:mm)</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Jam Selesai (WIB)</label>
                   <input
                     type="time"
                     required
@@ -297,13 +314,13 @@ export default function OwnerShiftsPage() {
                   className="rounded border-[var(--separator)]"
                 />
                 <label htmlFor="overnightCheck" className="text-xs font-medium cursor-pointer">
-                  Overnight Shift (Crosses midnight to next calendar date)
+                  Shift Lintas Hari (Melewati tengah malam hingga hari kalender berikutnya)
                 </label>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Grace Period (Mins)</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Toleransi Keterlambatan (Menit)</label>
                   <input
                     type="number"
                     min="0"
@@ -313,7 +330,7 @@ export default function OwnerShiftsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Deduction Policy</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Kebijakan Denda</label>
                   <select
                     value={newShift.deductionPolicyId}
                     onChange={(e) => setNewShift({ ...newShift, deductionPolicyId: e.target.value })}
@@ -330,10 +347,10 @@ export default function OwnerShiftsPage() {
 
               <div className="flex justify-end gap-2 pt-3 border-t border-[var(--separator-subtle)]">
                 <button type="button" onClick={() => setShowShiftModal(false)} className="hig-button-secondary text-xs">
-                  Cancel
+                  Batal
                 </button>
                 <button type="submit" className="hig-button-primary text-xs">
-                  Save Shift
+                  Simpan Shift
                 </button>
               </div>
             </form>
@@ -345,14 +362,14 @@ export default function OwnerShiftsPage() {
       {showPolicyModal && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="hig-card-elevated max-w-md w-full p-6">
-            <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-1">New Deduction Policy</h2>
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-1">Buat Kebijakan Denda Baru</h2>
             <form onSubmit={handleCreatePolicy} className="space-y-3 mt-4">
               <div>
-                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Policy Title</label>
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Nama Kebijakan</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Per-Minute Rp500"
+                  placeholder="Misal: Standar Per Menit Rp500"
                   value={newPolicy.name}
                   onChange={(e) => setNewPolicy({ ...newPolicy, name: e.target.value })}
                   className="hig-input"
@@ -361,20 +378,20 @@ export default function OwnerShiftsPage() {
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Mode</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Skema Hitung</label>
                   <select
                     value={newPolicy.mode}
                     onChange={(e) => setNewPolicy({ ...newPolicy, mode: e.target.value as any })}
                     className="hig-input"
                   >
-                    <option value="PER_MINUTE">Mode A: Per Minute</option>
-                    <option value="PER_HOUR">Mode B: Per Hour</option>
+                    <option value="PER_MINUTE">Per Menit</option>
+                    <option value="PER_HOUR">Per Jam</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
-                    Rate (IDR)
+                    Tarif Denda (IDR)
                   </label>
                   <input
                     type="number"
@@ -389,23 +406,23 @@ export default function OwnerShiftsPage() {
 
               {newPolicy.mode === "PER_HOUR" && (
                 <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Hourly Rounding Rule</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Aturan Pembulatan Jam</label>
                   <select
                     value={newPolicy.hourlyRounding}
                     onChange={(e) => setNewPolicy({ ...newPolicy, hourlyRounding: e.target.value as any })}
                     className="hig-input"
                   >
-                    <option value="EXACT">Exact Proportional Calculation</option>
-                    <option value="ROUND_UP">Round Up to Next Full Hour</option>
-                    <option value="ROUND_DOWN">Round Down to Full Hours</option>
-                    <option value="ROUND_NEAREST">Round to Nearest Full Hour</option>
+                    <option value="EXACT">Proporsional Riil (Sesuai Menit)</option>
+                    <option value="ROUND_UP">Bulatkan ke Atas (Jam Penuh Berikutnya)</option>
+                    <option value="ROUND_DOWN">Bulatkan ke Bawah (Abaikan Menit)</option>
+                    <option value="ROUND_NEAREST">Bulatkan ke Jam Terdekat</option>
                   </select>
                 </div>
               )}
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Grace Period (Mins)</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Toleransi Keterlambatan (Menit)</label>
                   <input
                     type="number"
                     value={newPolicy.gracePeriodMinutes}
@@ -414,7 +431,7 @@ export default function OwnerShiftsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Max Cap (% Daily Pay)</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Batas Maksimal (% Upah Harian)</label>
                   <input
                     type="number"
                     max="100"
@@ -428,10 +445,10 @@ export default function OwnerShiftsPage() {
 
               <div className="flex justify-end gap-2 pt-3 border-t border-[var(--separator-subtle)]">
                 <button type="button" onClick={() => setShowPolicyModal(false)} className="hig-button-secondary text-xs">
-                  Cancel
+                  Batal
                 </button>
                 <button type="submit" className="hig-button-primary text-xs">
-                  Save Policy
+                  Simpan Kebijakan
                 </button>
               </div>
             </form>

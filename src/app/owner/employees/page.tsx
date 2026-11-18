@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { formatIDR } from "@/lib/utils";
-import { Plus, Smartphone, DollarSign, RotateCcw, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Plus, Smartphone, Banknote, RotateCcw, AlertCircle, CheckCircle2 } from "lucide-react";
 
 interface ShiftItem {
   id: string;
@@ -110,9 +110,9 @@ export default function OwnerEmployeesPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to create employee");
+      if (!res.ok) throw new Error(data.error || "Gagal membuat karyawan baru");
 
-      setMessage({ text: data.message || "Employee created successfully.", type: "success" });
+      setMessage({ text: data.message || "Karyawan baru berhasil ditambahkan.", type: "success" });
       setShowAddModal(false);
       setNewEmp({
         fullName: "",
@@ -140,12 +140,12 @@ export default function OwnerEmployeesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           dailySalary: editSalaryVal,
-          salaryChangeReason: editSalaryReason || "Owner wage revision",
+          salaryChangeReason: editSalaryReason || "Penyesuaian tarif oleh owner",
         }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to update salary");
+      if (!res.ok) throw new Error(data.error || "Gagal memperbarui gaji");
 
       setMessage({ text: data.message, type: "success" });
       setEditingEmployee(null);
@@ -156,7 +156,7 @@ export default function OwnerEmployeesPage() {
   };
 
   const handleResetDevice = async (userId: string, name: string) => {
-    if (!confirm(`Reset device registration for ${name}? The employee will be able to bind a new device on next login.`)) {
+    if (!confirm(`Reset pendaftaran perangkat untuk ${name}? Karyawan dapat mendaftarkan perangkat baru saat login berikutnya.`)) {
       return;
     }
 
@@ -167,12 +167,12 @@ export default function OwnerEmployeesPage() {
         body: JSON.stringify({
           action: "RESET_DEVICE",
           userId,
-          reason: "Owner manual reset",
+          reason: "Reset manual oleh owner",
         }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) throw new Error(data.error || "Gagal mereset perangkat");
 
       setMessage({ text: data.message, type: "success" });
       loadData();
@@ -187,10 +187,10 @@ export default function OwnerEmployeesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
-            Employee Directory & Daily Salaries
+            Daftar Karyawan & Gaji Harian
           </h1>
           <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-            Configure employee profiles, assign daily salaries, and manage single-device authorizations.
+            Kelola profil karyawan, tarif upah harian, jadwal shift kerja, dan status binding perangkat.
           </p>
         </div>
 
@@ -199,7 +199,7 @@ export default function OwnerEmployeesPage() {
           className="hig-button-primary text-xs"
         >
           <Plus className="w-3.5 h-3.5 stroke-[2]" />
-          Add Employee
+          Tambah Karyawan
         </button>
       </div>
 
@@ -223,23 +223,30 @@ export default function OwnerEmployeesPage() {
       {/* Employee Table */}
       <div className="hig-card overflow-hidden">
         {loading ? (
-          <div className="text-center py-12 text-xs text-[var(--text-tertiary)]">Loading workforce directory...</div>
+          <div className="text-center py-12 text-xs text-[var(--text-tertiary)]">Memuat data karyawan...</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="hig-table">
               <thead>
                 <tr>
-                  <th>Employee</th>
-                  <th>Daily Salary</th>
-                  <th>Work Shift</th>
-                  <th>Status</th>
-                  <th>Authorized Device</th>
-                  <th className="text-right">Actions</th>
+                  <th>Karyawan</th>
+                  <th>Gaji Pokok / Hari</th>
+                  <th>Shift Kerja</th>
+                  <th>Status Kerja</th>
+                  <th>Perangkat Terdaftar</th>
+                  <th className="text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="tabular-numbers">
                 {employees.map((emp) => {
                   const dev = emp.user.deviceRegistration;
+                  const statusLabel =
+                    emp.employmentStatus === "PERMANENT"
+                      ? "Tetap"
+                      : emp.employmentStatus === "CONTRACT"
+                      ? "Kontrak"
+                      : emp.employmentStatus;
+
                   return (
                     <tr key={emp.id}>
                       <td>
@@ -253,19 +260,18 @@ export default function OwnerEmployeesPage() {
                         <div className="font-semibold text-sm text-[var(--text-primary)]">
                           {formatIDR(emp.dailySalary)}
                         </div>
-                        <div className="text-[10px] text-[var(--text-secondary)]">base daily rate</div>
                       </td>
 
                       <td>
                         <div className="font-medium text-[var(--text-primary)]">{emp.shift.name}</div>
                         <div className="text-[11px] text-[var(--text-secondary)] font-mono">
-                          {emp.shift.startTime} - {emp.shift.endTime} {emp.shift.isOvernight && "(Overnight)"}
+                          {emp.shift.startTime} - {emp.shift.endTime} {emp.shift.isOvernight && "(Shift Malam)"}
                         </div>
                       </td>
 
                       <td>
                         <span className="hig-badge hig-badge-neutral text-[10px]">
-                          {emp.employmentStatus}
+                          {statusLabel}
                         </span>
                       </td>
 
@@ -276,8 +282,8 @@ export default function OwnerEmployeesPage() {
                             <span className="font-medium">{dev.deviceName}</span>
                           </div>
                         ) : (
-                          <span className="text-[var(--system-orange)] font-medium">
-                            Unbound (First login binds)
+                          <span className="text-amber-600 dark:text-amber-400 font-medium text-xs">
+                            Belum Terhubung
                           </span>
                         )}
                       </td>
@@ -292,18 +298,18 @@ export default function OwnerEmployeesPage() {
                             }}
                             className="hig-button-secondary text-[11px] py-1 px-2.5"
                           >
-                            <DollarSign className="w-3 h-3 stroke-[2]" />
-                            Set Salary
+                            <Banknote className="w-3.5 h-3.5 stroke-[1.75]" />
+                            Atur Gaji
                           </button>
 
                           {dev && (
                             <button
                               onClick={() => handleResetDevice(emp.user.id, emp.fullName)}
-                              className="hig-button-destructive text-[11px] py-1 px-2"
-                              title="Reset device binding"
+                              className="hig-button-destructive text-[11px] py-1 px-2.5"
+                              title="Reset pengikatan perangkat"
                             >
-                              <RotateCcw className="w-3 h-3 stroke-[2]" />
-                              Reset
+                              <RotateCcw className="w-3.5 h-3.5 stroke-[1.75]" />
+                              Reset Perangkat
                             </button>
                           )}
                         </div>
@@ -322,28 +328,28 @@ export default function OwnerEmployeesPage() {
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="hig-card-elevated max-w-md w-full p-6 animate-in fade-in zoom-in-95">
             <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-1">
-              Add Employee
+              Tambah Karyawan Baru
             </h2>
             <p className="text-xs text-[var(--text-secondary)] mb-4">
-              Enter employee credentials, base daily wage, and assigned shift schedule.
+              Masukkan data profil, upah harian dasar, dan shift kerja yang ditugaskan.
             </p>
 
             <form onSubmit={handleCreateEmployee} className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Full Name</label>
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Nama Lengkap</label>
                 <input
                   type="text"
                   required
                   value={newEmp.fullName}
                   onChange={(e) => setNewEmp({ ...newEmp, fullName: e.target.value })}
-                  placeholder="Employee full name"
+                  placeholder="Nama lengkap karyawan"
                   className="hig-input"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Employee ID</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">ID Karyawan</label>
                   <input
                     type="text"
                     required
@@ -354,7 +360,7 @@ export default function OwnerEmployeesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Username</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Nama Pengguna</label>
                   <input
                     type="text"
                     required
@@ -374,12 +380,12 @@ export default function OwnerEmployeesPage() {
                     required
                     value={newEmp.email}
                     onChange={(e) => setNewEmp({ ...newEmp, email: e.target.value })}
-                    placeholder="email@company.com"
+                    placeholder="email@perusahaan.com"
                     className="hig-input"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Password</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Kata Sandi Awal</label>
                   <input
                     type="text"
                     required
@@ -392,7 +398,7 @@ export default function OwnerEmployeesPage() {
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Daily Salary (IDR)</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Gaji Pokok Harian (IDR)</label>
                   <input
                     type="number"
                     step="1000"
@@ -404,7 +410,7 @@ export default function OwnerEmployeesPage() {
                   <span className="text-[11px] text-[var(--text-secondary)] mt-0.5 block tabular-numbers">{formatIDR(newEmp.dailySalary)}</span>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Work Shift</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Shift Kerja</label>
                   <select
                     value={newEmp.shiftId}
                     onChange={(e) => setNewEmp({ ...newEmp, shiftId: e.target.value })}
@@ -425,13 +431,13 @@ export default function OwnerEmployeesPage() {
                   onClick={() => setShowAddModal(false)}
                   className="hig-button-secondary text-xs"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
                   className="hig-button-primary text-xs"
                 >
-                  Create
+                  Simpan Karyawan
                 </button>
               </div>
             </form>
@@ -444,26 +450,26 @@ export default function OwnerEmployeesPage() {
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="hig-card-elevated max-w-sm w-full p-6 animate-in fade-in zoom-in-95">
             <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-1">
-              Adjust Daily Salary
+              Ubah Gaji Pokok Harian
             </h2>
             <p className="text-xs text-[var(--text-secondary)] mb-4">
-              Historical values and effective dates are preserved in the employee salary ledger.
+              Perubahan tarif harian akan tercatat dalam riwayat penyesuaian gaji karyawan.
             </p>
 
             <form onSubmit={handleUpdateSalary} className="space-y-3">
               <div className="bg-[var(--separator-subtle)] p-2.5 rounded-lg text-xs">
-                <div className="text-[var(--text-secondary)]">Employee:</div>
+                <div className="text-[var(--text-secondary)]">Karyawan:</div>
                 <div className="font-semibold text-[var(--text-primary)]">
                   {editingEmployee.fullName} ({editingEmployee.employeeId})
                 </div>
                 <div className="text-[11px] text-[var(--text-secondary)] mt-0.5 tabular-numbers">
-                  Current: {formatIDR(editingEmployee.dailySalary)} / day
+                  Tarif Saat Ini: {formatIDR(editingEmployee.dailySalary)} / hari
                 </div>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
-                  New Daily Salary (IDR)
+                  Tarif Baru per Hari (IDR)
                 </label>
                 <input
                   type="number"
@@ -474,20 +480,20 @@ export default function OwnerEmployeesPage() {
                   className="hig-input font-semibold tabular-numbers text-sm"
                 />
                 <span className="text-xs text-[var(--accent)] font-medium mt-1 block tabular-numbers">
-                  {formatIDR(editSalaryVal)} per completed day
+                  {formatIDR(editSalaryVal)} per hari kerja
                 </span>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
-                  Reason for Adjustment
+                  Alasan Penyesuaian Gaji
                 </label>
                 <input
                   type="text"
                   required
                   value={editSalaryReason}
                   onChange={(e) => setEditSalaryReason(e.target.value)}
-                  placeholder="e.g. Annual compensation revision"
+                  placeholder="Misal: Penyesuaian tahunan atau kenaikan tingkat"
                   className="hig-input"
                 />
               </div>
@@ -498,13 +504,13 @@ export default function OwnerEmployeesPage() {
                   onClick={() => setEditingEmployee(null)}
                   className="hig-button-secondary text-xs"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
                   className="hig-button-primary text-xs"
                 >
-                  Save Salary
+                  Perbarui Gaji
                 </button>
               </div>
             </form>

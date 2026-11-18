@@ -158,16 +158,11 @@ export default function OwnerAuditLogsPage() {
       {/* Title */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
-              Audit Activity Log & Integrity Ledger
-            </h1>
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-              SHA-256 Chain • Ed25519 Signed
-            </span>
-          </div>
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
+            Log Aktivitas Audit & Integritas Sistem
+          </h1>
           <p className="text-xs text-neutral-500 mt-1">
-            Authoritative append-only ledger tracking all administrative actions, wage revisions, and security events with cryptographic tamper detection.
+            Catatan riwayat seluruh aktivitas operasional, penyesuaian gaji, dan pemantauan keamanan sistem.
           </p>
         </div>
 
@@ -177,20 +172,20 @@ export default function OwnerAuditLogsPage() {
             href="/api/owner/audit-logs/export-signed"
             download
             className="apple-btn-secondary text-xs flex items-center gap-1.5"
-            title="Download signed JSONL ledger"
+            title="Unduh log audit bertanda tangan digital"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Export Signed (.jsonl)</span>
+            <span>Ekspor Log Audit (.jsonl)</span>
           </a>
 
           <button
             onClick={checkHealth}
             disabled={verifying}
             className="apple-btn-secondary text-xs flex items-center gap-1.5"
-            title="Re-verify entire hash-chain and check outbox"
+            title="Verifikasi ulang rantai hash dan integritas data"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${verifying ? "animate-spin" : ""}`} />
-            <span>{verifying ? "Verifying..." : "Verify Chain"}</span>
+            <span>{verifying ? "Memverifikasi..." : "Verifikasi Integritas"}</span>
           </button>
         </div>
       </div>
@@ -333,33 +328,33 @@ export default function OwnerAuditLogsPage() {
           </select>
         </div>
 
-        <button onClick={loadLogs} className="apple-btn-secondary text-xs py-1.5" title="Reload logs">
+        <button onClick={loadLogs} className="apple-btn-secondary text-xs py-1.5" title="Muat ulang log audit">
           <RefreshCw className="w-3.5 h-3.5" />
-          <span>Refresh</span>
+          <span>Muat Ulang</span>
         </button>
       </div>
 
       {/* Logs Table */}
       <div className="apple-card overflow-hidden">
         {loading ? (
-          <div className="text-center py-12 text-xs text-neutral-400">Loading audit ledger...</div>
+          <div className="text-center py-12 text-xs text-neutral-400">Memuat log audit...</div>
         ) : logs.length === 0 ? (
           <div className="text-center py-12 text-xs text-neutral-400">
-            No audit records found matching criteria.
+            Tidak ada catatan audit yang sesuai dengan kriteria pencarian.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
               <thead>
-                <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 text-neutral-500">
-                  <th className="py-3 px-3 font-semibold uppercase tracking-wider">Seq</th>
-                  <th className="py-3 px-4 font-semibold uppercase tracking-wider">Timestamp (WIB)</th>
-                  <th className="py-3 px-4 font-semibold uppercase tracking-wider">Actor</th>
-                  <th className="py-3 px-4 font-semibold uppercase tracking-wider">Action</th>
-                  <th className="py-3 px-4 font-semibold uppercase tracking-wider">Target Entity</th>
-                  <th className="py-3 px-4 font-semibold uppercase tracking-wider">Ledger Hash</th>
-                  <th className="py-3 px-4 font-semibold uppercase tracking-wider">Reason / Details</th>
-                  <th className="py-3 px-3 font-semibold uppercase tracking-wider text-right">View</th>
+                <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 text-neutral-500 font-medium">
+                  <th className="py-3 px-3">No. Urut</th>
+                  <th className="py-3 px-4">Waktu (WIB)</th>
+                  <th className="py-3 px-4">Aktor</th>
+                  <th className="py-3 px-4">Tindakan</th>
+                  <th className="py-3 px-4">Target Entitas</th>
+                  <th className="py-3 px-4">Hash Buku Besar</th>
+                  <th className="py-3 px-4">Alasan / Rincian</th>
+                  <th className="py-3 px-3 text-right">Detail</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">

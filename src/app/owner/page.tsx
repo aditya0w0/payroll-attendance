@@ -46,16 +46,16 @@ export default async function OwnerOverviewPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
-            Attendance & Payroll
+            Ringkasan Presensi &amp; Penggajian
           </h1>
           <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-            Active shift date: <span className="font-mono tabular-numbers text-[var(--text-primary)]">{todayStr}</span>
+            Tanggal operasional aktif: <span className="font-mono tabular-numbers text-[var(--text-primary)]">{todayStr}</span>
           </p>
         </div>
 
         <Link href="/owner/qr" className="liquid-glass-btn-primary text-xs px-4 py-2 rounded-xl inline-flex items-center gap-2 font-medium shadow-sm">
           <QrCode className="w-3.5 h-3.5 stroke-[2]" />
-          Open Workplace QR Terminal
+          Buka Terminal Presensi QR
         </Link>
       </div>
 
@@ -65,15 +65,15 @@ export default async function OwnerOverviewPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ShieldAlert className="w-4 h-4 text-red-600 dark:text-red-400" />
-              <h2 className="text-xs font-semibold text-red-700 dark:text-red-300 uppercase tracking-wider">
-                Security Incidents & Flagged Cheating Attempts ({recentCheatingAlerts.length})
+              <h2 className="text-xs font-semibold text-red-700 dark:text-red-300">
+                Peringatan Keamanan &amp; Upaya Kecurangan ({recentCheatingAlerts.length})
               </h2>
             </div>
             <Link
               href="/owner/audit-logs?action=CHEATING_ALERTS"
               className="text-xs text-red-700 dark:text-red-300 font-medium hover:underline flex items-center"
             >
-              Review Incidents
+              Tinjau Insiden
             </Link>
           </div>
 
@@ -97,51 +97,51 @@ export default async function OwnerOverviewPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div className="hig-card p-4 rounded-2xl">
           <div className="flex items-center justify-between text-[var(--text-secondary)] mb-1">
-            <span className="text-[11px] font-medium uppercase tracking-wider">Employees</span>
+            <span className="text-[11px] font-medium">Total Karyawan</span>
             <Users className="w-3.5 h-3.5 text-[var(--text-tertiary)] stroke-[1.75]" />
           </div>
           <div className="text-2xl font-semibold text-[var(--text-primary)] tabular-numbers">
             {totalEmployees}
           </div>
-          <span className="text-[11px] text-[var(--text-tertiary)] mt-1 block">Active staff roster</span>
+          <span className="text-[11px] text-[var(--text-tertiary)] mt-1 block">Karyawan aktif terdaftar</span>
         </div>
 
         <div className="hig-card p-4 rounded-2xl">
           <div className="flex items-center justify-between text-[var(--text-secondary)] mb-1">
-            <span className="text-[11px] font-medium uppercase tracking-wider">Checked In</span>
+            <span className="text-[11px] font-medium">Hadir Hari Ini</span>
             <ClipboardList className="w-3.5 h-3.5 text-[var(--system-green)] stroke-[1.75]" />
           </div>
           <div className="text-2xl font-semibold text-[var(--text-primary)] tabular-numbers">
             {presentCount}
           </div>
           <span className="text-[11px] text-[var(--system-green)] mt-1 block tabular-numbers">
-            {presentCount - lateCount} on-time arrivals
+            {presentCount - lateCount} tepat waktu
           </span>
         </div>
 
         <div className="hig-card p-4 rounded-2xl">
           <div className="flex items-center justify-between text-[var(--text-secondary)] mb-1">
-            <span className="text-[11px] font-medium uppercase tracking-wider">Late Arrivals</span>
+            <span className="text-[11px] font-medium">Terlambat</span>
             <AlertCircle className="w-3.5 h-3.5 text-[var(--system-red)] stroke-[1.75]" />
           </div>
           <div className="text-2xl font-semibold text-[var(--system-red)] tabular-numbers">
             {lateCount}
           </div>
           <span className="text-[11px] text-[var(--system-red)] mt-1 block tabular-numbers">
-            {formatIDR(totalLateDeductions)} deducted
+            {formatIDR(totalLateDeductions)} potongan denda
           </span>
         </div>
 
         <div className="hig-card p-4 rounded-2xl">
           <div className="flex items-center justify-between text-[var(--text-secondary)] mb-1">
-            <span className="text-[11px] font-medium uppercase tracking-wider">Unlock Requests</span>
+            <span className="text-[11px] font-medium">Permintaan Buka Kunci</span>
             <Smartphone className="w-3.5 h-3.5 text-[var(--system-orange)] stroke-[1.75]" />
           </div>
           <div className="text-2xl font-semibold text-[var(--text-primary)] tabular-numbers">
             {pendingUnlockRequests}
           </div>
           <span className="text-[11px] text-[var(--text-secondary)] mt-1 block">
-            {pendingUnlockRequests > 0 ? "Pending authorization" : "All devices verified"}
+            {pendingUnlockRequests > 0 ? "Menunggu persetujuan" : "Semua perangkat aman"}
           </span>
         </div>
       </div>
@@ -155,30 +155,30 @@ export default async function OwnerOverviewPage() {
         <div className="lg:col-span-2 hig-card p-5 rounded-3xl">
           <div className="flex items-center justify-between mb-3 border-b border-[var(--separator-subtle)] pb-2.5">
             <div>
-              <h2 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider">
-                Today&apos;s Live Punches
+              <h2 className="text-xs font-semibold text-[var(--text-primary)]">
+                Presensi Hari Ini
               </h2>
             </div>
             <Link href="/owner/attendance" className="text-xs text-[var(--accent)] hover:underline flex items-center">
-              View All
+              Lihat Semua
             </Link>
           </div>
 
           {todayAttendance.length === 0 ? (
             <div className="text-center py-8 text-xs text-[var(--text-tertiary)]">
-              No punch records logged for today.
+              Belum ada catatan presensi untuk hari ini.
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="hig-table">
                 <thead>
                   <tr>
-                    <th>Employee</th>
-                    <th>In</th>
-                    <th>Out</th>
-                    <th>Lateness</th>
-                    <th>Deduction</th>
-                    <th>Net Earned</th>
+                    <th>Karyawan</th>
+                    <th>Masuk</th>
+                    <th>Keluar</th>
+                    <th>Keterlambatan</th>
+                    <th>Potongan Denda</th>
+                    <th>Gaji Bersih</th>
                   </tr>
                 </thead>
                 <tbody className="tabular-numbers">
@@ -189,9 +189,9 @@ export default async function OwnerOverviewPage() {
                       <td>{rec.checkOutTime ? rec.checkOutTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }) : "--"}</td>
                       <td>
                         {rec.lateMinutes > 0 ? (
-                          <span className="hig-badge hig-badge-red">{rec.lateMinutes}m late</span>
+                          <span className="hig-badge hig-badge-red">{rec.lateMinutes}m terlambat</span>
                         ) : (
-                          <span className="hig-badge hig-badge-green">On Time</span>
+                          <span className="hig-badge hig-badge-green">Tepat Waktu</span>
                         )}
                       </td>
                       <td className="text-[var(--system-red)] font-medium">
@@ -211,11 +211,11 @@ export default async function OwnerOverviewPage() {
         {/* Audit Trail Activity */}
         <div className="hig-card p-5 rounded-3xl">
           <div className="flex items-center justify-between mb-3 border-b border-[var(--separator-subtle)] pb-2.5">
-            <h2 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider">
-              Recent System Events
+            <h2 className="text-xs font-semibold text-[var(--text-primary)]">
+              Aktivitas Sistem Terkini
             </h2>
             <Link href="/owner/audit-logs" className="text-xs text-[var(--accent)] hover:underline">
-              Logs
+              Semua Log
             </Link>
           </div>
 
@@ -229,7 +229,7 @@ export default async function OwnerOverviewPage() {
                   </span>
                 </div>
                 <div className="text-[var(--text-secondary)] text-[11px] mt-0.5">
-                  Actor: {log.actorName} ({log.actorRole})
+                  Aktor: {log.actorName} ({log.actorRole})
                 </div>
               </div>
             ))}

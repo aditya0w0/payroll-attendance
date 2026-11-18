@@ -53,10 +53,10 @@ export default function OwnerQRDisplayPage() {
     <div className="max-w-md mx-auto text-center space-y-6 py-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
-          Workplace Terminal
+          Terminal Presensi QR
         </h1>
         <p className="text-xs text-neutral-500 mt-1 max-w-sm mx-auto">
-          Display this screen at the office entrance. Employees scan using their registered device for Check-in and Check-out.
+          Buka layar ini di pintu masuk kantor. Karyawan memindai QR menggunakan perangkat terdaftar untuk absensi masuk dan keluar.
         </p>
       </div>
 
@@ -64,7 +64,7 @@ export default function OwnerQRDisplayPage() {
       <div className="liquid-glass-elevated p-8 rounded-3xl inline-block shadow-lg">
         {loading || !qrDataUrl ? (
           <div className="w-64 h-64 flex items-center justify-center text-xs text-neutral-400">
-            Generating cryptographic challenge...
+            Membuat kode QR dinamis...
           </div>
         ) : (
           <div className="space-y-4">
@@ -72,7 +72,7 @@ export default function OwnerQRDisplayPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={qrDataUrl}
-                alt="Workplace Dynamic Attendance QR"
+                alt="Terminal Presensi QR Dinamis"
                 className="w-64 h-64 object-contain rounded-xl"
               />
             </div>
@@ -81,7 +81,7 @@ export default function OwnerQRDisplayPage() {
             <div className="flex items-center justify-between text-xs text-neutral-500 font-medium px-1">
               <span className="flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-blue-600" />
-                Rotates every 15s
+                Berganti tiap 15 detik
               </span>
               <span className="font-mono font-semibold text-sm text-neutral-900 dark:text-neutral-100 tabular-nums">
                 00:{String(secondsRemaining).padStart(2, "0")}
@@ -103,10 +103,10 @@ export default function OwnerQRDisplayPage() {
       <div className="text-[11px] text-neutral-400 max-w-sm mx-auto space-y-1">
         <p className="flex items-center justify-center gap-1 font-medium text-neutral-600 dark:text-neutral-400">
           <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-          Single-Use Dynamic Token • Consumes & burns immediately upon scan
+          Token Dinamis Sekali Pakai • Langsung hangus setelah dipindai
         </p>
         <p>
-          Re-using or sharing photographed QR codes is blocked and flagged as a security incident to the Owner.
+          Penggunaan ulang foto QR otomatis diblokir dan dicatat sebagai pelanggaran keamanan.
         </p>
       </div>
     </div>
