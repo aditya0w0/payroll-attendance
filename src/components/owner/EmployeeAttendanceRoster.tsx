@@ -312,7 +312,7 @@ export default function EmployeeAttendanceRoster() {
                         <button
                           type="button"
                           onClick={() => setSelectedEmployee(emp)}
-                          className="hig-button-secondary text-xs py-1 px-2.5 inline-flex items-center gap-1"
+                          className="hig-button-compact-secondary inline-flex items-center gap-1"
                         >
                           <Eye className="w-3.5 h-3.5 text-neutral-500" />
                           <span>Detail</span>

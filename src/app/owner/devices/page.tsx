@@ -376,14 +376,14 @@ export default function OwnerDevicesPage() {
                       {isReplacementRequest ? (
                         <button
                           onClick={() => handleApproveReplacement(req.id, employeeName)}
-                          className="hig-button-primary text-xs px-3.5 py-2 whitespace-nowrap bg-purple-700 hover:bg-purple-800 text-white"
+                          className="hig-button-compact-primary whitespace-nowrap bg-purple-700 hover:bg-purple-800 border-purple-800 text-white"
                         >
                           Setujui Perangkat Baru
                         </button>
                       ) : (
                         <button
                           onClick={() => handleApproveUnlock(req.id)}
-                          className="hig-button-primary text-xs px-3.5 py-2 whitespace-nowrap"
+                          className="hig-button-compact-primary whitespace-nowrap"
                         >
                           Setujui Pembukaan
                         </button>
@@ -525,7 +525,7 @@ export default function OwnerDevicesPage() {
                                   assuranceTier: dev.assuranceTier || "STANDARD_PASSKEY_SYNCED",
                                 })
                               }
-                              className="hig-button-secondary text-[11px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 border-red-200 dark:border-red-900/60 px-2.5 py-1 flex items-center gap-1 font-medium transition-colors"
+                              className="hig-button-compact-secondary text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 border-red-200 dark:border-red-900/60 inline-flex items-center gap-1 font-medium transition-colors"
                               title="Cabut Akses Perangkat Ini"
                             >
                               <Slash className="w-3 h-3 stroke-[2.5]" />
@@ -539,7 +539,7 @@ export default function OwnerDevicesPage() {
                                 dev.user.employeeProfile?.fullName || dev.user.username
                               )
                             }
-                            className="hig-button-secondary text-[11px] text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 px-2 py-1"
+                            className="hig-button-compact-secondary text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 px-2"
                             title="Reset pengikatan perangkat"
                             aria-label={`Reset perangkat ${dev.deviceName}`}
                           >

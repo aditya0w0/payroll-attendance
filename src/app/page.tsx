@@ -15,13 +15,6 @@ export default function HomePage() {
             <span className="text-xs text-[var(--text-secondary)] ml-1.5 font-normal">Presensi &amp; Penggajian</span>
           </div>
         </div>
-
-        <Link
-          href="/login"
-          className="hig-button-primary text-xs"
-        >
-          Masuk
-        </Link>
       </header>
 
       {/* Main Hero */}

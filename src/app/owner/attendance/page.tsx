@@ -299,7 +299,7 @@ export default function OwnerAttendancePage() {
                             setCorrectedStatus(r.status);
                             setCorrectionReason("");
                           }}
-                          className="hig-button-secondary text-[11px] py-1 px-2.5"
+                          className="hig-button-compact-secondary inline-flex items-center gap-1"
                           title="Koreksi presensi manual dengan catatan audit wajib"
                         >
                           <Edit2 className="w-3 h-3 stroke-[2]" />
