@@ -201,7 +201,7 @@ export default function EmployeeScanPage() {
   // 2. Direct Native Geolocation Trigger (Synchronous browser call)
   const triggerNativeGpsPrompt = () => {
     if (typeof window === "undefined" || !("geolocation" in window.navigator)) {
-      setGpsError("API Geolocation tidak ditemukan di browser ini.");
+      setGpsError("Fitur lokasi tidak didukung pada peramban ini.");
       return;
     }
 
@@ -218,17 +218,16 @@ export default function EmployeeScanPage() {
       },
       (geoErr) => {
         setGpsLoading(false);
-        const rawReason = `[CODE ${geoErr.code}] ${geoErr.message || "Unknown geolocation error"}`;
         if (geoErr.code === 1) {
           setGpsError(
-            `${rawReason}: Izin lokasi belum aktif. Klik ikon Gembok di kiri URL bar browser -> Izinkan Lokasi (Precise Location).`
+            "Izin akses lokasi belum diaktifkan. Buka setelan peramban atau klik ikon gembok pada bilah alamat untuk mengizinkan akses lokasi kantor."
           );
         } else if (geoErr.code === 2) {
-          setGpsError(`${rawReason}: Sinyal GPS satelit tidak terdeteksi.`);
+          setGpsError("Sinyal GPS tidak terdeteksi. Pastikan perangkat Anda memiliki sinyal GPS atau koneksi jaringan yang memadai.");
         } else if (geoErr.code === 3) {
-          setGpsError(`${rawReason}: Timeout mencari koordinat GPS.`);
+          setGpsError("Waktu pencarian koordinat lokasi habis. Silakan coba kembali.");
         } else {
-          setGpsError(rawReason);
+          setGpsError("Gagal memperoleh koordinat lokasi perangkat.");
         }
       },
       {
@@ -316,21 +315,48 @@ export default function EmployeeScanPage() {
     }
 
     try {
-      const constraints: MediaStreamConstraints = {
-        video: {
-          facingMode: { ideal: targetFacing },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-        audio: false,
-      };
+      let stream: MediaStream | null = null;
+      let lastError: any = null;
 
-      let stream: MediaStream;
+      // Strategy 1: Ideal facingMode and 720p resolution
       try {
-        stream = await navigator.mediaDevices.getUserMedia(constraints);
-      } catch (constraintErr: any) {
-        console.warn("Retrying with generic video constraints:", constraintErr);
-        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: targetFacing },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+          audio: false,
+        });
+      } catch (err1) {
+        lastError = err1;
+      }
+
+      // Strategy 2: Relaxed resolution with ideal facingMode
+      if (!stream) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: { ideal: targetFacing },
+            },
+            audio: false,
+          });
+        } catch (err2) {
+          lastError = err2;
+        }
+      }
+
+      // Strategy 3: Minimal generic video stream (desktop webcams, virtual cams)
+      if (!stream) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        } catch (err3) {
+          lastError = err3;
+        }
+      }
+
+      if (!stream) {
+        throw lastError || new Error("Kamera tidak dapat diinisialisasi.");
       }
 
       streamRef.current = stream;
@@ -372,12 +398,16 @@ export default function EmployeeScanPage() {
       console.error("Camera access error:", err);
       if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
         setCameraError(
-          "Izin kamera belum diberikan. Klik ikon Gembok di address bar browser untuk mengizinkan kamera."
+          "Izin akses kamera belum diberikan. Buka setelan peramban untuk mengizinkan akses kamera pada situs ini."
         );
       } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
-        setCameraError("Kamera tidak ditemukan pada perangkat ini.");
+        setCameraError("Kamera tidak terdeteksi pada perangkat ini.");
+      } else if (err.name === "NotReadableError" || err.name === "TrackStartError") {
+        setCameraError("Kamera sedang digunakan oleh aplikasi lain.");
+      } else if (err.name === "OverconstrainedError") {
+        setCameraError("Spesifikasi sensor kamera tidak didukung pada peramban ini.");
       } else {
-        setCameraError(err.message || "Gagal membuka kamera.");
+        setCameraError("Kamera tidak dapat dibuka saat ini. Silakan coba kembali.");
       }
       setCameraActive(false);
     } finally {
@@ -878,14 +908,13 @@ export default function EmployeeScanPage() {
               </p>
             </div>
 
-            {/* GPS Diagnostic & Status */}
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-white/30 dark:bg-black/20 backdrop-blur-md border border-white/40 dark:border-white/10 text-xs shadow-inner">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5 text-neutral-500" />
-                <span className="text-neutral-500 text-[11px]">Lokasi GPS:</span>
-              </div>
-
-              {gpsCoords ? (
+            {/* GPS Status & Diagnostics */}
+            {gpsCoords ? (
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-white/30 dark:bg-black/20 backdrop-blur-md border border-white/40 dark:border-white/10 text-xs shadow-inner">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-3.5 h-3.5 text-neutral-500" />
+                  <span className="text-neutral-500 text-[11px]">Lokasi GPS:</span>
+                </div>
                 <div className="flex items-center gap-1.5">
                   <span className="liquid-glass-pill px-3 py-1 text-[10px] font-mono font-medium bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 inline-flex items-center gap-1.5 shadow-sm">
                     <CheckCircle2 className="w-3 h-3 text-emerald-500" />
@@ -894,60 +923,68 @@ export default function EmployeeScanPage() {
                   <button
                     type="button"
                     onClick={() => triggerNativeGpsPrompt()}
-                    title="Refresh GPS"
+                    title="Perbarui Koordinat GPS"
                     className="p-1.5 hover:bg-white/50 dark:hover:bg-white/10 rounded-full transition-colors"
                   >
                     <RotateCcw className="w-3 h-3 text-neutral-400" />
                   </button>
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => triggerNativeGpsPrompt()}
-                  disabled={gpsLoading}
-                  className="liquid-glass-btn-primary px-3 py-1.5 rounded-xl text-white text-[11px] font-medium inline-flex items-center gap-1 shadow-sm transition-all"
-                >
-                  <span>{gpsLoading ? "Mengunci GPS..." : "Aktifkan Izin GPS"}</span>
-                </button>
-              )}
-            </div>
-
-            {/* GPS Error Alert */}
-            {gpsError && (
-              <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 text-amber-900 dark:text-amber-200 text-xs space-y-2 text-left">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                  <p className="leading-relaxed text-[11px]">{gpsError}</p>
+              </div>
+            ) : (
+              <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs space-y-2.5 text-left">
+                <div className="flex items-start gap-2.5">
+                  <MapPin className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="space-y-0.5 flex-1">
+                    <span className="font-semibold text-xs text-[var(--text-primary)] block">
+                      Akses Lokasi Kantor Diperlukan
+                    </span>
+                    <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+                      {gpsError ||
+                        "Sistem presensi membutuhkan koordinat lokasi perangkat Anda untuk memastikan kehadiran di area kantor."}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 pt-1 border-t border-amber-200/60 dark:border-amber-800/60">
+                <div className="flex items-center gap-2 pt-1 border-t border-amber-500/15">
                   <button
                     type="button"
                     onClick={() => triggerNativeGpsPrompt()}
-                    className="hig-button-secondary text-[11px] px-3 py-1 font-medium bg-white dark:bg-neutral-800"
+                    disabled={gpsLoading}
+                    className="hig-button-primary text-[11px] px-3.5 py-1.5 font-medium"
                   >
-                    Coba Lagi
+                    {gpsLoading ? "Mengunci Koordinat..." : "Izinkan Akses Lokasi"}
                   </button>
-                  <button
-                    type="button"
-                    onClick={handleUseOfficeGpsLocal}
-                    className="hig-button-secondary text-[11px] px-2.5 py-1 font-medium bg-white dark:bg-neutral-800 text-neutral-600"
-                  >
-                    Gunakan Lokasi Kantor (Mode Tes)
-                  </button>
+                  {isDev && (
+                    <button
+                      type="button"
+                      onClick={handleUseOfficeGpsLocal}
+                      className="hig-button-secondary text-[11px] px-3 py-1.5 font-medium"
+                    >
+                      Mode Tes Kantor
+                    </button>
+                  )}
                 </div>
               </div>
             )}
 
             {/* Camera Error Alert */}
             {cameraError && (
-              <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 text-xs text-left flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
-                <div className="space-y-1">
-                  <p className="text-[11px] leading-relaxed">{cameraError}</p>
+              <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-xs text-left space-y-2">
+                <div className="flex items-start gap-2.5">
+                  <AlertCircle className="w-4 h-4 text-[var(--system-red)] shrink-0 mt-0.5" />
+                  <div className="space-y-0.5 flex-1">
+                    <span className="font-semibold text-xs text-[var(--text-primary)] block">
+                      Akses Kamera Terhambat
+                    </span>
+                    <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+                      {cameraError}
+                    </p>
+                  </div>
+                </div>
+                <div className="pt-1 border-t border-red-500/15">
                   <button
                     type="button"
                     onClick={() => startCamera("environment")}
-                    className="hig-button-secondary text-[11px] px-2.5 py-1 font-medium bg-white dark:bg-neutral-800"
+                    className="hig-button-secondary text-[11px] px-3 py-1.5 font-medium"
                   >
                     Buka Kamera Ulang
                   </button>
@@ -1065,49 +1102,50 @@ export default function EmployeeScanPage() {
             </div>
           )}
 
-          {/* Collapsible Manual Testing / Dev Section */}
-          <div className="border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden bg-white dark:bg-neutral-900">
-            <button
-              type="button"
-              onClick={() => setShowManualSection(!showManualSection)}
-              className="w-full p-3 text-xs text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 flex items-center justify-between transition-colors"
-            >
-              <span className="text-[11px] font-medium">Opsi Pengujian / Manual Token (Khusus Demo)</span>
-              {showManualSection ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-            </button>
+          {/* Collapsible Manual Testing / Dev Section (Only in Local Development) */}
+          {isDev && (
+            <div className="border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden bg-white dark:bg-neutral-900">
+              <button
+                type="button"
+                onClick={() => setShowManualSection(!showManualSection)}
+                className="w-full p-3 text-xs text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 flex items-center justify-between transition-colors"
+              >
+                <span className="text-[11px] font-medium">Bantuan Pengujian Lokal (Khusus Pengembang)</span>
+                {showManualSection ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
 
-            {showManualSection && (
-              <div className="p-4 pt-1 border-t border-neutral-100 dark:border-neutral-800 space-y-3">
-                <button
-                  type="button"
-                  onClick={handleQuickScanActiveQR}
-                  disabled={loading || !gpsCoords}
-                  className="hig-button-secondary w-full py-2.5 text-xs font-medium flex items-center justify-center gap-2"
-                >
-                  <Zap className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Ambil QR Aktif Terminal Otomatis (1-Tap Test)</span>
-                </button>
-
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={tokenInput}
-                    onChange={(e) => setTokenInput(e.target.value)}
-                    placeholder="Masukkan token manual..."
-                    className="flex-1 hig-input text-xs font-mono py-2"
-                  />
+              {showManualSection && (
+                <div className="p-4 pt-1 border-t border-neutral-100 dark:border-neutral-800 space-y-3">
                   <button
                     type="button"
-                    onClick={() => submitToken(tokenInput)}
-                    disabled={loading || !tokenInput.trim() || !gpsCoords}
-                    className="hig-button-primary text-xs px-4 py-2 font-medium"
+                    onClick={handleQuickScanActiveQR}
+                    disabled={loading || !gpsCoords}
+                    className="hig-button-secondary w-full py-2 text-xs font-medium flex items-center justify-center gap-2"
                   >
-                    Verifikasi Token
+                    <span>Gunakan QR Terminal Aktif</span>
                   </button>
+
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={tokenInput}
+                      onChange={(e) => setTokenInput(e.target.value)}
+                      placeholder="Tempel token QR manual..."
+                      className="flex-1 hig-input text-xs font-mono py-2"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => submitToken(tokenInput)}
+                      disabled={loading || !tokenInput.trim() || !gpsCoords}
+                      className="hig-button-primary text-xs px-4 py-2 font-medium"
+                    >
+                      Verifikasi
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         /* Result Screen */
