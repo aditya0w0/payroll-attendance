@@ -220,7 +220,7 @@ flowchart TD
 3. Configure environment variables in `.env`:
    ```env
    DATABASE_URL="file:./dev.db"
-   JWT_SECRET="your-session-secret"
+   SESSION_SECRET="your-session-secret"
    CRON_SECRET="your-scheduled-job-token"
    AUDIT_SIGNING_PRIVATE_KEY="your-ed25519-private-key"
    AUDIT_SIGNING_PUBLIC_KEY="your-ed25519-public-key"

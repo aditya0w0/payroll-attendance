@@ -11,6 +11,7 @@
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "seed": "tsx prisma/seed.ts",
+    "db:clean": "tsx scripts/reset-clean-seed.ts",
     "audit:verify": "tsx scripts/verify-audit-chain.js",
     "db:triggers": "tsx scripts/apply-pg-triggers.ts",
     "test:arch": "tsx scripts/test-hardened-architecture.ts",

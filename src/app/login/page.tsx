@@ -22,8 +22,8 @@ type ProfileMode = "owner" | "employee";
 
 export default function LoginPage() {
   const [mode, setMode] = useState<ProfileMode>("employee");
-  const [identifier, setIdentifier] = useState("siti@company.com");
-  const [password, setPassword] = useState("employee123");
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -100,13 +100,8 @@ export default function LoginPage() {
     setMode(newMode);
     setError(null);
     setWebAuthnPrompt(null);
-    if (newMode === "owner") {
-      setIdentifier("owner@company.com");
-      setPassword("admin123");
-    } else {
-      setIdentifier("siti@company.com");
-      setPassword("employee123");
-    }
+    setIdentifier("");
+    setPassword("");
   };
 
   const executePasskeyAuth = async (userIdentifier: string) => {
@@ -395,7 +390,7 @@ export default function LoginPage() {
               type="text"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              placeholder={mode === "owner" ? "owner@company.com" : "siti@company.com"}
+              placeholder={mode === "owner" ? "owner@perusahaan.com" : "nama@perusahaan.com"}
               required
               className="hig-input text-xs"
             />
@@ -696,7 +691,7 @@ export default function LoginPage() {
                     onChange={(e) => setReplaceIdentifier(e.target.value)}
                     required
                     className="hig-input text-xs"
-                    placeholder="siti@company.com"
+                    placeholder="nama@perusahaan.com"
                   />
                 </div>
 
