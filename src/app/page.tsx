@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Shield, UserCheck, QrCode, ArrowRight } from "lucide-react";
+import { Shield, UserCheck, QrCode } from "lucide-react";
 
 export default function HomePage() {
   return (
@@ -26,12 +26,12 @@ export default function HomePage() {
 
       {/* Main Hero */}
       <main className="my-auto py-16 max-w-2xl mx-auto text-center">
-        <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-[var(--text-primary)] mb-4">
-          Presensi Karyawan &amp; Penggajian Harian.
+        <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-[var(--text-primary)] mb-3">
+          Presensi Karyawan &amp; Penggajian Harian
         </h1>
 
-        <p className="text-sm sm:text-base text-[var(--text-secondary)] leading-relaxed mb-12 max-w-xl mx-auto">
-          Sistem pencatatan kehadiran berbasis QR dinamis dengan validasi lokasi kantor, kalkulasi upah harian otomatis, dan log audit anti-manipulasi.
+        <p className="text-sm sm:text-base text-[var(--text-secondary)] leading-relaxed mb-10 max-w-lg mx-auto">
+          Pencatatan kehadiran kerja dan kalkulasi upah harian tim secara transparan.
         </p>
 
         {/* Action Cards */}
@@ -45,15 +45,14 @@ export default function HomePage() {
                 <UserCheck className="w-5 h-5 stroke-[2]" />
               </div>
               <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-1">
-                Portal Pemilik (Owner)
+                Portal Pemilik
               </h2>
               <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                Kelola jadwal shift kerja, kebijakan denda keterlambatan, tarif gaji harian karyawan, dan validasi radius geofence kantor.
+                Pantau kehadiran tim, persetujuan presensi, dan rekap penggajian.
               </p>
             </div>
-            <div className="text-xs font-medium text-[var(--accent)] flex items-center gap-1 group-hover:gap-1.5 transition-all">
-              <span>Masuk sebagai Owner</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+            <div className="text-xs font-medium text-[var(--accent)]">
+              Buka Portal Pemilik
             </div>
           </Link>
 
@@ -69,12 +68,11 @@ export default function HomePage() {
                 Portal Karyawan
               </h2>
               <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                Pindai kode QR kantor untuk pencatatan absensi masuk dan pulang kerja, serta pantau estimasi akumulasi upah harian.
+                Presensi masuk dan pulang kerja, serta riwayat upah harian.
               </p>
             </div>
-            <div className="text-xs font-medium text-[var(--accent)] flex items-center gap-1 group-hover:gap-1.5 transition-all">
-              <span>Masuk sebagai Karyawan</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+            <div className="text-xs font-medium text-[var(--accent)]">
+              Buka Portal Karyawan
             </div>
           </Link>
         </div>
@@ -82,8 +80,8 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="py-4 border-t border-[var(--separator)] flex flex-col sm:flex-row justify-between items-center text-xs text-[var(--text-secondary)] gap-2">
-        <span>Zona Waktu Operasional: Asia/Jakarta (WIB)</span>
-        <span>Hak Cipta (c) 2026 CyberGuard</span>
+        <span>CyberGuard Attendance Systems</span>
+        <span>Asia/Jakarta (WIB)</span>
       </footer>
     </div>
   );

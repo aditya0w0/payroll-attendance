@@ -12,8 +12,6 @@ import {
   RotateCcw,
   MapPin,
   Clock,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import Link from "next/link";
 import { formatIDR } from "@/lib/utils";
@@ -66,11 +64,6 @@ export default function EmployeeScanPage() {
   const [scanStatusHint, setScanStatusHint] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [scanResult, setScanResult] = useState<any | null>(null);
-
-  // Manual / Dev Fallback State (Collapsed by default)
-  const [showManualSection, setShowManualSection] = useState(false);
-  const [tokenInput, setTokenInput] = useState("");
-  const [isDev, setIsDev] = useState(false);
 
   // Geolocation Anti-Cheat Verification State
   const [gpsCoords, setGpsCoords] = useState<{
@@ -238,37 +231,8 @@ export default function EmployeeScanPage() {
     );
   };
 
-  // Local Testing Fallback
-  const handleUseOfficeGpsLocal = async () => {
-    try {
-      const res = await fetch("/api/owner/office-config");
-      const data = await res.json();
-      if (data.config && data.config.latitude && data.config.longitude) {
-        commitGpsCoordinates({
-          latitude: data.config.latitude,
-          longitude: data.config.longitude,
-          accuracy: 10,
-        });
-        return;
-      }
-    } catch {}
-
-    commitGpsCoordinates({
-      latitude: -6.928715,
-      longitude: 109.655502,
-      accuracy: 10,
-    });
-  };
-
   // Mount initialization: Load Shift Status, GPS, and Start Camera
   useEffect(() => {
-    const isDevelopment =
-      process.env.NODE_ENV === "development" ||
-      (typeof window !== "undefined" &&
-        (window.location.hostname === "localhost" ||
-          window.location.hostname === "127.0.0.1"));
-    setIsDev(isDevelopment);
-
     loadShiftStatus();
     triggerNativeGpsPrompt();
     startCamera("environment");
@@ -594,11 +558,7 @@ export default function EmployeeScanPage() {
         return;
       }
 
-      setGpsError(
-        isDev
-          ? "Koordinat GPS belum terkunci. Klik tombol 'Gunakan Lokasi Kantor (Mode Tes Lokal)' di bawah."
-          : "Koordinat GPS diperlukan untuk presensi. Klik 'Minta Izin Lokasi' di bawah."
-      );
+      setGpsError("Koordinat GPS belum terkunci. Klik tombol 'Izinkan Akses Lokasi' di bawah.");
       isSubmittingRef.current = false;
       setLoading(false);
       setScanningPulse(false);
@@ -711,23 +671,6 @@ export default function EmployeeScanPage() {
         lastScannedTokenRef.current = null;
       }, 2500);
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleQuickScanActiveQR = async () => {
-    setError(null);
-    setLoading(true);
-
-    try {
-      const qrRes = await fetch("/api/qr/active");
-      const qrData = await qrRes.json();
-      if (!qrData.token) {
-        throw new Error("Tidak dapat mengambil QR aktif dari terminal.");
-      }
-      await submitToken(qrData.token);
-    } catch (err: any) {
-      setError(err.message || "Failed to scan QR");
       setLoading(false);
     }
   };
@@ -944,7 +887,7 @@ export default function EmployeeScanPage() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 pt-1 border-t border-amber-500/15">
+                <div className="pt-1 border-t border-amber-500/15">
                   <button
                     type="button"
                     onClick={() => triggerNativeGpsPrompt()}
@@ -953,15 +896,6 @@ export default function EmployeeScanPage() {
                   >
                     {gpsLoading ? "Mengunci Koordinat..." : "Izinkan Akses Lokasi"}
                   </button>
-                  {isDev && (
-                    <button
-                      type="button"
-                      onClick={handleUseOfficeGpsLocal}
-                      className="hig-button-secondary text-[11px] px-3 py-1.5 font-medium"
-                    >
-                      Mode Tes Kantor
-                    </button>
-                  )}
                 </div>
               </div>
             )}
@@ -1099,51 +1033,6 @@ export default function EmployeeScanPage() {
                   </button>
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* Collapsible Manual Testing / Dev Section (Only in Local Development) */}
-          {isDev && (
-            <div className="border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden bg-white dark:bg-neutral-900">
-              <button
-                type="button"
-                onClick={() => setShowManualSection(!showManualSection)}
-                className="w-full p-3 text-xs text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 flex items-center justify-between transition-colors"
-              >
-                <span className="text-[11px] font-medium">Bantuan Pengujian Lokal (Khusus Pengembang)</span>
-                {showManualSection ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-              </button>
-
-              {showManualSection && (
-                <div className="p-4 pt-1 border-t border-neutral-100 dark:border-neutral-800 space-y-3">
-                  <button
-                    type="button"
-                    onClick={handleQuickScanActiveQR}
-                    disabled={loading || !gpsCoords}
-                    className="hig-button-secondary w-full py-2 text-xs font-medium flex items-center justify-center gap-2"
-                  >
-                    <span>Gunakan QR Terminal Aktif</span>
-                  </button>
-
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={tokenInput}
-                      onChange={(e) => setTokenInput(e.target.value)}
-                      placeholder="Tempel token QR manual..."
-                      className="flex-1 hig-input text-xs font-mono py-2"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => submitToken(tokenInput)}
-                      disabled={loading || !tokenInput.trim() || !gpsCoords}
-                      className="hig-button-primary text-xs px-4 py-2 font-medium"
-                    >
-                      Verifikasi
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>
