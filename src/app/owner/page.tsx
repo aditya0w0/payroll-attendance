@@ -44,47 +44,47 @@ export default async function OwnerOverviewPage() {
     <div className="space-y-6">
       {/* Title */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
+        <div className="flex items-center gap-2.5">
           <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
             Ringkasan Presensi &amp; Penggajian
           </h1>
-          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-            Tanggal operasional aktif: <span className="font-mono tabular-numbers text-[var(--text-primary)]">{todayStr}</span>
-          </p>
+          <span className="hig-badge hig-badge-neutral text-xs font-mono tabular-numbers px-2 py-0.5">
+            {todayStr}
+          </span>
         </div>
 
-        <Link href="/owner/qr" className="liquid-glass-btn-primary text-xs px-4 py-2 rounded-xl inline-flex items-center gap-2 font-medium shadow-sm">
+        <Link href="/owner/qr" className="hig-button-primary text-xs">
           <QrCode className="w-3.5 h-3.5 stroke-[2]" />
-          Buka Terminal Presensi QR
+          Terminal Presensi QR
         </Link>
       </div>
 
       {/* High-Priority Cheating & Security Alerts Banner */}
       {recentCheatingAlerts.length > 0 && (
-        <div className="p-4 rounded-2xl liquid-glass border border-red-500/30 bg-red-500/10 dark:bg-red-950/30 space-y-2.5 shadow-sm">
+        <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5 dark:bg-red-950/20 space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-red-600 dark:text-red-400" />
-              <h2 className="text-xs font-semibold text-red-700 dark:text-red-300">
-                Peringatan Keamanan &amp; Upaya Kecurangan ({recentCheatingAlerts.length})
+              <ShieldAlert className="w-4 h-4 text-[var(--system-red)]" />
+              <h2 className="text-xs font-semibold text-[var(--system-red)]">
+                Peringatan Keamanan ({recentCheatingAlerts.length})
               </h2>
             </div>
             <Link
               href="/owner/audit-logs?action=CHEATING_ALERTS"
-              className="text-xs text-red-700 dark:text-red-300 font-medium hover:underline flex items-center"
+              className="text-xs text-[var(--system-red)] font-medium hover:underline"
             >
               Tinjau Insiden
             </Link>
           </div>
 
-          <div className="divide-y divide-red-200/60 dark:divide-red-900/40 text-xs">
+          <div className="divide-y divide-red-200/40 dark:divide-red-900/30 text-xs">
             {recentCheatingAlerts.map((alert) => (
-              <div key={alert.id} className="py-2 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <div key={alert.id} className="py-1.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                 <div>
-                  <span className="font-semibold text-neutral-900 dark:text-neutral-100">{alert.actorName}:</span>{" "}
-                  <span className="text-neutral-700 dark:text-neutral-300">{alert.reason}</span>
+                  <span className="font-semibold text-[var(--text-primary)]">{alert.actorName}:</span>{" "}
+                  <span className="text-[var(--text-secondary)]">{alert.reason}</span>
                 </div>
-                <span className="font-mono text-[10px] text-neutral-500 whitespace-nowrap">
+                <span className="font-mono text-[10px] text-[var(--text-tertiary)] tabular-numbers">
                   {formatJakartaDateTime(alert.timestamp)}
                 </span>
               </div>
@@ -95,54 +95,64 @@ export default async function OwnerOverviewPage() {
 
       {/* Metric Cards (Apple HIG Style) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="hig-card p-4 rounded-2xl">
-          <div className="flex items-center justify-between text-[var(--text-secondary)] mb-1">
-            <span className="text-[11px] font-medium">Total Karyawan</span>
+        <div className="hig-card p-4 rounded-xl flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[var(--text-secondary)] mb-2">
+            <span className="text-xs font-medium">Total Karyawan</span>
             <Users className="w-3.5 h-3.5 text-[var(--text-tertiary)] stroke-[1.75]" />
           </div>
-          <div className="text-2xl font-semibold text-[var(--text-primary)] tabular-numbers">
-            {totalEmployees}
+          <div className="flex items-baseline justify-between">
+            <div className="text-2xl font-semibold text-[var(--text-primary)] tabular-numbers">
+              {totalEmployees}
+            </div>
+            <span className="text-xs text-[var(--text-tertiary)] font-medium">staf aktif</span>
           </div>
-          <span className="text-[11px] text-[var(--text-tertiary)] mt-1 block">Karyawan aktif terdaftar</span>
         </div>
 
-        <div className="hig-card p-4 rounded-2xl">
-          <div className="flex items-center justify-between text-[var(--text-secondary)] mb-1">
-            <span className="text-[11px] font-medium">Hadir Hari Ini</span>
+        <div className="hig-card p-4 rounded-xl flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[var(--text-secondary)] mb-2">
+            <span className="text-xs font-medium">Hadir Hari Ini</span>
             <ClipboardList className="w-3.5 h-3.5 text-[var(--system-green)] stroke-[1.75]" />
           </div>
-          <div className="text-2xl font-semibold text-[var(--text-primary)] tabular-numbers">
-            {presentCount}
+          <div className="flex items-baseline justify-between">
+            <div className="text-2xl font-semibold text-[var(--text-primary)] tabular-numbers">
+              {presentCount}
+            </div>
+            <span className="text-xs text-[var(--system-green)] font-medium tabular-numbers">
+              {presentCount - lateCount} tepat
+            </span>
           </div>
-          <span className="text-[11px] text-[var(--system-green)] mt-1 block tabular-numbers">
-            {presentCount - lateCount} tepat waktu
-          </span>
         </div>
 
-        <div className="hig-card p-4 rounded-2xl">
-          <div className="flex items-center justify-between text-[var(--text-secondary)] mb-1">
-            <span className="text-[11px] font-medium">Terlambat</span>
+        <div className="hig-card p-4 rounded-xl flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[var(--text-secondary)] mb-2">
+            <span className="text-xs font-medium">Terlambat</span>
             <AlertCircle className="w-3.5 h-3.5 text-[var(--system-red)] stroke-[1.75]" />
           </div>
-          <div className="text-2xl font-semibold text-[var(--system-red)] tabular-numbers">
-            {lateCount}
+          <div className="flex items-baseline justify-between">
+            <div className="text-2xl font-semibold text-[var(--system-red)] tabular-numbers">
+              {lateCount}
+            </div>
+            <span className="text-xs text-[var(--system-red)] font-medium tabular-numbers">
+              {totalLateDeductions > 0 ? formatIDR(totalLateDeductions) : "Rp0"}
+            </span>
           </div>
-          <span className="text-[11px] text-[var(--system-red)] mt-1 block tabular-numbers">
-            {formatIDR(totalLateDeductions)} potongan denda
-          </span>
         </div>
 
-        <div className="hig-card p-4 rounded-2xl">
-          <div className="flex items-center justify-between text-[var(--text-secondary)] mb-1">
-            <span className="text-[11px] font-medium">Permintaan Buka Kunci</span>
+        <div className="hig-card p-4 rounded-xl flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[var(--text-secondary)] mb-2">
+            <span className="text-xs font-medium">Buka Kunci</span>
             <Smartphone className="w-3.5 h-3.5 text-[var(--system-orange)] stroke-[1.75]" />
           </div>
-          <div className="text-2xl font-semibold text-[var(--text-primary)] tabular-numbers">
-            {pendingUnlockRequests}
+          <div className="flex items-baseline justify-between">
+            <div className="text-2xl font-semibold text-[var(--text-primary)] tabular-numbers">
+              {pendingUnlockRequests}
+            </div>
+            <span className={`text-xs font-medium ${
+              pendingUnlockRequests > 0 ? "text-[var(--system-orange)]" : "text-[var(--text-tertiary)]"
+            }`}>
+              {pendingUnlockRequests > 0 ? "perlu tinjau" : "aman"}
+            </span>
           </div>
-          <span className="text-[11px] text-[var(--text-secondary)] mt-1 block">
-            {pendingUnlockRequests > 0 ? "Menunggu persetujuan" : "Semua perangkat aman"}
-          </span>
         </div>
       </div>
 

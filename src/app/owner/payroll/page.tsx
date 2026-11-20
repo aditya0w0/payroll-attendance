@@ -61,7 +61,7 @@ export default function OwnerPayrollPage() {
   }, [showPdfModal]);
 
   const handleFinalize = async () => {
-    if (!confirm(`Finalize and lock the payroll period for ${year}-${String(month).padStart(2, "0")}? This creates an immutable snapshot. Future salary or policy updates will not alter finalized records.`)) {
+    if (!confirm(`Kunci dan finalisasi periode penggajian ${year}-${String(month).padStart(2, "0")}? Rekapitulasi akan disimpan permanen sebagai snapshot historis.`)) {
       return;
     }
 
@@ -90,28 +90,28 @@ export default function OwnerPayrollPage() {
     const generatedAt = new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" });
 
     const metadataLines = [
-      `"CYBERGUARD FINANCIAL PAYROLL & RECONCILIATION STATEMENT"`,
-      `"Payroll Period:","${periodStr}"`,
-      `"Export Generated At (WIB):","${generatedAt}"`,
-      `"Total Workforce Count:",${summaries.length}`,
-      `"Total Gross Wages Accrued (IDR):",${totalGrossPayroll}`,
-      `"Total Lateness Deductions (IDR):",${totalDeductionsAll}`,
-      `"Total Net Payable Balance (IDR):",${totalNetPayroll}`,
-      `"Period Status:","${isFinalized ? "FINALIZED & LOCKED (SNAPSHOT)" : "PROVISIONAL / DRAFT"}"`,
+      `"Laporan Rekapitulasi Presensi & Penggajian - CyberGuard"`,
+      `"Periode Penggajian:","${periodStr}"`,
+      `"Waktu Ekspor (WIB):","${generatedAt}"`,
+      `"Jumlah Karyawan:",${summaries.length}`,
+      `"Total Gaji Kotor (IDR):",${totalGrossPayroll}`,
+      `"Total Potongan Keterlambatan (IDR):",${totalDeductionsAll}`,
+      `"Total Gaji Bersih (IDR):",${totalNetPayroll}`,
+      `"Status Periode:","${isFinalized ? "Final (Snapshot Terkunci)" : "Berjalan (Draft)"}"`,
       `""`,
-      `"EMPLOYEE BREAKDOWN"`
+      `"Rincian Gaji Karyawan"`
     ];
 
     const headers = [
-      "Employee ID",
-      "Full Name",
-      "Daily Salary Rate (IDR)",
-      "Completed Working Days",
-      "Gross Wages Accrued (IDR)",
-      "Late Arrivals Count",
-      "Total Lateness (Minutes)",
-      "Late Deductions (IDR)",
-      "Net Payable Earnings (IDR)",
+      "ID Karyawan",
+      "Nama Lengkap",
+      "Gaji Pokok Harian (IDR)",
+      "Hari Kerja Selesai",
+      "Gaji Kotor (IDR)",
+      "Frekuensi Terlambat",
+      "Total Keterlambatan (Menit)",
+      "Potongan Denda (IDR)",
+      "Gaji Bersih Diterima (IDR)",
       "Status"
     ];
 

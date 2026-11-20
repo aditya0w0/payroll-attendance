@@ -70,6 +70,16 @@ export default function LoginPage() {
   useEffect(() => {
     getClientDeviceIdentity().then(setDeviceInfo);
     setWebViewInfo(detectInAppWebView());
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const role = params.get("role");
+      if (role === "employee") {
+        handleModeChange("employee");
+      } else if (role === "owner") {
+        handleModeChange("owner");
+      }
+    }
   }, []);
 
   // Modal keyboard Escape listener (R-32)
