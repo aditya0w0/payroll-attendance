@@ -15,6 +15,8 @@ import {
   Fingerprint,
   Copy,
   ExternalLink,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { startRegistration } from "@simplewebauthn/browser";
 import { detectInAppWebView, type WebViewDetectionResult } from "@/lib/webview-detect";
@@ -73,6 +75,19 @@ interface DashboardData {
     netDailyEarnings: number;
     status: string;
   } | null;
+}
+
+function getShiftTimeCategory(shift?: { name?: string; startTime?: string; isOvernight?: boolean }): "morning" | "afternoon" | "night" {
+  if (!shift) return "morning";
+  const nameLower = (shift.name || "").toLowerCase();
+  if (nameLower.includes("malam") || shift.isOvernight) return "night";
+  if (nameLower.includes("siang") || nameLower.includes("sore")) return "afternoon";
+  if (nameLower.includes("pagi") || nameLower.includes("subuh")) return "morning";
+
+  const startHour = parseInt((shift.startTime || "09:00").split(":")[0], 10);
+  if (startHour >= 5 && startHour < 11) return "morning";
+  if (startHour >= 11 && startHour < 18) return "afternoon";
+  return "night";
 }
 
 export default function EmployeeDashboardPage() {
@@ -310,94 +325,159 @@ export default function EmployeeDashboardPage() {
         </div>
       )}
 
-      {/* Unified Shift & Attendance Card */}
-      <div className="hig-card p-4 rounded-2xl space-y-3.5 border border-neutral-200 dark:border-neutral-800 shadow-sm">
-        {/* Header: Shift Name, Time & Status Badge */}
-        <div className="flex items-center justify-between pb-2.5 border-b border-neutral-100 dark:border-neutral-800">
-          <div className="flex items-center gap-2 min-w-0">
-            <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-            <div className="min-w-0">
-              <span className="text-xs font-semibold text-[var(--text-primary)] block truncate">
-                {employee.shift.name}
-              </span>
-              <span className="text-[11px] font-mono text-[var(--text-secondary)] block">
-                {employee.shift.startTime} – {employee.shift.endTime}
-              </span>
-            </div>
-          </div>
+      {/* Dynamic Shift & Attendance Card (Theme matches shift: Night / Morning / Afternoon) */}
+      {(() => {
+        const shiftCategory = getShiftTimeCategory(employee.shift);
+        const shiftTheme = {
+          night: {
+            card: "bg-slate-950 text-white border-slate-800 shadow-md",
+            icon: <Moon className="w-4 h-4 text-indigo-400 shrink-0" />,
+            title: "text-white font-semibold",
+            time: "text-slate-400 font-mono",
+            divider: "border-slate-800/80",
+            badgeBelum: "bg-slate-800/80 text-slate-300 border-slate-700/80",
+            badgeKerja: "bg-amber-500/20 text-amber-300 border-amber-500/40",
+            badgeSelesai: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
+            wageLabel: "text-slate-400",
+            wageVal: "text-white font-bold",
+            subtext: "text-slate-400",
+            activeText: "text-slate-300",
+            lateText: "text-red-400 font-medium",
+            completedText: "text-emerald-400 font-medium",
+            btn: "hig-button-primary w-full py-2.5 text-xs font-semibold flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-sm border border-blue-400/30",
+            footer: "border-slate-800 text-slate-400",
+            footerBadge: "text-emerald-400 border-emerald-500/30 bg-emerald-500/15",
+          },
+          morning: {
+            card: "bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-amber-500/5 dark:from-amber-950/30 dark:via-orange-950/20 dark:to-neutral-900 border-amber-500/25 dark:border-amber-500/20 shadow-sm",
+            icon: <Sun className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" />,
+            title: "text-neutral-900 dark:text-neutral-100 font-semibold",
+            time: "text-amber-700/80 dark:text-amber-300/80 font-mono",
+            divider: "border-amber-500/15 dark:border-amber-500/20",
+            badgeBelum: "bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/30",
+            badgeKerja: "bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-500/40",
+            badgeSelesai: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30",
+            wageLabel: "text-neutral-500 dark:text-neutral-400",
+            wageVal: "text-neutral-900 dark:text-neutral-100 font-bold",
+            subtext: "text-neutral-600 dark:text-neutral-400",
+            activeText: "text-neutral-700 dark:text-neutral-300",
+            lateText: "text-red-600 dark:text-red-400 font-medium",
+            completedText: "text-emerald-600 dark:text-emerald-400 font-medium",
+            btn: "hig-button-primary w-full py-2.5 text-xs font-semibold flex items-center justify-center gap-2 rounded-xl",
+            footer: "border-amber-500/15 dark:border-amber-500/20 text-neutral-500",
+            footerBadge: "text-emerald-600 dark:text-emerald-400",
+          },
+          afternoon: {
+            card: "bg-gradient-to-br from-sky-500/10 via-blue-500/5 to-sky-500/5 dark:from-sky-950/30 dark:via-blue-950/20 dark:to-neutral-900 border-sky-500/25 dark:border-sky-500/20 shadow-sm",
+            icon: <Sun className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0" />,
+            title: "text-neutral-900 dark:text-neutral-100 font-semibold",
+            time: "text-sky-700/80 dark:text-sky-300/80 font-mono",
+            divider: "border-sky-500/15 dark:border-sky-500/20",
+            badgeBelum: "bg-sky-500/15 text-sky-800 dark:text-sky-300 border-sky-500/30",
+            badgeKerja: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30",
+            badgeSelesai: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30",
+            wageLabel: "text-neutral-500 dark:text-neutral-400",
+            wageVal: "text-neutral-900 dark:text-neutral-100 font-bold",
+            subtext: "text-neutral-600 dark:text-neutral-400",
+            activeText: "text-neutral-700 dark:text-neutral-300",
+            lateText: "text-red-600 dark:text-red-400 font-medium",
+            completedText: "text-emerald-600 dark:text-emerald-400 font-medium",
+            btn: "hig-button-primary w-full py-2.5 text-xs font-semibold flex items-center justify-center gap-2 rounded-xl",
+            footer: "border-sky-500/15 dark:border-sky-500/20 text-neutral-500",
+            footerBadge: "text-emerald-600 dark:text-emerald-400",
+          },
+        }[shiftCategory];
 
-          <div className="shrink-0">
-            {isNotCheckedIn && (
-              <span className="hig-badge px-2.5 py-0.5 text-[10px] font-medium text-neutral-600 dark:text-neutral-400">
-                Belum Masuk
-              </span>
-            )}
-            {isCheckedIn && (
-              <span className="hig-badge px-2.5 py-0.5 text-[10px] font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
-                Sedang Bekerja
-              </span>
-            )}
-            {isCompleted && (
-              <span className="hig-badge px-2.5 py-0.5 text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
-                Selesai
-              </span>
-            )}
-          </div>
-        </div>
+        return (
+          <div className={`p-4 rounded-2xl space-y-3.5 border transition-colors duration-200 ${shiftTheme.card}`}>
+            {/* Header: Shift Name, Time & Status Badge */}
+            <div className={`flex items-center justify-between pb-2.5 border-b ${shiftTheme.divider}`}>
+              <div className="flex items-center gap-2 min-w-0">
+                {shiftTheme.icon}
+                <div className="min-w-0">
+                  <span className={`text-xs block truncate ${shiftTheme.title}`}>
+                    {employee.shift.name}
+                  </span>
+                  <span className={`text-[11px] block ${shiftTheme.time}`}>
+                    {employee.shift.startTime} – {employee.shift.endTime}
+                  </span>
+                </div>
+              </div>
 
-        {/* Wage & Status Summary */}
-        <div className="flex items-baseline justify-between">
-          <div>
-            <span className="text-[10px] uppercase tracking-wider text-neutral-400 block font-medium">
-              Tarif Upah Harian
-            </span>
-            <div className="text-2xl font-bold tracking-tight text-[var(--text-primary)] tabular-nums mt-0.5">
-              {formatIDR(employee.dailySalary)}
-            </div>
-          </div>
-
-          <div className="text-right">
-            {isNotCheckedIn && (
-              <span className="text-[11px] text-[var(--text-secondary)] block">
-                Toleransi {employee.shift.gracePeriodMinutes} mnt
-              </span>
-            )}
-            {isCheckedIn && today.activeRecord && (
-              <div className="text-right">
-                <span className="text-[11px] font-mono text-[var(--text-secondary)] block">
-                  Masuk: {today.activeRecord.checkInTime.split(", ")[1] || today.activeRecord.checkInTime}
-                </span>
-                {today.activeRecord.lateMinutes > 0 && (
-                  <span className="text-[10px] text-red-600 dark:text-red-400 font-medium block">
-                    Telat {today.activeRecord.lateMinutes} mnt (-{formatIDR(today.activeRecord.lateDeduction)})
+              <div className="shrink-0">
+                {isNotCheckedIn && (
+                  <span className={`hig-badge px-2.5 py-0.5 text-[10px] font-medium ${shiftTheme.badgeBelum}`}>
+                    Belum Masuk
+                  </span>
+                )}
+                {isCheckedIn && (
+                  <span className={`hig-badge px-2.5 py-0.5 text-[10px] font-semibold ${shiftTheme.badgeKerja}`}>
+                    Sedang Bekerja
+                  </span>
+                )}
+                {isCompleted && (
+                  <span className={`hig-badge px-2.5 py-0.5 text-[10px] font-semibold ${shiftTheme.badgeSelesai}`}>
+                    Selesai
                   </span>
                 )}
               </div>
-            )}
-            {isCompleted && (
-              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium block">
-                Shift Tervalidasi
-              </span>
-            )}
-          </div>
-        </div>
+            </div>
 
-        {/* Attendance Action Button */}
-        {!isCompleted ? (
-          <Link
-            href="/employee/scan"
-            className="hig-button-primary w-full py-2.5 text-xs font-semibold flex items-center justify-center gap-2 rounded-xl"
-          >
-            <QrCode className="w-4 h-4" />
-            <span>{isNotCheckedIn ? "Pindai QR Masuk" : "Pindai QR Pulang"}</span>
-          </Link>
-        ) : (
-          <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 flex justify-between items-center text-xs text-neutral-500">
-            <span>Shift selesai untuk {today.shiftDate}</span>
-            <span className="hig-badge text-[10px] font-medium text-emerald-600 dark:text-emerald-400">Tervalidasi</span>
+            {/* Wage & Status Summary */}
+            <div className="flex items-baseline justify-between">
+              <div>
+                <span className={`text-[10px] uppercase tracking-wider block font-medium ${shiftTheme.wageLabel}`}>
+                  Tarif Upah Harian
+                </span>
+                <div className={`text-2xl tracking-tight tabular-nums mt-0.5 ${shiftTheme.wageVal}`}>
+                  {formatIDR(employee.dailySalary)}
+                </div>
+              </div>
+
+              <div className="text-right">
+                {isNotCheckedIn && (
+                  <span className={`text-[11px] block ${shiftTheme.subtext}`}>
+                    Toleransi {employee.shift.gracePeriodMinutes} mnt
+                  </span>
+                )}
+                {isCheckedIn && today.activeRecord && (
+                  <div className="text-right">
+                    <span className={`text-[11px] font-mono block ${shiftTheme.activeText}`}>
+                      Masuk: {today.activeRecord.checkInTime.split(", ")[1] || today.activeRecord.checkInTime}
+                    </span>
+                    {today.activeRecord.lateMinutes > 0 && (
+                      <span className={`text-[10px] block ${shiftTheme.lateText}`}>
+                        Telat {today.activeRecord.lateMinutes} mnt (-{formatIDR(today.activeRecord.lateDeduction)})
+                      </span>
+                    )}
+                  </div>
+                )}
+                {isCompleted && (
+                  <span className={`text-[11px] block ${shiftTheme.completedText}`}>
+                    Shift Tervalidasi
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Attendance Action Button */}
+            {!isCompleted ? (
+              <Link
+                href="/employee/scan"
+                className={shiftTheme.btn}
+              >
+                <QrCode className="w-4 h-4" />
+                <span>{isNotCheckedIn ? "Pindai QR Masuk" : "Pindai QR Pulang"}</span>
+              </Link>
+            ) : (
+              <div className={`pt-2 border-t flex justify-between items-center text-xs ${shiftTheme.footer}`}>
+                <span>Shift selesai untuk {today.shiftDate}</span>
+                <span className={`hig-badge text-[10px] font-medium ${shiftTheme.footerBadge}`}>Tervalidasi</span>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        );
+      })()}
 
       {/* Immediate Daily Salary Receipt */}
       {latestCompletedPayslip && (
