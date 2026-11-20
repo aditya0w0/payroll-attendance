@@ -465,11 +465,14 @@ export default function OwnerEmployeesPage() {
                     onChange={(e) => setNewEmp({ ...newEmp, shiftId: e.target.value })}
                     className="hig-input"
                   >
-                    {shifts.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name} ({s.startTime}-{s.endTime})
-                      </option>
-                    ))}
+                    {shifts.map((s) => {
+                      const cleanName = s.name.replace(/\s*\(\d{2}:\d{2}\s*-\s*\d{2}:\d{2}\)/, "");
+                      return (
+                        <option key={s.id} value={s.id}>
+                          {cleanName} ({s.startTime} – {s.endTime})
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
               </div>

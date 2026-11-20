@@ -242,7 +242,7 @@ export default function EmployeeAttendanceRoster() {
                           </span>
                           <span className="text-neutral-300 dark:text-neutral-600">•</span>
                           <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
-                            {emp.shiftName}
+                            {emp.shiftName.replace(/\s*\(\d{2}:\d{2}\s*-\s*\d{2}:\d{2}\)/, "")}
                           </span>
                         </div>
                       </td>
@@ -343,7 +343,7 @@ export default function EmployeeAttendanceRoster() {
                   </span>
                 </div>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-                  Shift: <strong className="text-neutral-800 dark:text-neutral-200">{selectedEmployee.shiftName}</strong> • Gaji Pokok Harian:{" "}
+                  Shift: <strong className="text-neutral-800 dark:text-neutral-200">{selectedEmployee.shiftName.replace(/\s*\(\d{2}:\d{2}\s*-\s*\d{2}:\d{2}\)/, "")}</strong> • Gaji Pokok Harian:{" "}
                   <strong className="text-neutral-800 dark:text-neutral-200 font-mono">{formatIDR(selectedEmployee.dailySalary)}</strong>
                 </p>
               </div>
