@@ -6,7 +6,6 @@ import {
   Camera,
   CheckCircle2,
   AlertCircle,
-  ArrowLeft,
   Zap,
   SwitchCamera,
   RotateCcw,
@@ -680,65 +679,58 @@ export default function EmployeeScanPage() {
   const isCompleted = shiftInfo?.today?.state === "COMPLETED";
 
   return (
-    <div className="space-y-4">
-      {/* Top Navigation */}
-      <div className="flex items-center justify-between">
-        <Link
-          href="/employee"
-          className="min-h-[44px] px-3.5 py-2 text-xs text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white flex items-center gap-2 font-medium transition-colors rounded-lg border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Dashboard</span>
-        </Link>
-        <div className="flex items-center gap-1.5">
-          <span className="hig-badge text-[10px] font-mono uppercase px-2.5 py-1 font-bold tracking-tight bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-            {isCheckedIn ? "MODE: ABSEN PULANG" : isCompleted ? "SHIFT SELESAI" : "MODE: ABSEN MASUK"}
-          </span>
-        </div>
-      </div>
-
+    <div className="space-y-3.5">
       {!scanResult ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Shift State Header Banner */}
-          <div className="p-4 rounded-3xl liquid-glass flex items-center justify-between">
+          <div className="p-3.5 px-4 rounded-2xl hig-card flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div
-                className={`w-10 h-10 rounded-2xl flex items-center justify-center ${
+                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                   isCheckedIn
-                    ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25 shadow-inner"
+                    ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
                     : isCompleted
-                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 shadow-inner"
-                    : "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25 shadow-inner"
+                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                    : "bg-blue-500/15 text-blue-600 dark:text-blue-400"
                 }`}
               >
-                <Clock className="w-5 h-5" />
+                <Clock className="w-4 h-4" />
               </div>
               <div>
-                <span className="text-[10px] uppercase tracking-wider font-semibold text-neutral-400 block">
-                  {isCheckedIn ? "Status: Sedang Bekerja" : isCompleted ? "Status: Selesai" : "Status: Siap Masuk"}
-                </span>
-                <h3 className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xs font-semibold text-[var(--text-primary)]">
+                    {isCheckedIn
+                      ? "Absen Pulang"
+                      : isCompleted
+                      ? "Presensi Selesai"
+                      : "Absen Masuk"}
+                  </h3>
+                  <span className="hig-badge text-[10px] font-mono px-2 py-0.5">
+                    {isCheckedIn ? "Check-Out" : isCompleted ? "Lengkap" : "Check-In"}
+                  </span>
+                </div>
+                <span className="text-[11px] text-[var(--text-secondary)] block">
                   {isCheckedIn
-                    ? "Arahkan ke QR untuk Absen Pulang (Check-Out)"
+                    ? "Arahkan kamera ke layar terminal QR"
                     : isCompleted
-                    ? "Presensi hari ini sudah selesai"
-                    : "Arahkan ke QR untuk Absen Masuk (Check-In)"}
-                </h3>
+                    ? "Presensi hari ini sudah lengkap"
+                    : "Arahkan kamera ke layar terminal QR"}
+                </span>
               </div>
             </div>
 
             {isCheckedIn && shiftInfo?.today?.activeRecord && (
-              <span className="text-[11px] font-mono text-neutral-500 font-medium shrink-0">
-                In: {shiftInfo.today.activeRecord.checkInTime.split(", ")[1] || shiftInfo.today.activeRecord.checkInTime}
+              <span className="text-[11px] font-mono text-[var(--text-secondary)] font-medium shrink-0">
+                Masuk: {shiftInfo.today.activeRecord.checkInTime.split(", ")[1] || shiftInfo.today.activeRecord.checkInTime}
               </span>
             )}
           </div>
 
-          {/* Apple Style Seamless Viewfinder Card */}
-          <div className="liquid-glass p-5 rounded-3xl text-center space-y-4">
+          {/* Viewfinder Card */}
+          <div className="hig-card p-4 rounded-2xl text-center space-y-3">
             {/* Viewfinder Viewport */}
             <div
-              className={`relative w-full max-w-[300px] aspect-square mx-auto rounded-3xl overflow-hidden bg-neutral-950 border transition-all duration-300 shadow-inner flex items-center justify-center ${
+              className={`relative w-full max-w-[280px] aspect-square mx-auto rounded-2xl overflow-hidden bg-neutral-950 border transition-all duration-300 shadow-inner flex items-center justify-center ${
                 scanningPulse
                   ? "border-emerald-500 ring-4 ring-emerald-500/30 shadow-[0_0_25px_rgba(16,185,129,0.4)]"
                   : error
@@ -836,111 +828,93 @@ export default function EmployeeScanPage() {
             </div>
 
             {/* Viewfinder Caption */}
-            <div className="space-y-1">
-              <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 block">
+            <div className="space-y-0.5">
+              <span className="text-xs font-semibold text-[var(--text-primary)] block">
                 {isCompleted
                   ? "Presensi Hari Ini Selesai"
                   : isCheckedIn
-                  ? "Absen Pulang (Check-Out)"
-                  : "Absen Masuk (Check-In)"}
+                  ? "Absen Pulang"
+                  : "Absen Masuk"}
               </span>
-              <p className="text-[11px] text-neutral-500 max-w-xs mx-auto">
+              <p className="text-[11px] text-[var(--text-secondary)]">
                 {isCompleted
-                  ? "Presensi masuk dan pulang untuk shift hari ini sudah lengkap."
-                  : "Dekatkan kamera ke layar terminal QR di kantor. Pemindaian akan berjalan otomatis tanpa perlu menekan tombol."}
+                  ? "Presensi masuk dan pulang sudah lengkap."
+                  : "Arahkan kamera ke layar terminal QR di kantor."}
               </p>
             </div>
 
-            {/* GPS Status & Diagnostics */}
+            {/* GPS & Camera Compact Status Rows */}
             {gpsCoords ? (
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-white/30 dark:bg-black/20 backdrop-blur-md border border-white/40 dark:border-white/10 text-xs shadow-inner">
+              <div className="flex items-center justify-between px-3 py-2 rounded-xl hig-card text-xs">
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-3.5 h-3.5 text-neutral-500" />
-                  <span className="text-neutral-500 text-[11px]">Lokasi GPS:</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="liquid-glass-pill px-3 py-1 text-[10px] font-mono font-medium bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 inline-flex items-center gap-1.5 shadow-sm">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                    <span>Terkunci (+/-{gpsCoords.accuracy}m)</span>
+                  <MapPin className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span className="text-[11px] text-[var(--text-secondary)]">
+                    GPS Terkunci (+/-{gpsCoords.accuracy}m)
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => triggerNativeGpsPrompt()}
-                    title="Perbarui Koordinat GPS"
-                    className="p-1.5 hover:bg-white/50 dark:hover:bg-white/10 rounded-full transition-colors"
-                  >
-                    <RotateCcw className="w-3 h-3 text-neutral-400" />
-                  </button>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => triggerNativeGpsPrompt()}
+                  title="Perbarui Koordinat GPS"
+                  className="p-1 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 rounded transition-colors"
+                >
+                  <RotateCcw className="w-3 h-3 text-neutral-400" />
+                </button>
               </div>
             ) : (
-              <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs space-y-2.5 text-left">
-                <div className="flex items-start gap-2.5">
-                  <MapPin className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                  <div className="space-y-0.5 flex-1">
-                    <span className="font-semibold text-xs text-[var(--text-primary)] block">
-                      Akses Lokasi Kantor Diperlukan
-                    </span>
-                    <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
-                      {gpsError ||
-                        "Sistem presensi membutuhkan koordinat lokasi perangkat Anda untuk memastikan kehadiran di area kantor."}
-                    </p>
-                  </div>
+              <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <MapPin className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <span className="text-[11px] text-[var(--text-primary)] truncate">
+                    {gpsLoading ? "Mengunci koordinat..." : "Izin lokasi diperlukan"}
+                  </span>
                 </div>
-                <div className="pt-1 border-t border-amber-500/15">
-                  <button
-                    type="button"
-                    onClick={() => triggerNativeGpsPrompt()}
-                    disabled={gpsLoading}
-                    className="hig-button-primary text-[11px] px-3.5 py-1.5 font-medium"
-                  >
-                    {gpsLoading ? "Mengunci Koordinat..." : "Izinkan Akses Lokasi"}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => triggerNativeGpsPrompt()}
+                  disabled={gpsLoading}
+                  className="hig-button-primary text-[10px] px-2.5 py-1 font-medium shrink-0"
+                >
+                  {gpsLoading ? "Mencari..." : "Aktifkan"}
+                </button>
               </div>
             )}
 
-            {/* Camera Error Alert */}
+            {/* Camera Error Compact Alert */}
             {cameraError && (
-              <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/20 text-xs text-left space-y-2">
-                <div className="flex items-start gap-2.5">
-                  <AlertCircle className="w-4 h-4 text-[var(--system-red)] shrink-0 mt-0.5" />
-                  <div className="space-y-0.5 flex-1">
-                    <span className="font-semibold text-xs text-[var(--text-primary)] block">
-                      Akses Kamera Terhambat
-                    </span>
-                    <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
-                      {cameraError}
-                    </p>
-                  </div>
+              <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-xs gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <AlertCircle className="w-3.5 h-3.5 text-[var(--system-red)] shrink-0" />
+                  <span className="text-[11px] text-[var(--text-primary)] truncate" title={cameraError}>
+                    Kamera: {cameraError}
+                  </span>
                 </div>
-                <div className="pt-1 border-t border-red-500/15">
-                  <button
-                    type="button"
-                    onClick={() => startCamera("environment")}
-                    className="hig-button-secondary text-[11px] px-3 py-1.5 font-medium"
-                  >
-                    Buka Kamera Ulang
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => startCamera("environment")}
+                  className="hig-button-secondary text-[10px] px-2.5 py-1 font-medium shrink-0"
+                >
+                  Buka Ulang
+                </button>
               </div>
             )}
 
-            {/* Live Scan Error Alert */}
+            {/* Live Scan Error Compact Alert */}
             {error && (
-              <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 text-xs text-left flex items-start gap-2.5 animate-in fade-in">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
-                <div className="space-y-1 flex-1">
-                  <span className="font-semibold text-xs block text-red-900 dark:text-red-200">
-                    Gagal Melakukan Presensi
-                  </span>
-                  <p className="text-[11px] text-neutral-700 dark:text-neutral-300 leading-relaxed">
+              <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-xs gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <AlertCircle className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                  <span className="text-[11px] text-red-800 dark:text-red-300 truncate" title={error}>
                     {error}
-                  </p>
-                  <span className="text-[10px] text-neutral-400 block pt-0.5">
-                    Kamera tetap aktif. Silakan arahkan kembali ke QR yang valid di layar.
                   </span>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setError("")}
+                  className="text-[10px] text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 px-1 shrink-0"
+                >
+                  Tutup
+                </button>
               </div>
             )}
           </div>
