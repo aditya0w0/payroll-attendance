@@ -199,6 +199,12 @@ model AttendanceRecord {
   checkOutClientIp          String?
   manualCorrectionNote      String?
   correctedByUserId         String?
+  isEarlyCheckOut           Boolean   @default(false)
+  earlyCheckOutMinutes      Int       @default(0)
+  earlyCheckOutReason       String?
+  earlyCheckOutApproved     Boolean   @default(false)
+  timezoneSource            String?   @default("INTERNET") // "INTERNET" | "LOCAL_FALLBACK"
+  clientTimezone            String?
   createdAt                 DateTime  @default(now())
   updatedAt                 DateTime  @updatedAt
 

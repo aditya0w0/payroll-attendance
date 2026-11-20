@@ -7,6 +7,7 @@ import {
   determineActiveShiftDate,
   computeShiftTimestamps,
   formatJakartaDateTime,
+  formatJakartaTime,
 } from "@/lib/timezone";
 import { calculateLateDeduction } from "@/lib/payroll";
 import { recordAuditLog, recordTransactionalAuditLog } from "@/lib/audit";
@@ -20,6 +21,11 @@ const scanPayloadSchema = z
     latitude: z.number().optional(),
     longitude: z.number().optional(),
     accuracy: z.number().optional(),
+    forceEarlyCheckout: z.boolean().optional(),
+    earlyCheckoutReason: z.string().optional(),
+    earlyCheckoutApproved: z.boolean().optional(),
+    timezoneSource: z.enum(["INTERNET", "LOCAL_FALLBACK"]).optional(),
+    clientTimezone: z.string().optional(),
   })
   .refine((data) => Boolean(data.token || data.qrToken), {
     message: "QR token is required (token or qrToken)",
@@ -287,6 +293,42 @@ export async function handleAttendanceScan(req: Request) {
       }
     }
 
+    // Early Clock-Out Guard: Check if employee attempts to check out before shift scheduled end time
+    let isEarlyCheckOut = false;
+    let minutesEarly = 0;
+    if (existingRecord && existingRecord.status === "CHECKED_IN") {
+      isEarlyCheckOut = now.getTime() < existingRecord.scheduledEndTime.getTime();
+      minutesEarly = isEarlyCheckOut
+        ? Math.max(1, Math.round((existingRecord.scheduledEndTime.getTime() - now.getTime()) / 60000))
+        : 0;
+
+      if (isEarlyCheckOut) {
+        if (!parseRes.data.forceEarlyCheckout) {
+          return NextResponse.json(
+            {
+              error: "Shift kerja Anda belum berakhir.",
+              code: "EARLY_CHECKOUT_RESTRICTED",
+              message: `Shift Anda dijadwalkan selesai pukul ${formatJakartaTime(existingRecord.scheduledEndTime)} WIB (${minutesEarly} menit lagi). Pulang lebih awal memerlukan konfirmasi alasan dan izin atasan.`,
+              scheduledEndTime: formatJakartaTime(existingRecord.scheduledEndTime),
+              minutesEarly,
+              checkInTime: existingRecord.checkInTime,
+            },
+            { status: 403 }
+          );
+        }
+
+        if (!parseRes.data.earlyCheckoutReason || !parseRes.data.earlyCheckoutReason.trim()) {
+          return NextResponse.json(
+            {
+              error: "Alasan pulang lebih awal wajib diisi.",
+              code: "EARLY_CHECKOUT_REASON_REQUIRED",
+            },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
     // 8. Validate & Atomically Consume Single-Use Dynamic QR Token (15s TTL)
     const qrValidation = await validateAndConsumeQRToken(
       token,
@@ -346,15 +388,21 @@ export async function handleAttendanceScan(req: Request) {
             checkOutLongitude: longitude ?? null,
             checkOutDistanceMeters: distanceMeters,
             checkOutClientIp: clientIp,
+            isEarlyCheckOut,
+            earlyCheckOutMinutes: minutesEarly,
+            earlyCheckOutReason: isEarlyCheckOut ? parseRes.data.earlyCheckoutReason?.trim() : null,
+            earlyCheckOutApproved: isEarlyCheckOut ? Boolean(parseRes.data.earlyCheckoutApproved) : false,
+            timezoneSource: parseRes.data.timezoneSource || "INTERNET",
+            clientTimezone: parseRes.data.clientTimezone || null,
           },
         });
 
-        // Transactional Audit Log with ATTENDANCE_CHECKOUT_RECORDED
+        // Transactional Audit Log with ATTENDANCE_CHECKOUT_RECORDED or ATTENDANCE_EARLY_CHECKOUT
         await recordTransactionalAuditLog(tx, {
           actorId: user.id,
           actorRole: "EMPLOYEE",
           actorName: employee.fullName,
-          action: "ATTENDANCE_CHECKOUT_RECORDED",
+          action: isEarlyCheckOut ? "ATTENDANCE_EARLY_CHECKOUT" : "ATTENDANCE_CHECKOUT_RECORDED",
           targetEntity: "ATTENDANCE",
           targetId: updated.id,
           newValues: {
@@ -362,6 +410,10 @@ export async function handleAttendanceScan(req: Request) {
             employee: employee.fullName,
             shiftDate,
             checkOutTime: now.toISOString(),
+            isEarlyCheckOut,
+            earlyCheckOutMinutes: minutesEarly,
+            earlyCheckOutReason: isEarlyCheckOut ? parseRes.data.earlyCheckoutReason?.trim() : null,
+            earlyCheckOutApproved: isEarlyCheckOut ? Boolean(parseRes.data.earlyCheckoutApproved) : false,
             lateMinutes: updated.lateMinutes,
             lateDeduction: updated.lateDeduction,
             netDailyEarnings: updated.netDailyEarnings,
@@ -375,10 +427,14 @@ export async function handleAttendanceScan(req: Request) {
             gpsAccuracy: accuracy ?? null,
             wifiMatched: Boolean(activeConfig.enforceWifiIp),
             geofenceMatched: Boolean(activeConfig.enforceGeofence),
+            timezoneSource: parseRes.data.timezoneSource || "INTERNET",
+            clientTimezone: parseRes.data.clientTimezone || null,
           },
           ipAddress: clientIp,
           userAgent,
-          reason: "Employee completed shift checkout with dual geofence and WiFi verification",
+          reason: isEarlyCheckOut
+            ? `Karyawan pulang ${minutesEarly} menit lebih awal: ${parseRes.data.earlyCheckoutReason}${parseRes.data.earlyCheckoutApproved ? " (Disetujui atasan)" : " (Tanpa persetujuan)"}`
+            : "Employee completed shift checkout with dual geofence and WiFi verification",
         });
 
         return updated;
@@ -482,6 +538,8 @@ export async function handleAttendanceScan(req: Request) {
           checkInLongitude: longitude ?? null,
           checkInDistanceMeters: distanceMeters,
           checkInClientIp: clientIp,
+          timezoneSource: parseRes.data.timezoneSource || "INTERNET",
+          clientTimezone: parseRes.data.clientTimezone || null,
         },
       });
 

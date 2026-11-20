@@ -81,6 +81,58 @@ export default function EmployeeScanPage() {
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
 
+  // Early Clock-Out Warning Popup State & Mandatory Countdown
+  const [earlyModalOpen, setEarlyModalOpen] = useState(false);
+  const [earlyToken, setEarlyToken] = useState<string>("");
+  const [earlyScheduledEnd, setEarlyScheduledEnd] = useState<string>("");
+  const [earlyMinutes, setEarlyMinutes] = useState<number>(0);
+  const [earlyReason, setEarlyReason] = useState<string>("");
+  const [earlyApproved, setEarlyApproved] = useState<boolean>(false);
+  const [earlyCountdown, setEarlyCountdown] = useState<number>(5);
+  const [earlySubmitting, setEarlySubmitting] = useState(false);
+
+  // Timezone Synchronization Metadata
+  const getTimezoneMetadata = async (): Promise<{
+    timezoneSource: "INTERNET" | "LOCAL_FALLBACK";
+    clientTimezone: string;
+  }> => {
+    const localTz =
+      typeof Intl !== "undefined" && Intl.DateTimeFormat
+        ? Intl.DateTimeFormat().resolvedOptions().timeZone
+        : "Asia/Jakarta";
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const res = await fetch("/api/time", { signal: controller.signal, cache: "no-store" });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        return {
+          timezoneSource: "INTERNET",
+          clientTimezone: localTz,
+        };
+      }
+    } catch {
+      // Network timeout or offline fallback
+    }
+    return {
+      timezoneSource: "LOCAL_FALLBACK",
+      clientTimezone: localTz,
+    };
+  };
+
+  // 5-second mandatory countdown lock for early checkout
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (earlyModalOpen && earlyCountdown > 0) {
+      timer = setTimeout(() => {
+        setEarlyCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [earlyModalOpen, earlyCountdown]);
+
   // Active Refs to prevent React Stale Closure bugs inside requestAnimationFrame
   const gpsCoordsRef = useRef<{
     latitude: number;
@@ -491,7 +543,14 @@ export default function EmployeeScanPage() {
     return trimmed;
   };
 
-  const submitToken = async (tokenToSubmit: string) => {
+  const submitToken = async (
+    tokenToSubmit: string,
+    earlyOptions?: {
+      forceEarlyCheckout: boolean;
+      earlyCheckoutReason: string;
+      earlyCheckoutApproved: boolean;
+    }
+  ) => {
     const cleanToken = extractCleanToken(tokenToSubmit);
 
     // Read LIVE GPS from ref to guarantee freshness and prevent stale closure
@@ -501,7 +560,7 @@ export default function EmployeeScanPage() {
       // If GPS is currently acquiring, store token as pending and display soft hint
       if (gpsLoading) {
         pendingTokenRef.current = cleanToken;
-        setScanStatusHint("QR terbaca! Menunggu sinyal GPS satelit mengunci...");
+        setScanStatusHint("QR terbaca. Menunggu sinyal GPS satelit mengunci...");
         return;
       }
 
@@ -522,21 +581,51 @@ export default function EmployeeScanPage() {
     setError(null);
 
     try {
-      const dev = await getClientDeviceIdentity();
+      const [dev, tzMeta] = await Promise.all([
+        getClientDeviceIdentity(),
+        getTimezoneMetadata(),
+      ]);
+
+      const payload: Record<string, any> = {
+        token: cleanToken,
+        deviceFingerprint: dev.deviceFingerprint,
+        latitude: currentGps.latitude,
+        longitude: currentGps.longitude,
+        accuracy: currentGps.accuracy,
+        timezoneSource: tzMeta.timezoneSource,
+        clientTimezone: tzMeta.clientTimezone,
+      };
+
+      if (earlyOptions?.forceEarlyCheckout) {
+        payload.forceEarlyCheckout = true;
+        payload.earlyCheckoutReason = earlyOptions.earlyCheckoutReason;
+        payload.earlyCheckoutApproved = earlyOptions.earlyCheckoutApproved;
+      }
+
       const res = await fetch("/api/qr/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token: cleanToken,
-          deviceFingerprint: dev.deviceFingerprint,
-          latitude: currentGps.latitude,
-          longitude: currentGps.longitude,
-          accuracy: currentGps.accuracy,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
       if (!res.ok) {
+        // Intercept early clock-out restriction before shift ends
+        if (data.code === "EARLY_CHECKOUT_RESTRICTED") {
+          setEarlyToken(cleanToken);
+          setEarlyScheduledEnd(data.scheduledEndTime || "17:00:00");
+          setEarlyMinutes(data.minutesEarly || 0);
+          setEarlyReason("");
+          setEarlyApproved(false);
+          setEarlyCountdown(5);
+          setEarlyModalOpen(true);
+          isSubmittingRef.current = false;
+          setLoading(false);
+          setScanningPulse(false);
+          setScanStatusHint(null);
+          return;
+        }
+
         let errorMsg = data.error || data.message || "Attendance scan failed";
         if (data.code === "SCAN_COOLDOWN_ACTIVE") {
           errorMsg = "Anda baru saja melakukan Check-In. Tunggu minimal 1 menit sebelum Check-Out.";
@@ -548,6 +637,8 @@ export default function EmployeeScanPage() {
           errorMsg = "QR code sudah berganti atau kedaluwarsa. Arahkan kamera ke QR baru di layar.";
         } else if (data.code === "QR_QUEUE_ROTATING") {
           errorMsg = "QR baru saja digunakan karyawan lain. Arahkan kamera ke QR berikutnya di layar.";
+        } else if (data.code === "EARLY_CHECKOUT_REASON_REQUIRED") {
+          errorMsg = "Alasan kepulangan lebih awal wajib diisi.";
         }
         throw new Error(errorMsg);
       }
@@ -705,9 +796,6 @@ export default function EmployeeScanPage() {
                       <div className="absolute -top-1 -right-1 w-6 h-6 border-t-[3.5px] border-r-[3.5px] border-blue-500 rounded-tr-sm pointer-events-none" />
                       <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-[3.5px] border-l-[3.5px] border-blue-500 rounded-bl-sm pointer-events-none" />
                       <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-[3.5px] border-r-[3.5px] border-blue-500 rounded-tr-sm pointer-events-none" />
-
-                      {/* Animated Laser Scanning Line */}
-                      <div className="absolute left-2 right-2 top-1/2 h-0.5 bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.9)] animate-pulse pointer-events-none" />
                     </div>
                   </div>
 
@@ -794,14 +882,14 @@ export default function EmployeeScanPage() {
             <div className="flex items-center justify-between p-3 rounded-2xl bg-white/30 dark:bg-black/20 backdrop-blur-md border border-white/40 dark:border-white/10 text-xs shadow-inner">
               <div className="flex items-center gap-2">
                 <MapPin className="w-3.5 h-3.5 text-neutral-500" />
-                <span className="text-neutral-500 text-[11px]">GPS Location:</span>
+                <span className="text-neutral-500 text-[11px]">Lokasi GPS:</span>
               </div>
 
               {gpsCoords ? (
                 <div className="flex items-center gap-1.5">
-                  <span className="liquid-glass-pill px-3 py-1 text-[10px] font-mono font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 inline-flex items-center gap-1.5 shadow-sm">
+                  <span className="liquid-glass-pill px-3 py-1 text-[10px] font-mono font-medium bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 inline-flex items-center gap-1.5 shadow-sm">
                     <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                    <span>LOKASI DIDAPAT: +/-{gpsCoords.accuracy}m</span>
+                    <span>Terkunci (+/-{gpsCoords.accuracy}m)</span>
                   </span>
                   <button
                     type="button"
@@ -835,14 +923,14 @@ export default function EmployeeScanPage() {
                   <button
                     type="button"
                     onClick={() => triggerNativeGpsPrompt()}
-                    className="apple-btn-secondary text-[11px] px-3 py-1 font-medium bg-white dark:bg-neutral-800"
+                    className="hig-button-secondary text-[11px] px-3 py-1 font-medium bg-white dark:bg-neutral-800"
                   >
                     Coba Lagi
                   </button>
                   <button
                     type="button"
                     onClick={handleUseOfficeGpsLocal}
-                    className="apple-btn-secondary text-[11px] px-2.5 py-1 font-medium bg-white dark:bg-neutral-800 text-neutral-600"
+                    className="hig-button-secondary text-[11px] px-2.5 py-1 font-medium bg-white dark:bg-neutral-800 text-neutral-600"
                   >
                     Gunakan Lokasi Kantor (Mode Tes)
                   </button>
@@ -859,7 +947,7 @@ export default function EmployeeScanPage() {
                   <button
                     type="button"
                     onClick={() => startCamera("environment")}
-                    className="apple-btn-secondary text-[11px] px-2.5 py-1 font-medium bg-white dark:bg-neutral-800"
+                    className="hig-button-secondary text-[11px] px-2.5 py-1 font-medium bg-white dark:bg-neutral-800"
                   >
                     Buka Kamera Ulang
                   </button>
@@ -886,6 +974,97 @@ export default function EmployeeScanPage() {
             )}
           </div>
 
+          {/* Early Clock-Out Warning Modal with 5s Mandatory Countdown */}
+          {earlyModalOpen && (
+            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+              <div className="hig-card-elevated max-w-sm w-full p-5 space-y-4 shadow-xl border border-[var(--separator-subtle)] text-left">
+                <div className="flex items-center gap-2.5 pb-2 border-b border-[var(--separator-subtle)]">
+                  <div className="w-8 h-8 rounded-full bg-amber-500/15 text-amber-600 flex items-center justify-center shrink-0">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-semibold text-[var(--text-primary)]">
+                      Konfirmasi Pulang Lebih Awal
+                    </h3>
+                    <span className="text-[10px] text-[var(--text-secondary)] block">
+                      Jadwal shift selesai pukul {earlyScheduledEnd} WIB
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 space-y-1">
+                  <div className="font-medium text-[11px]">
+                    Anda mencoba check-out {earlyMinutes} menit lebih awal dari jadwal resmi.
+                  </div>
+                  <p className="text-[10px] leading-relaxed text-[var(--text-secondary)]">
+                    Kepulangan sebelum shift selesai wajib mencantumkan alasan yang valid dan persetujuan atasan/pemilik.
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-medium text-[var(--text-primary)] block">
+                    Alasan Pulang Awal <span className="text-[var(--system-red)]">*</span>
+                  </label>
+                  <textarea
+                    value={earlyReason}
+                    onChange={(e) => setEarlyReason(e.target.value)}
+                    placeholder="Tuliskan alasan jelas (misal: keperluan mendesak keluarga, sakit, dll.)"
+                    rows={3}
+                    className="w-full text-xs p-2.5 rounded-xl border border-[var(--separator-subtle)] bg-[var(--surface-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                  />
+                </div>
+
+                <label className="flex items-start gap-2 cursor-pointer select-none text-xs text-[var(--text-secondary)]">
+                  <input
+                    type="checkbox"
+                    checked={earlyApproved}
+                    onChange={(e) => setEarlyApproved(e.target.checked)}
+                    className="mt-0.5 rounded border-[var(--separator-subtle)] text-blue-600 focus:ring-0"
+                  />
+                  <span className="text-[11px] leading-tight">
+                    Saya menyatakan sudah memperoleh izin langsung dari Owner atau Supervisor.
+                  </span>
+                </label>
+
+                <div className="pt-2 border-t border-[var(--separator-subtle)] flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEarlyModalOpen(false);
+                      setEarlyToken("");
+                      isSubmittingRef.current = false;
+                      setLoading(false);
+                    }}
+                    disabled={earlySubmitting}
+                    className="hig-button-secondary flex-1 py-2 text-xs"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (earlyCountdown > 0 || !earlyReason.trim()) return;
+                      setEarlySubmitting(true);
+                      setEarlyModalOpen(false);
+                      await submitToken(earlyToken, {
+                        forceEarlyCheckout: true,
+                        earlyCheckoutReason: earlyReason.trim(),
+                        earlyCheckoutApproved: earlyApproved,
+                      });
+                      setEarlySubmitting(false);
+                    }}
+                    disabled={earlyCountdown > 0 || !earlyReason.trim() || earlySubmitting}
+                    className="hig-button-primary flex-1 py-2 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {earlyCountdown > 0
+                      ? `Jeda verifikasi (${earlyCountdown}d)`
+                      : "Konfirmasi Pulang"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Collapsible Manual Testing / Dev Section */}
           <div className="border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden bg-white dark:bg-neutral-900">
             <button
@@ -903,7 +1082,7 @@ export default function EmployeeScanPage() {
                   type="button"
                   onClick={handleQuickScanActiveQR}
                   disabled={loading || !gpsCoords}
-                  className="apple-btn-secondary w-full py-2.5 text-xs font-medium flex items-center justify-center gap-2"
+                  className="hig-button-secondary w-full py-2.5 text-xs font-medium flex items-center justify-center gap-2"
                 >
                   <Zap className="w-3.5 h-3.5 text-amber-500" />
                   <span>Ambil QR Aktif Terminal Otomatis (1-Tap Test)</span>
@@ -915,15 +1094,15 @@ export default function EmployeeScanPage() {
                     value={tokenInput}
                     onChange={(e) => setTokenInput(e.target.value)}
                     placeholder="Masukkan token manual..."
-                    className="flex-1 apple-input text-xs font-mono py-2"
+                    className="flex-1 hig-input text-xs font-mono py-2"
                   />
                   <button
                     type="button"
                     onClick={() => submitToken(tokenInput)}
                     disabled={loading || !tokenInput.trim() || !gpsCoords}
-                    className="apple-btn-primary text-xs px-4 py-2 font-medium"
+                    className="hig-button-primary text-xs px-4 py-2 font-medium"
                   >
-                    Submit
+                    Verifikasi Token
                   </button>
                 </div>
               </div>
@@ -935,7 +1114,7 @@ export default function EmployeeScanPage() {
         <div className="space-y-4 animate-in fade-in zoom-in-95">
           {scanResult.action === "CHECK_IN" ? (
             /* Check-in Confirmation */
-            <div className="apple-card p-6 text-center space-y-4">
+            <div className="hig-card p-6 text-center space-y-4">
               <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-6 h-6 stroke-[2]" />
               </div>
@@ -983,7 +1162,7 @@ export default function EmployeeScanPage() {
               <button
                 type="button"
                 onClick={() => router.push("/employee")}
-                className="apple-btn-primary w-full py-2.5 text-xs font-medium"
+                className="hig-button-primary w-full py-2.5 text-xs font-medium"
               >
                 Kembali ke Dashboard
               </button>
@@ -991,7 +1170,7 @@ export default function EmployeeScanPage() {
           ) : (
             /* Check-Out Confirmation: Transparent Apple Pay Style Payslip Receipt */
             <div className="space-y-4">
-              <div className="apple-card p-5 space-y-3.5 shadow-sm border border-neutral-200 dark:border-neutral-800">
+              <div className="hig-card p-5 space-y-3.5 shadow-sm border border-neutral-200 dark:border-neutral-800">
                 <div className="text-center pb-3 border-b border-neutral-200 dark:border-neutral-800">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 block">
                     Shift Selesai • Slip Gaji Harian
@@ -1077,7 +1256,7 @@ export default function EmployeeScanPage() {
               <button
                 type="button"
                 onClick={() => router.push("/employee")}
-                className="apple-btn-primary w-full py-2.5 text-xs font-medium"
+                className="hig-button-primary w-full py-2.5 text-xs font-medium"
               >
                 Kembali ke Dashboard
               </button>

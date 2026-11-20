@@ -19,6 +19,12 @@ interface AttendanceItem {
   lateDeduction: number;
   netDailyEarnings: number;
   manualCorrectionNote: string | null;
+  isEarlyCheckOut?: boolean;
+  earlyCheckOutMinutes?: number;
+  earlyCheckOutReason?: string | null;
+  earlyCheckOutApproved?: boolean;
+  timezoneSource?: string | null;
+  clientTimezone?: string | null;
   employee: {
     fullName: string;
     employeeId: string;
@@ -236,17 +242,47 @@ export default function OwnerAttendancePage() {
                         {formatJakartaTime(r.checkInTime)}
                       </td>
                       <td className="font-mono text-xs text-[var(--text-secondary)]">
-                        {r.checkOutTime ? formatJakartaTime(r.checkOutTime) : "–"}
+                        {r.checkOutTime ? (
+                          <div>
+                            <div>{formatJakartaTime(r.checkOutTime)}</div>
+                            {r.isEarlyCheckOut && (
+                              <span className="text-[10px] text-[var(--system-orange)] font-sans">
+                                Awal -{r.earlyCheckOutMinutes}m
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          "–"
+                        )}
                       </td>
                       <td>
                         {!r.checkOutTime ? (
                           <span className="hig-badge hig-badge-orange">
                             {r.lateMinutes > 0 ? `Bekerja (+${r.lateMinutes}m)` : "Sedang Bekerja"}
                           </span>
-                        ) : r.lateMinutes > 0 ? (
-                          <span className="hig-badge hig-badge-red">{r.lateMinutes}m terlambat</span>
                         ) : (
-                          <span className="hig-badge hig-badge-green">Tepat Waktu</span>
+                          <div className="flex flex-col gap-1 items-start">
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {r.lateMinutes > 0 ? (
+                                <span className="hig-badge hig-badge-red">{r.lateMinutes}m terlambat</span>
+                              ) : (
+                                <span className="hig-badge hig-badge-green">Tepat Waktu</span>
+                              )}
+                              {r.isEarlyCheckOut && (
+                                <span className="hig-badge hig-badge-orange">
+                                  Pulang Awal (-{r.earlyCheckOutMinutes}m)
+                                </span>
+                              )}
+                            </div>
+                            {r.isEarlyCheckOut && (
+                              <div className="text-[10px] text-[var(--text-secondary)] max-w-[220px] leading-tight">
+                                <span className="font-medium text-[var(--text-primary)]">
+                                  {r.earlyCheckOutApproved ? "Izin Disetujui" : "Tanpa Izin"}:
+                                </span>{" "}
+                                {r.earlyCheckOutReason || "Tidak ada keterangan"}
+                              </div>
+                            )}
+                          </div>
                         )}
                       </td>
                       <td>{formatIDR(r.dailySalarySnapshot)}</td>
