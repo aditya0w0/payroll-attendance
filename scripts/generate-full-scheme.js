@@ -609,7 +609,7 @@ function generateSvg() {
       { name: 'nextAttemptAt', type: 'DateTime' }
     ],
     ['1:1 AuditLog', '@@index([status, nextAttemptAt])'],
-    'Reliable outbox queue for transactional log shipping to external enterprise SIEM systems.'
+    'Reliable outbox queue for transactional log shipping to external log collectors.'
   );
 
   // -------------------------------------------------------------
