@@ -32,7 +32,7 @@ export default async function OwnerOverviewPage() {
     prisma.auditLog.findMany({
       where: { action: { startsWith: "CHEATING_ALERT_" } },
       orderBy: { timestamp: "desc" },
-      take: 4,
+      take: 2,
     }),
   ]);
 
@@ -78,7 +78,7 @@ export default async function OwnerOverviewPage() {
           </div>
 
           <div className="divide-y divide-red-200/40 dark:divide-red-900/30 text-xs">
-            {recentCheatingAlerts.map((alert) => (
+            {recentCheatingAlerts.slice(0, 2).map((alert) => (
               <div key={alert.id} className="py-1.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                 <div>
                   <span className="font-semibold text-[var(--text-primary)]">{alert.actorName}:</span>{" "}

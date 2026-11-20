@@ -7,16 +7,13 @@ export function cn(...inputs: ClassValue[]) {
 
 /**
  * Formats integer amount to Indonesian Rupiah (IDR).
- * Example: 150000 -> "Rp150.000"
+ * Uses deterministic string formatting to prevent SSR/CSR hydration mismatch.
+ * Example: 150000 -> "Rp150.000", 0 -> "Rp0", -6000 -> "-Rp6.000"
  */
 export function formatIDR(amount: number): string {
   const rounded = Math.round(amount || 0);
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-    minimumFractionDigits: 0,
-  }).format(rounded);
+  const formatted = Math.abs(rounded).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return rounded < 0 ? `-Rp${formatted}` : `Rp${formatted}`;
 }
 
 /**
