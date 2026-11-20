@@ -1,8 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { formatIDR } from "@/lib/utils";
+import { formatIDR, angkaKeTerbilang } from "@/lib/utils";
 import { Lock, Download, CheckCircle2, AlertCircle, FileText, Printer, X, ShieldCheck } from "lucide-react";
+
+const MONTH_NAMES_ID = [
+  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+  "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+];
 
 interface PayrollSummaryItem {
   employeeId: string;
@@ -27,6 +32,7 @@ export default function OwnerPayrollPage() {
   const [finalizedAt, setFinalizedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPdfModal, setShowPdfModal] = useState(false);
+  const [selectedSlipEmployee, setSelectedSlipEmployee] = useState<PayrollSummaryItem | null>(null);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
   const loadPayroll = async () => {
@@ -50,15 +56,16 @@ export default function OwnerPayrollPage() {
 
   // Modal keyboard Escape listener (R-32)
   useEffect(() => {
-    if (!showPdfModal) return;
+    if (!showPdfModal && !selectedSlipEmployee) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setShowPdfModal(false);
+        setSelectedSlipEmployee(null);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showPdfModal]);
+  }, [showPdfModal, selectedSlipEmployee]);
 
   const handleFinalize = async () => {
     if (!confirm(`Kunci dan finalisasi periode penggajian ${year}-${String(month).padStart(2, "0")}? Rekapitulasi akan disimpan permanen sebagai snapshot historis.`)) {
@@ -182,9 +189,13 @@ export default function OwnerPayrollPage() {
             Ekspor CSV
           </button>
 
-          <button onClick={() => setShowPdfModal(true)} className="hig-button-secondary text-xs" title="Cetak slip keuangan PDF">
+          <button
+            onClick={() => setShowPdfModal(true)}
+            className="hig-button-secondary text-xs flex items-center gap-1.5"
+            title="Cetak lembar rekapitulasi penggajian seluruh karyawan"
+          >
             <Printer className="w-3.5 h-3.5 stroke-[2]" />
-            Cetak Slip
+            <span>Cetak Rekap Gaji (PDF)</span>
           </button>
 
           {!isFinalized ? (
@@ -254,6 +265,7 @@ export default function OwnerPayrollPage() {
                   <th>Total Menit</th>
                   <th>Potongan</th>
                   <th className="font-semibold text-right">Gaji Bersih</th>
+                  <th className="text-right">Slip Gaji</th>
                 </tr>
               </thead>
               <tbody className="tabular-numbers">
@@ -280,6 +292,16 @@ export default function OwnerPayrollPage() {
                     </td>
                     <td className="font-semibold text-sm text-[var(--system-green)] text-right">
                       {formatIDR(s.netEarnings)}
+                    </td>
+                    <td className="text-right">
+                      <button
+                        onClick={() => setSelectedSlipEmployee(s)}
+                        className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline py-1 px-1.5 transition-colors inline-flex items-center gap-1"
+                        title={`Lihat Slip Gaji Resmi untuk ${s.fullName}`}
+                      >
+                        <FileText className="w-3 h-3 stroke-[2]" />
+                        <span>Slip Gaji</span>
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -342,27 +364,27 @@ export default function OwnerPayrollPage() {
                 </div>
               </div>
 
-              {/* KPI Summary Grid */}
-              <div className="grid grid-cols-3 gap-4 p-4 rounded-xl bg-neutral-50 border border-neutral-200 text-center">
-                <div>
-                  <span className="text-[11px] font-medium text-neutral-500 block">Gaji Kotor</span>
-                  <span className="text-base font-semibold text-neutral-900 tabular-nums">
-                    {formatIDR(totalGrossPayroll)}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[11px] font-medium text-neutral-500 block">Total Potongan Denda</span>
-                  <span className={`text-base font-semibold tabular-nums ${
-                    totalDeductionsAll > 0 ? "text-red-600" : "text-neutral-500"
-                  }`}>
-                    {totalDeductionsAll > 0 ? `-${formatIDR(totalDeductionsAll)}` : "Rp0"}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[11px] font-medium text-emerald-600 block">Gaji Bersih Siap Bayar</span>
-                  <span className="text-lg font-bold text-emerald-600 tabular-nums">
-                    {formatIDR(totalNetPayroll)}
-                  </span>
+              {/* Formal Accounting Ledger Summary */}
+              <div className="border border-neutral-300 rounded-lg p-4 bg-neutral-50/70 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 divide-y sm:divide-y-0 sm:divide-x divide-neutral-200">
+                  <div className="sm:pr-3">
+                    <span className="text-[11px] text-neutral-500 block">Total Gaji Pokok Kotor</span>
+                    <span className="text-sm font-semibold text-neutral-900 font-mono mt-0.5 block">
+                      {formatIDR(totalGrossPayroll)}
+                    </span>
+                  </div>
+                  <div className="pt-2 sm:pt-0 sm:px-3">
+                    <span className="text-[11px] text-neutral-500 block">Total Potongan Keterlambatan</span>
+                    <span className="text-sm font-semibold text-neutral-900 font-mono mt-0.5 block">
+                      {totalDeductionsAll > 0 ? `-${formatIDR(totalDeductionsAll)}` : "Rp0"}
+                    </span>
+                  </div>
+                  <div className="pt-2 sm:pt-0 sm:pl-3">
+                    <span className="text-[11px] text-neutral-700 font-medium block">Total Pembayaran Gaji Bersih</span>
+                    <span className="text-sm font-bold text-neutral-900 font-mono mt-0.5 block">
+                      {formatIDR(totalNetPayroll)}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -419,6 +441,199 @@ export default function OwnerPayrollPage() {
                 <div className="text-right text-[11px] text-neutral-400 font-mono">
                   ID Laporan: PAY-{year}{String(month).padStart(2, "0")}-{summaries.length}
                 </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* AUTHENTIC INDONESIAN SLIP GAJI KARYAWAN MODAL & PRINT VIEW */}
+      {/* ======================================================== */}
+      {selectedSlipEmployee && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white text-neutral-900 rounded-2xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl my-8 space-y-6 print:m-0 print:p-0 print:shadow-none print:max-w-none">
+            
+            {/* Modal Actions (Hidden on Print) */}
+            <div className="flex items-center justify-between border-b pb-4 print:hidden">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-neutral-700" />
+                <span className="text-sm font-semibold text-neutral-900">
+                  Slip Gaji Karyawan — {selectedSlipEmployee.fullName}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => window.print()}
+                  className="hig-button-primary text-xs flex items-center gap-1.5"
+                >
+                  <Printer className="w-3.5 h-3.5 stroke-[2]" />
+                  <span>Cetak Slip Gaji (PDF)</span>
+                </button>
+                <button
+                  onClick={() => setSelectedSlipEmployee(null)}
+                  className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-700 transition-colors"
+                  aria-label="Tutup"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Printable Slip Gaji Document */}
+            <div className="border border-neutral-300 rounded-xl p-6 sm:p-8 space-y-6 bg-white text-neutral-900 print:border-none print:p-0">
+              
+              {/* Document Letterhead */}
+              <div className="border-b-2 border-neutral-800 pb-4 flex justify-between items-start">
+                <div>
+                  <h2 className="text-base font-bold tracking-tight text-neutral-900 uppercase">
+                    CyberGuard Attendance Systems
+                  </h2>
+                  <p className="text-xs text-neutral-500 mt-0.5">
+                    Sistem Manajemen Presensi &amp; Rekapitulasi Penggajian
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-bold uppercase tracking-wider text-neutral-900 block">
+                    SLIP GAJI KARYAWAN
+                  </span>
+                  <span className="text-xs text-neutral-600 font-medium">
+                    Periode: {MONTH_NAMES_ID[month - 1]} {year}
+                  </span>
+                </div>
+              </div>
+
+              {/* Employee Metadata Grid */}
+              <div className="grid grid-cols-2 gap-4 text-xs bg-neutral-50 border border-neutral-200 rounded-lg p-3.5">
+                <div className="space-y-1.5">
+                  <div className="flex">
+                    <span className="w-28 text-neutral-500">Nama Karyawan</span>
+                    <span className="font-semibold text-neutral-900">: {selectedSlipEmployee.fullName}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="w-28 text-neutral-500">ID / NIK</span>
+                    <span className="font-mono font-medium text-neutral-900">: {selectedSlipEmployee.code}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="w-28 text-neutral-500">Gaji Pokok / Hari</span>
+                    <span className="font-medium text-neutral-900">: {formatIDR(selectedSlipEmployee.dailySalary)}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex">
+                    <span className="w-28 text-neutral-500">Hari Kerja Selesai</span>
+                    <span className="font-medium text-neutral-900">: {selectedSlipEmployee.completedDays} hari</span>
+                  </div>
+                  <div className="flex">
+                    <span className="w-28 text-neutral-500">Total Terlambat</span>
+                    <span className="font-medium text-neutral-900">: {selectedSlipEmployee.totalLateMinutes} menit</span>
+                  </div>
+                  <div className="flex">
+                    <span className="w-28 text-neutral-500">Tanggal Terbit</span>
+                    <span className="font-medium text-neutral-900">: {new Date().toLocaleDateString("id-ID")}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Breakdown Table: Penerimaan vs Potongan */}
+              <div className="border border-neutral-300 rounded-lg overflow-hidden text-xs">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-neutral-100 border-b border-neutral-300 font-semibold text-neutral-800">
+                      <th className="py-2 px-3 border-r border-neutral-300 w-1/2">PENERIMAAN (HAK)</th>
+                      <th className="py-2 px-3 w-1/2">POTONGAN</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-200">
+                    <tr>
+                      <td className="py-2.5 px-3 border-r border-neutral-300 align-top">
+                        <div className="flex justify-between items-center py-1">
+                          <span>Gaji Pokok ({selectedSlipEmployee.completedDays} hari x {formatIDR(selectedSlipEmployee.dailySalary)})</span>
+                          <span className="font-mono font-medium">{formatIDR(selectedSlipEmployee.grossEarnings)}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-1 text-neutral-500">
+                          <span>Tunjangan Operasional</span>
+                          <span className="font-mono">–</span>
+                        </div>
+                      </td>
+
+                      <td className="py-2.5 px-3 align-top">
+                        <div className="flex justify-between items-center py-1">
+                          <span>Denda Keterlambatan ({selectedSlipEmployee.totalLateMinutes} menit)</span>
+                          <span className="font-mono font-medium">
+                            {selectedSlipEmployee.totalLateDeductions > 0
+                              ? `-${formatIDR(selectedSlipEmployee.totalLateDeductions)}`
+                              : "Rp0"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center py-1 text-neutral-500">
+                          <span>Potongan Lain / PPh</span>
+                          <span className="font-mono">–</span>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {/* Subtotals */}
+                    <tr className="bg-neutral-50 font-semibold">
+                      <td className="py-2 px-3 border-r border-neutral-300">
+                        <div className="flex justify-between items-center">
+                          <span>Total Penerimaan Kotor (A)</span>
+                          <span className="font-mono">{formatIDR(selectedSlipEmployee.grossEarnings)}</span>
+                        </div>
+                      </td>
+                      <td className="py-2 px-3">
+                        <div className="flex justify-between items-center">
+                          <span>Total Potongan (B)</span>
+                          <span className="font-mono">
+                            {selectedSlipEmployee.totalLateDeductions > 0
+                              ? formatIDR(selectedSlipEmployee.totalLateDeductions)
+                              : "Rp0"}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Take Home Pay & Terbilang Box */}
+              <div className="border-2 border-neutral-800 rounded-lg p-4 bg-neutral-50 space-y-2">
+                <div className="flex justify-between items-baseline">
+                  <span className="text-xs font-bold uppercase tracking-wider text-neutral-700">
+                    Gaji Bersih Diterima (Take Home Pay = A - B)
+                  </span>
+                  <span className="font-mono text-lg font-bold text-neutral-900">
+                    {formatIDR(selectedSlipEmployee.netEarnings)}
+                  </span>
+                </div>
+                <div className="text-xs text-neutral-600 italic border-t border-neutral-300 pt-2">
+                  Terbilang: <span className="font-medium text-neutral-800 not-italic">{angkaKeTerbilang(selectedSlipEmployee.netEarnings)}</span>
+                </div>
+              </div>
+
+              {/* Signoff Section */}
+              <div className="pt-8 grid grid-cols-2 text-center text-xs text-neutral-700">
+                <div className="space-y-16">
+                  <span>Diterima Oleh Karyawan,</span>
+                  <div className="border-t border-neutral-400 mx-auto w-44 pt-1 font-medium text-neutral-900">
+                    ( {selectedSlipEmployee.fullName} )
+                  </div>
+                </div>
+
+                <div className="space-y-16">
+                  <span>Dibuat Oleh Keuangan / Manajemen,</span>
+                  <div className="border-t border-neutral-400 mx-auto w-44 pt-1 font-medium text-neutral-900">
+                    ( Manajemen CyberGuard )
+                  </div>
+                </div>
+              </div>
+
+              {/* Verification Microprint */}
+              <div className="pt-4 border-t border-neutral-200 text-center text-[10px] text-neutral-400">
+                Dokumen resmi ini dihitung otomatis berdasarkan akumulasi catatan presensi digital terverifikasi.
               </div>
 
             </div>

@@ -442,27 +442,27 @@ export default function EmployeeDashboardPage() {
           <div className="flex items-center justify-between pb-3 border-b border-white/40 dark:border-white/10">
             <div>
               <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block">
-                Daily Salary Receipt
+                Rincian Gaji Harian
               </span>
               <h3 className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">
                 {latestCompletedPayslip.shiftName}
               </h3>
             </div>
             <span className="liquid-glass-pill px-2.5 py-0.5 text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
-              {latestCompletedPayslip.status}
+              {latestCompletedPayslip.status === "COMPLETED" ? "Selesai" : latestCompletedPayslip.status}
             </span>
           </div>
 
           <div className="text-xs space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-neutral-500">Base Daily Salary</span>
+              <span className="text-neutral-500">Gaji Pokok Harian</span>
               <span className="font-medium text-neutral-900 dark:text-neutral-100 tabular-nums">
                 {formatIDR(latestCompletedPayslip.dailySalary)}
               </span>
             </div>
 
             <div className="flex justify-between items-center text-neutral-500">
-              <span>Scheduled Check-In</span>
+              <span>Jadwal Masuk</span>
               <span className="font-mono text-neutral-700 dark:text-neutral-300">
                 {latestCompletedPayslip.scheduledCheckIn.split(", ")[1] ||
                   latestCompletedPayslip.scheduledCheckIn}
@@ -470,7 +470,7 @@ export default function EmployeeDashboardPage() {
             </div>
 
             <div className="flex justify-between items-center text-neutral-500">
-              <span>Actual Check-In</span>
+              <span>Jam Masuk Aktual</span>
               <span className="font-mono text-neutral-700 dark:text-neutral-300">
                 {latestCompletedPayslip.actualCheckIn.split(", ")[1] ||
                   latestCompletedPayslip.actualCheckIn}
@@ -478,7 +478,7 @@ export default function EmployeeDashboardPage() {
             </div>
 
             <div className="flex justify-between items-center">
-              <span className="text-neutral-500">Late Duration</span>
+              <span className="text-neutral-500">Keterlambatan</span>
               <span
                 className={
                   latestCompletedPayslip.lateDurationMinutes > 0
@@ -487,14 +487,14 @@ export default function EmployeeDashboardPage() {
                 }
               >
                 {latestCompletedPayslip.lateDurationMinutes > 0
-                  ? `${latestCompletedPayslip.lateDurationMinutes} minutes`
-                  : "0 mins (On Time)"}
+                  ? `${latestCompletedPayslip.lateDurationMinutes} menit`
+                  : "Tepat Waktu"}
               </span>
             </div>
 
             {latestCompletedPayslip.lateDeduction > 0 && (
               <div className="flex justify-between items-center text-red-600 dark:text-red-400 font-medium pt-1.5 border-t border-white/40 dark:border-white/10">
-                <span>Late Deduction</span>
+                <span>Potongan Denda</span>
                 <span className="tabular-nums">
                   -{formatIDR(latestCompletedPayslip.lateDeduction)}
                 </span>
@@ -503,7 +503,7 @@ export default function EmployeeDashboardPage() {
 
             <div className="flex justify-between items-baseline pt-3 border-t border-white/60 dark:border-white/10">
               <span className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">
-                Net Daily Earnings
+                Gaji Bersih Harian
               </span>
               <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
                 {formatIDR(latestCompletedPayslip.netDailyEarnings)}
@@ -512,7 +512,7 @@ export default function EmployeeDashboardPage() {
           </div>
 
           <div className="text-[10px] text-neutral-400 text-center pt-2 border-t border-white/40 dark:border-white/10">
-            Session Date: {latestCompletedPayslip.shiftDate} • Authoritative Server Snapshot
+            Tanggal Shift: {latestCompletedPayslip.shiftDate} • Catatan Terverifikasi Sistem
           </div>
         </div>
       )}
@@ -521,7 +521,7 @@ export default function EmployeeDashboardPage() {
       <div className="liquid-glass p-3.5 rounded-2xl flex items-center justify-between text-xs text-neutral-500">
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-          <span>Authorized Device:</span>
+          <span>Perangkat Terotorisasi:</span>
         </div>
         <div className="flex items-center gap-2 font-medium text-neutral-800 dark:text-neutral-200">
           {hasPasskey && (
