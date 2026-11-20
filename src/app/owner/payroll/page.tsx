@@ -324,43 +324,43 @@ export default function OwnerPayrollPage() {
               {/* Header Letterhead */}
               <div className="flex justify-between items-start border-b pb-6">
                 <div>
-                  <h2 className="text-xl font-bold tracking-tight text-neutral-900">
-                    LAPORAN PENGGAJIAN &amp; REKAPITULASI UPAH
+                  <h2 className="text-lg font-semibold tracking-tight text-neutral-900">
+                    Laporan Rekapitulasi Penggajian &amp; Upah
                   </h2>
                   <p className="text-xs text-neutral-500 mt-0.5">
-                    Rekapitulasi gaji bulanan dan potongan penalti absensi karyawan
+                    Periode: {year}-{String(month).padStart(2, "0")} • Diterbitkan: {new Date().toLocaleDateString("id-ID")}
                   </p>
                 </div>
-                <div className="text-right text-xs space-y-1">
-                  <div className="font-mono font-bold text-neutral-800">
-                    PERIODE: {year}-{String(month).padStart(2, "0")}
-                  </div>
-                  <div className="text-neutral-500">
-                    Diterbitkan: {new Date().toLocaleDateString("id-ID")}
-                  </div>
-                  <div className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-neutral-100 text-neutral-700 border">
-                    {isFinalized ? "FINAL & TERVERIFIKASI" : "DRAF SEMENTARA"}
-                  </div>
+                <div className="text-right text-xs">
+                  <span className={`inline-block px-2.5 py-0.5 rounded text-[11px] font-medium border ${
+                    isFinalized
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : "bg-neutral-100 text-neutral-700 border-neutral-200"
+                  }`}>
+                    {isFinalized ? "Final (Snapshot Terkunci)" : "Draf Sementara"}
+                  </span>
                 </div>
               </div>
 
               {/* KPI Summary Grid */}
               <div className="grid grid-cols-3 gap-4 p-4 rounded-xl bg-neutral-50 border border-neutral-200 text-center">
                 <div>
-                  <span className="text-[10px] font-semibold text-neutral-500 block">Gaji Kotor</span>
-                  <span className="text-lg font-bold text-neutral-900 tabular-nums">
+                  <span className="text-[11px] font-medium text-neutral-500 block">Gaji Kotor</span>
+                  <span className="text-base font-semibold text-neutral-900 tabular-nums">
                     {formatIDR(totalGrossPayroll)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-semibold text-red-500 block">Total Potongan Denda</span>
-                  <span className="text-lg font-bold text-red-600 tabular-nums">
-                    -{formatIDR(totalDeductionsAll)}
+                  <span className="text-[11px] font-medium text-neutral-500 block">Total Potongan Denda</span>
+                  <span className={`text-base font-semibold tabular-nums ${
+                    totalDeductionsAll > 0 ? "text-red-600" : "text-neutral-500"
+                  }`}>
+                    {totalDeductionsAll > 0 ? `-${formatIDR(totalDeductionsAll)}` : "Rp0"}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-semibold text-emerald-600 block">Gaji Bersih Siap Bayar</span>
-                  <span className="text-xl font-extrabold text-emerald-600 tabular-nums">
+                  <span className="text-[11px] font-medium text-emerald-600 block">Gaji Bersih Siap Bayar</span>
+                  <span className="text-lg font-bold text-emerald-600 tabular-nums">
                     {formatIDR(totalNetPayroll)}
                   </span>
                 </div>
@@ -374,25 +374,33 @@ export default function OwnerPayrollPage() {
                       <th className="py-2.5 px-3">ID Karyawan</th>
                       <th className="py-2.5 px-3">Nama Lengkap</th>
                       <th className="py-2.5 px-3">Gaji Harian</th>
-                      <th className="py-2.5 px-3">Hari Kerja</th>
-                      <th className="py-2.5 px-3">Menit Terlambat</th>
-                      <th className="py-2.5 px-3">Potongan</th>
+                      <th className="py-2.5 px-3 text-center">Hari Kerja</th>
+                      <th className="py-2.5 px-3 text-center">Keterlambatan</th>
+                      <th className="py-2.5 px-3 text-right">Potongan</th>
                       <th className="py-2.5 px-3 text-right">Gaji Bersih</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-200 tabular-nums">
                     {summaries.map((s) => (
                       <tr key={s.employeeId} className="hover:bg-neutral-50">
-                        <td className="py-2.5 px-3 font-mono font-medium text-neutral-600">{s.code}</td>
-                        <td className="py-2.5 px-3 font-semibold text-neutral-900">{s.fullName}</td>
+                        <td className="py-2.5 px-3 font-mono font-medium text-neutral-500">{s.code}</td>
+                        <td className="py-2.5 px-3 font-medium text-neutral-900">{s.fullName}</td>
                         <td className="py-2.5 px-3">{formatIDR(s.dailySalary)}</td>
-                        <td className="py-2.5 px-3">{s.completedDays} hari</td>
-                        <td className="py-2.5 px-3">{s.totalLateMinutes} menit</td>
-                        <td className="py-2.5 px-3 text-red-600 font-medium">
-                          {s.totalLateDeductions > 0 ? `-${formatIDR(s.totalLateDeductions)}` : "Rp0"}
+                        <td className="py-2.5 px-3 text-center text-neutral-700">
+                          {s.completedDays > 0 ? `${s.completedDays} hari` : "–"}
                         </td>
-                        <td className="py-2.5 px-3 text-right font-bold text-neutral-900">
-                          {formatIDR(s.netEarnings)}
+                        <td className="py-2.5 px-3 text-center text-neutral-700">
+                          {s.totalLateMinutes > 0 ? `${s.totalLateMinutes} menit` : "–"}
+                        </td>
+                        <td className="py-2.5 px-3 text-right">
+                          {s.totalLateDeductions > 0 ? (
+                            <span className="text-red-600 font-semibold">-{formatIDR(s.totalLateDeductions)}</span>
+                          ) : (
+                            <span className="text-neutral-400">Rp0</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 text-right font-semibold text-neutral-900">
+                          {s.netEarnings > 0 ? formatIDR(s.netEarnings) : "Rp0"}
                         </td>
                       </tr>
                     ))}
@@ -401,18 +409,15 @@ export default function OwnerPayrollPage() {
               </div>
 
               {/* Authorization & Signoff Block */}
-              <div className="pt-6 border-t border-neutral-200 grid grid-cols-2 gap-8 text-xs text-neutral-500">
-                <div className="space-y-1">
-                  <span className="font-semibold text-neutral-800 block">Verifikasi Sistem:</span>
-                  <p>Rekapitulasi resmi dihitung otomatis dari catatan presensi audit server yang tidak dapat dimanipulasi.</p>
-                  <p className="font-mono text-[10px] text-neutral-400">Checksum: SHA256-SNAP-{year}{month}-{summaries.length}</p>
+              <div className="pt-6 border-t border-neutral-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-xs text-neutral-500">
+                <div>
+                  <span className="font-medium text-neutral-800">CyberGuard Payroll Ledger</span>
+                  <p className="text-[11px] text-neutral-400 mt-0.5">
+                    Data dihitung otomatis berdasarkan akumulasi catatan presensi harian karyawan.
+                  </p>
                 </div>
-                <div className="text-right space-y-6">
-                  <div>
-                    <span className="font-semibold text-neutral-800 block">Pemilik / Pejabat Keuangan:</span>
-                    <div className="h-10 border-b border-dashed border-neutral-300 w-48 ml-auto mt-2"></div>
-                    <span className="text-[10px] text-neutral-400 mt-1 block">Tanda Tangan Resmi &amp; Tanggal</span>
-                  </div>
+                <div className="text-right text-[11px] text-neutral-400 font-mono">
+                  ID Laporan: PAY-{year}{String(month).padStart(2, "0")}-{summaries.length}
                 </div>
               </div>
 

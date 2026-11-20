@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { formatIDR } from "@/lib/utils";
-import { Plus, Smartphone, Banknote, RotateCcw, AlertCircle, CheckCircle2, Search } from "lucide-react";
+import { Plus, Smartphone, RotateCcw, AlertCircle, CheckCircle2, Search } from "lucide-react";
 
 interface ShiftItem {
   id: string;
@@ -292,11 +292,13 @@ export default function OwnerEmployeesPage() {
                 {filteredEmployees.map((emp) => {
                   const dev = emp.user.deviceRegistration;
                   const statusLabel =
-                    emp.employmentStatus === "PERMANENT"
+                    emp.employmentStatus === "PERMANENT" || emp.employmentStatus === "ACTIVE"
                       ? "Tetap"
                       : emp.employmentStatus === "CONTRACT"
                       ? "Kontrak"
-                      : emp.employmentStatus;
+                      : emp.employmentStatus === "PROBATION"
+                      ? "Probasi"
+                      : "Tetap";
 
                   const cleanShiftName = emp.shift.name.replace(/\s*\(\d{2}:\d{2}\s*-\s*\d{2}:\d{2}\)/, "");
 
@@ -332,7 +334,7 @@ export default function OwnerEmployeesPage() {
                         {dev ? (
                           <div className="flex items-center gap-1.5 text-[var(--system-green)] text-xs">
                             <Smartphone className="w-3.5 h-3.5 stroke-[1.75]" />
-                            <span className="font-medium truncate max-w-[140px]">{dev.deviceName}</span>
+                            <span className="font-medium truncate max-w-[220px] sm:max-w-none">{dev.deviceName}</span>
                           </div>
                         ) : (
                           <span className="text-amber-600 dark:text-amber-400 font-medium text-xs">
@@ -342,24 +344,24 @@ export default function OwnerEmployeesPage() {
                       </td>
 
                       <td className="text-right">
-                        <div className="inline-flex items-center justify-end gap-1.5">
+                        <div className="inline-flex items-center justify-end gap-2">
                           <button
                             onClick={() => {
                               setEditingEmployee(emp);
                               setEditSalaryVal(emp.dailySalary);
                               setEditSalaryReason("");
                             }}
-                            className="hig-button-secondary text-[11px] py-1 px-2.5 flex items-center gap-1.5"
+                            className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline py-1 px-1.5 transition-colors"
                           >
-                            <Banknote className="w-3.5 h-3.5 stroke-[1.75]" />
-                            <span>Atur Gaji</span>
+                            Atur Gaji
                           </button>
 
                           {dev && (
                             <button
                               onClick={() => handleResetDevice(emp.user.id, emp.fullName)}
-                              className="p-1 rounded-md text-neutral-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 border border-neutral-200 dark:border-neutral-700 transition-colors"
+                              className="p-1 rounded-md text-neutral-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
                               title="Reset pengikatan perangkat"
+                              aria-label={`Reset perangkat ${emp.fullName}`}
                             >
                               <RotateCcw className="w-3.5 h-3.5 stroke-[1.75]" />
                             </button>

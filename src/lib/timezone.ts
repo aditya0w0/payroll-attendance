@@ -44,7 +44,7 @@ export function getJakartaTimeString(date: Date = new Date()): string {
 export function formatJakartaDateTime(date: Date | string | null | undefined): string {
   if (!date) return "--";
   const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat("en-GB", {
+  const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: BUSINESS_TIMEZONE,
     day: "numeric",
     month: "short",
@@ -52,6 +52,27 @@ export function formatJakartaDateTime(date: Date | string | null | undefined): s
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
+    hour12: false,
+  }).formatToParts(d);
+
+  const p: Record<string, string> = {};
+  for (const part of parts) {
+    p[part.type] = part.value;
+  }
+  return `${p.day} ${p.month} ${p.year}, ${p.hour}:${p.minute}:${p.second}`;
+}
+
+/**
+ * Returns time string formatted as "HH:mm:ss" or "HH:mm" in Asia/Jakarta.
+ */
+export function formatJakartaTime(date: Date | string | null | undefined, includeSeconds: boolean = true): string {
+  if (!date) return "--";
+  const d = typeof date === "string" ? new Date(date) : date;
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: BUSINESS_TIMEZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: includeSeconds ? "2-digit" : undefined,
     hour12: false,
   }).format(d);
 }

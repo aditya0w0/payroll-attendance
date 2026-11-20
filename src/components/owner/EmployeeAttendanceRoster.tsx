@@ -17,7 +17,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { formatIDR } from "@/lib/utils";
-import { formatJakartaDateTime } from "@/lib/timezone";
+import { formatJakartaDateTime, formatJakartaTime } from "@/lib/timezone";
 import type {
   AttendanceAnalyticsResult,
   EmployeeRosterItem,
@@ -447,12 +447,12 @@ export default function EmployeeAttendanceRoster() {
                         <div className="flex items-center gap-1.5">
                           <Clock className="w-3.5 h-3.5 text-neutral-400" />
                           <span>
-                            Masuk: <strong>{formatJakartaDateTime(rec.checkInTime).split(", ")[1] || formatJakartaDateTime(rec.checkInTime)}</strong>
+                            Masuk: <strong>{formatJakartaTime(rec.checkInTime)}</strong>
                             {" • "}
                             Pulang:{" "}
                             <strong>
                               {rec.checkOutTime
-                                ? formatJakartaDateTime(rec.checkOutTime).split(", ")[1] || formatJakartaDateTime(rec.checkOutTime)
+                                ? formatJakartaTime(rec.checkOutTime)
                                 : "Belum Check-Out"}
                             </strong>
                           </span>

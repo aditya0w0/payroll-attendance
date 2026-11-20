@@ -12,10 +12,6 @@ import {
   Legend,
 } from "recharts";
 import {
-  TrendingUp,
-  UserCheck,
-  Clock,
-  UserX,
   BarChart3,
   RefreshCw,
 } from "lucide-react";
@@ -177,73 +173,6 @@ export default function DashboardAnalytics() {
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           </button>
-        </div>
-      </div>
-
-      {/* KPI Metric Row (Liquid Glass) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* 1. Tingkat Kehadiran */}
-        <div className="liquid-glass p-5 rounded-2xl">
-          <div className="flex items-center justify-between text-neutral-500 dark:text-neutral-400 mb-1.5">
-            <span className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
-              Tingkat Kehadiran
-            </span>
-            <TrendingUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-          </div>
-          <div className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50 tabular-numbers">
-            {kpi.attendanceRatePercentage}%
-          </div>
-          <span className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-1 block tabular-numbers">
-            {kpi.totalPresent} dari {kpi.totalScheduledShifts} jadwal shift
-          </span>
-        </div>
-
-        {/* 2. Total Hadir Tepat Waktu */}
-        <div className="liquid-glass p-5 rounded-2xl">
-          <div className="flex items-center justify-between text-neutral-500 dark:text-neutral-400 mb-1.5">
-            <span className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
-              Total Hadir
-            </span>
-            <UserCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-          </div>
-          <div className="text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 tabular-numbers">
-            {kpi.totalPresentOnTime}
-          </div>
-          <span className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-1 block tabular-numbers">
-            Kehadiran tepat waktu
-          </span>
-        </div>
-
-        {/* 3. Terlambat */}
-        <div className="liquid-glass p-5 rounded-2xl">
-          <div className="flex items-center justify-between text-neutral-500 dark:text-neutral-400 mb-1.5">
-            <span className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
-              Terlambat
-            </span>
-            <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-          </div>
-          <div className="text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400 tabular-numbers">
-            {kpi.totalPresentLate}
-          </div>
-          <span className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-1 block tabular-numbers">
-            Total {kpi.totalLateMinutes} menit terlambat
-          </span>
-        </div>
-
-        {/* 4. Tidak Masuk / Alpa */}
-        <div className="liquid-glass p-5 rounded-2xl">
-          <div className="flex items-center justify-between text-neutral-500 dark:text-neutral-400 mb-1.5">
-            <span className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400">
-              Tidak Masuk / Alpa
-            </span>
-            <UserX className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
-          </div>
-          <div className="text-2xl font-bold tracking-tight text-rose-600 dark:text-rose-400 tabular-numbers">
-            {kpi.totalAbsent}
-          </div>
-          <span className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-1 block tabular-numbers">
-            Shift terjadwal tanpa presensi
-          </span>
         </div>
       </div>
 

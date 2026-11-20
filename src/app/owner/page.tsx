@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { formatIDR } from "@/lib/utils";
-import { getJakartaDateString, formatJakartaDateTime } from "@/lib/timezone";
+import { getJakartaDateString, formatJakartaDateTime, formatJakartaTime } from "@/lib/timezone";
 import { Users, ClipboardList, AlertCircle, Smartphone, QrCode, ShieldAlert } from "lucide-react";
 import DashboardAnalytics from "@/components/owner/DashboardAnalytics";
 
@@ -219,7 +219,7 @@ export default async function OwnerOverviewPage() {
         </div>
 
         {/* Audit Trail Activity */}
-        <div className="hig-card p-5 rounded-3xl">
+        <div className="hig-card p-5 rounded-2xl">
           <div className="flex items-center justify-between mb-3 border-b border-[var(--separator-subtle)] pb-2.5">
             <h2 className="text-xs font-semibold text-[var(--text-primary)]">
               Aktivitas Sistem Terkini
@@ -229,20 +229,49 @@ export default async function OwnerOverviewPage() {
             </Link>
           </div>
 
-          <div className="space-y-3">
-            {recentAuditLogs.map((log) => (
-              <div key={log.id} className="text-xs pb-2 border-b border-[var(--separator-subtle)] last:border-0">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-[var(--text-primary)] font-mono text-[11px]">{log.action}</span>
-                  <span className="text-[10px] text-[var(--text-tertiary)] tabular-numbers">
-                    {new Date(log.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </span>
+          <div className="space-y-2.5">
+            {recentAuditLogs.map((log) => {
+              const actionLabel = (() => {
+                switch (log.action) {
+                  case "AUTH_LOGIN_SUCCESS":
+                    return "Login Berhasil";
+                  case "ATTENDANCE_CHECK_IN":
+                    return "Presensi Masuk";
+                  case "ATTENDANCE_CHECK_OUT":
+                    return "Presensi Pulang";
+                  case "SHIFT_CREATED":
+                    return "Shift Dibuat";
+                  case "SHIFT_UPDATED":
+                    return "Shift Diperbarui";
+                  case "SHIFT_DELETED":
+                    return "Shift Dihapus";
+                  case "DEDUCTION_POLICY_CREATED":
+                    return "Kebijakan Dibuat";
+                  case "DEDUCTION_POLICY_UPDATED":
+                    return "Kebijakan Diperbarui";
+                  case "DEVICE_UNLOCKED":
+                    return "Buka Kunci Perangkat";
+                  case "SALARY_UPDATED":
+                    return "Gaji Diperbarui";
+                  default:
+                    return log.action.replace(/_/g, " ");
+                }
+              })();
+
+              return (
+                <div key={log.id} className="text-xs pb-2 border-b border-[var(--separator-subtle)] last:border-0">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-[var(--text-primary)] text-xs">{actionLabel}</span>
+                    <span className="text-[10px] text-[var(--text-tertiary)] tabular-numbers">
+                      {formatJakartaTime(log.timestamp)}
+                    </span>
+                  </div>
+                  <div className="text-[var(--text-secondary)] text-[11px] mt-0.5 truncate">
+                    {log.actorName} • {log.reason || "Operasi terverifikasi"}
+                  </div>
                 </div>
-                <div className="text-[var(--text-secondary)] text-[11px] mt-0.5">
-                  Aktor: {log.actorName} ({log.actorRole})
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

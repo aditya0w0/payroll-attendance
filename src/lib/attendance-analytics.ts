@@ -228,14 +228,19 @@ export function computeAttendanceAnalytics(params: {
       totalAccumulatedWages += rec.netDailyEarnings || 0;
     }
 
+    // Only count absence on dates with active recorded attendance to prevent false-alarm monolithic red bars
+    // Days with 0 company-wide records represent non-operational days or days without logged shifts
+    const hasActivity = dayRecords.length > 0;
     const totalDayPresent = dayOnTime + dayLate;
-    const dayAbsent = Math.max(0, scheduledOnDate - totalDayPresent);
+    const dayAbsent = hasActivity ? Math.max(0, scheduledOnDate - totalDayPresent) : 0;
+    const effectiveScheduled = hasActivity ? scheduledOnDate : 0;
+    totalScheduledShifts += effectiveScheduled;
 
     dailyTrends.push({
       date: displayDate,
       rawDate: dateStr,
       dayName,
-      scheduled: scheduledOnDate,
+      scheduled: effectiveScheduled,
       hadir: dayOnTime,
       terlambat: dayLate,
       alpa: dayAbsent,
@@ -254,7 +259,8 @@ export function computeAttendanceAnalytics(params: {
   const employeeRoster: EmployeeRosterItem[] = employees.map((emp) => {
     let empAssignedCount = 0;
     for (const dateStr of targetDates) {
-      if (isEmployeeScheduledOnDate(emp, dateStr)) {
+      const dateHasActivity = (dateRecordsMap.get(dateStr)?.length || 0) > 0;
+      if (dateHasActivity && isEmployeeScheduledOnDate(emp, dateStr)) {
         empAssignedCount++;
       }
     }

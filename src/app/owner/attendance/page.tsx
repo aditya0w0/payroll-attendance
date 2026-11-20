@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { formatIDR } from "@/lib/utils";
-import { formatJakartaDateTime } from "@/lib/timezone";
+import { formatJakartaDateTime, formatJakartaTime } from "@/lib/timezone";
 import { Edit2, CheckCircle2, AlertCircle, Users, FileText } from "lucide-react";
 import EmployeeAttendanceRoster from "@/components/owner/EmployeeAttendanceRoster";
 
@@ -212,7 +212,7 @@ export default function OwnerAttendancePage() {
                   <th>Shift Kerja</th>
                   <th>Jam Masuk</th>
                   <th>Jam Keluar</th>
-                  <th>Keterlambatan</th>
+                  <th>Status Presensi</th>
                   <th>Gaji Pokok</th>
                   <th>Potongan Denda</th>
                   <th>Gaji Bersih</th>
@@ -232,18 +232,18 @@ export default function OwnerAttendancePage() {
                       <td className="text-[var(--text-secondary)]">
                         {r.shift.name}
                       </td>
-                      <td className="font-mono text-xs">
-                        {formatJakartaDateTime(r.checkInTime).split(", ")[1] || formatJakartaDateTime(r.checkInTime)}
+                      <td className="font-mono text-xs text-[var(--text-primary)]">
+                        {formatJakartaTime(r.checkInTime)}
                       </td>
-                      <td className="font-mono text-xs">
-                        {r.checkOutTime ? (
-                          formatJakartaDateTime(r.checkOutTime).split(", ")[1] || formatJakartaDateTime(r.checkOutTime)
-                        ) : (
-                          <span className="text-amber-600 dark:text-amber-400 font-medium text-xs">Sedang Bekerja</span>
-                        )}
+                      <td className="font-mono text-xs text-[var(--text-secondary)]">
+                        {r.checkOutTime ? formatJakartaTime(r.checkOutTime) : "–"}
                       </td>
                       <td>
-                        {r.lateMinutes > 0 ? (
+                        {!r.checkOutTime ? (
+                          <span className="hig-badge hig-badge-orange">
+                            {r.lateMinutes > 0 ? `Bekerja (+${r.lateMinutes}m)` : "Sedang Bekerja"}
+                          </span>
+                        ) : r.lateMinutes > 0 ? (
                           <span className="hig-badge hig-badge-red">{r.lateMinutes}m terlambat</span>
                         ) : (
                           <span className="hig-badge hig-badge-green">Tepat Waktu</span>
