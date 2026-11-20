@@ -234,7 +234,6 @@ export function computeAttendanceAnalytics(params: {
     const totalDayPresent = dayOnTime + dayLate;
     const dayAbsent = hasActivity ? Math.max(0, scheduledOnDate - totalDayPresent) : 0;
     const effectiveScheduled = hasActivity ? scheduledOnDate : 0;
-    totalScheduledShifts += effectiveScheduled;
 
     dailyTrends.push({
       date: displayDate,
@@ -259,8 +258,7 @@ export function computeAttendanceAnalytics(params: {
   const employeeRoster: EmployeeRosterItem[] = employees.map((emp) => {
     let empAssignedCount = 0;
     for (const dateStr of targetDates) {
-      const dateHasActivity = (dateRecordsMap.get(dateStr)?.length || 0) > 0;
-      if (dateHasActivity && isEmployeeScheduledOnDate(emp, dateStr)) {
+      if (isEmployeeScheduledOnDate(emp, dateStr)) {
         empAssignedCount++;
       }
     }
