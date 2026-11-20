@@ -843,9 +843,70 @@ export default function EmployeeScanPage() {
               </p>
             </div>
 
-            {/* GPS & Camera Compact Status Rows */}
-            {gpsCoords ? (
-              <div className="flex items-center justify-between px-3 py-2 rounded-xl hig-card text-xs">
+            {/* Unified Sensor & Diagnostic Status Card */}
+            {!gpsCoords || cameraError || error ? (
+              <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/90 dark:bg-neutral-900/90 p-2.5 space-y-2 text-xs text-left divide-y divide-neutral-200 dark:divide-neutral-800">
+                {/* GPS Permission Row */}
+                {!gpsCoords && (
+                  <div className="flex items-center justify-between gap-2 pt-1.5 first:pt-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <MapPin className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                      <span className="text-[11px] text-[var(--text-primary)] truncate">
+                        {gpsLoading ? "Mengunci koordinat..." : "Izin lokasi diperlukan"}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => triggerNativeGpsPrompt()}
+                      disabled={gpsLoading}
+                      className="hig-button-compact-primary shrink-0"
+                    >
+                      {gpsLoading ? "Mencari..." : "Aktifkan"}
+                    </button>
+                  </div>
+                )}
+
+                {/* Camera Error Row */}
+                {cameraError && (
+                  <div className="flex items-center justify-between gap-2 pt-2 first:pt-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <AlertCircle className="w-3.5 h-3.5 text-[var(--system-red)] shrink-0" />
+                      <span className="text-[11px] text-[var(--text-primary)] truncate" title={cameraError}>
+                        Kamera: {cameraError}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => startCamera("environment")}
+                      className="hig-button-compact-secondary shrink-0"
+                    >
+                      Buka Ulang
+                    </button>
+                  </div>
+                )}
+
+                {/* Live Scan Error Row */}
+                {error && (
+                  <div className="flex items-center justify-between gap-2 pt-2 first:pt-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <AlertCircle className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                      <span className="text-[11px] text-red-700 dark:text-red-300 truncate" title={error}>
+                        {error}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setError("")}
+                      className="text-[10px] text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 px-1 shrink-0"
+                    >
+                      Tutup
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* GPS Locked Bar (Normal State) */
+              <div className="flex items-center justify-between px-3 py-1.5 rounded-xl hig-card text-xs">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span className="text-[11px] text-[var(--text-secondary)]">
@@ -859,61 +920,6 @@ export default function EmployeeScanPage() {
                   className="p-1 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 rounded transition-colors"
                 >
                   <RotateCcw className="w-3 h-3 text-neutral-400" />
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <MapPin className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                  <span className="text-[11px] text-[var(--text-primary)] truncate">
-                    {gpsLoading ? "Mengunci koordinat..." : "Izin lokasi diperlukan"}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => triggerNativeGpsPrompt()}
-                  disabled={gpsLoading}
-                  className="hig-button-primary text-[10px] px-2.5 py-1 font-medium shrink-0"
-                >
-                  {gpsLoading ? "Mencari..." : "Aktifkan"}
-                </button>
-              </div>
-            )}
-
-            {/* Camera Error Compact Alert */}
-            {cameraError && (
-              <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-xs gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <AlertCircle className="w-3.5 h-3.5 text-[var(--system-red)] shrink-0" />
-                  <span className="text-[11px] text-[var(--text-primary)] truncate" title={cameraError}>
-                    Kamera: {cameraError}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => startCamera("environment")}
-                  className="hig-button-secondary text-[10px] px-2.5 py-1 font-medium shrink-0"
-                >
-                  Buka Ulang
-                </button>
-              </div>
-            )}
-
-            {/* Live Scan Error Compact Alert */}
-            {error && (
-              <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-xs gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <AlertCircle className="w-3.5 h-3.5 text-red-600 shrink-0" />
-                  <span className="text-[11px] text-red-800 dark:text-red-300 truncate" title={error}>
-                    {error}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setError("")}
-                  className="text-[10px] text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 px-1 shrink-0"
-                >
-                  Tutup
                 </button>
               </div>
             )}

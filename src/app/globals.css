@@ -280,6 +280,80 @@ body {
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
+/* Compact Inline Action Buttons */
+.hig-button-compact-primary {
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  border-radius: 6px;
+  min-height: unset;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid #1d4ed8;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.hig-button-compact-primary:hover {
+  background: #1d4ed8;
+  border-color: #1e40af;
+}
+
+.hig-button-compact-primary:active {
+  background: #1e40af;
+}
+
+.hig-button-compact-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hig-button-compact-secondary {
+  background: #f1f5f9;
+  color: #1e293b;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  border-radius: 6px;
+  min-height: unset;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.dark .hig-button-compact-secondary {
+  background: #1e293b;
+  color: #f1f5f9;
+  border: 1px solid #334155;
+}
+
+.hig-button-compact-secondary:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
+
+.dark .hig-button-compact-secondary:hover {
+  background: #334155;
+  border-color: #475569;
+}
+
+.hig-button-compact-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .liquid-glass-btn-primary:hover,
 .apple-btn-primary:hover,
 .hig-button-primary:hover {
