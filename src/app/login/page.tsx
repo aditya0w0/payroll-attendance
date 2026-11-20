@@ -328,7 +328,7 @@ export default function LoginPage() {
         </div>
 
         {/* In-App Browser (WebView) Warning Banner */}
-        {webViewInfo && (webViewInfo.isInApp || !webViewInfo.isWebAuthnSupported) && (
+        {webViewInfo && webViewInfo.isInApp && (
           <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs space-y-2.5 animate-in fade-in duration-200">
             <div className="flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
@@ -342,7 +342,7 @@ export default function LoginPage() {
                   </span>
                 </div>
                 <p className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                  Buka di Browser Utama (Safari / Chrome) untuk autentikasi sidik jari atau Face ID. Browser internal aplikasi ini membatasi sensor keamanan biometrik.
+                  Buka di Browser Utama (Safari / Chrome) untuk autentikasi sidik jari atau Face ID. Browser internal {webViewInfo.appName || "aplikasi ini"} membatasi sensor keamanan biometrik.
                 </p>
               </div>
             </div>

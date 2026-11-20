@@ -8,6 +8,7 @@ export interface WebViewDetectionResult {
   isInApp: boolean;
   appName: string | null;
   isWebAuthnSupported: boolean;
+  isSecureContext: boolean;
   canUsePasskey: boolean;
   reason: string | null;
 }
@@ -17,11 +18,14 @@ export interface WebViewDetectionResult {
  * and checks whether WebAuthn platform authenticators are supported.
  */
 export function detectInAppWebView(customUserAgent?: string): WebViewDetectionResult {
+  const isSecure = typeof window !== "undefined" ? Boolean(window.isSecureContext) : true;
+
   if (typeof window === "undefined" && !customUserAgent) {
     return {
       isInApp: false,
       appName: null,
       isWebAuthnSupported: true,
+      isSecureContext: true,
       canUsePasskey: true,
       reason: null,
     };
@@ -66,11 +70,13 @@ export function detectInAppWebView(customUserAgent?: string): WebViewDetectionRe
     typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === "function";
 
   const isWebAuthnSupported = Boolean(hasPublicKeyCredential);
-  const canUsePasskey = !isInApp && isWebAuthnSupported;
+  const canUsePasskey = !isInApp && isWebAuthnSupported && isSecure;
 
   let reason: string | null = null;
   if (isInApp) {
     reason = `Terdeteksi dibuka melalui ${appName}. Browser internal aplikasi membatasi autentikasi biometrik WebAuthn.`;
+  } else if (!isSecure) {
+    reason = "Koneksi HTTP tidak aman (Insecure Context). Peramban membatasi WebAuthn / Passkey pada origin non-HTTPS.";
   } else if (!isWebAuthnSupported) {
     reason = "Browser ini tidak mendukung WebAuthn / FIDO2 Passkey. Gunakan browser modern (Safari, Chrome, atau Edge).";
   }
@@ -79,6 +85,7 @@ export function detectInAppWebView(customUserAgent?: string): WebViewDetectionRe
     isInApp,
     appName,
     isWebAuthnSupported,
+    isSecureContext: isSecure,
     canUsePasskey,
     reason,
   };

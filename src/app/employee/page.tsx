@@ -234,7 +234,7 @@ export default function EmployeeDashboardPage() {
   return (
     <div className="space-y-4">
       {/* In-App Browser (WebView) Warning Banner */}
-      {webViewInfo && (webViewInfo.isInApp || !webViewInfo.isWebAuthnSupported) && (
+      {webViewInfo && webViewInfo.isInApp && (
         <div className="apple-card p-3.5 bg-amber-500/10 border border-amber-500/30 text-xs space-y-2.5 animate-in fade-in duration-200">
           <div className="flex items-start gap-2.5">
             <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
@@ -248,7 +248,7 @@ export default function EmployeeDashboardPage() {
                 </span>
               </div>
               <p className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                Buka di Browser Utama (Safari / Chrome) untuk autentikasi sidik jari atau Face ID. Browser internal aplikasi ini membatasi sensor keamanan biometrik.
+                Buka di Browser Utama (Safari / Chrome) untuk autentikasi sidik jari atau Face ID. Browser internal {webViewInfo.appName || "aplikasi ini"} membatasi sensor keamanan biometrik.
               </p>
             </div>
           </div>
@@ -280,6 +280,32 @@ export default function EmployeeDashboardPage() {
                 </>
               )}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Insecure Context (HTTP Non-Localhost) QA Diagnostic Notice */}
+      {webViewInfo && !webViewInfo.isSecureContext && !webViewInfo.isInApp && (
+        <div className="hig-card p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 text-xs space-y-1.5 animate-in fade-in duration-200">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div className="space-y-1 flex-1">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-[var(--text-primary)] text-[11px]">
+                  Koneksi HTTP Tidak Aman (Pengujian QA)
+                </span>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-amber-500/20 text-amber-800 dark:text-amber-200">
+                  HTTP INSECURE
+                </span>
+              </div>
+              <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+                Peramban membatasi sensor kamera, GPS, dan biometrik pada alamat IP non-HTTPS. Untuk pengujian di ponsel, buka{" "}
+                <code className="px-1 py-0.5 bg-amber-500/15 rounded text-[10px] font-mono">
+                  chrome://flags/#unsafely-treat-insecure-origin-as-secure
+                </code>{" "}
+                di tab baru dan izinkan origin ini, atau jalankan server dengan HTTPS.
+              </p>
+            </div>
           </div>
         </div>
       )}

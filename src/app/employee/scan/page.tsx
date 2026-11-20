@@ -149,6 +149,7 @@ export default function EmployeeScanPage() {
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [torchSupported, setTorchSupported] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
+  const [flagCopied, setFlagCopied] = useState(false);
 
   // 1. Fetch current employee shift & attendance state
   const loadShiftStatus = async () => {
@@ -197,6 +198,14 @@ export default function EmployeeScanPage() {
       return;
     }
 
+    if (typeof window !== "undefined" && !window.isSecureContext) {
+      setGpsError(
+        "Izin lokasi dibatasi oleh peramban karena koneksi HTTP tidak aman (bukan HTTPS). Gunakan HTTPS atau izinkan IP ini di chrome://flags."
+      );
+      setGpsLoading(false);
+      return;
+    }
+
     setGpsLoading(true);
     setGpsError(null);
 
@@ -211,9 +220,15 @@ export default function EmployeeScanPage() {
       (geoErr) => {
         setGpsLoading(false);
         if (geoErr.code === 1) {
-          setGpsError(
-            "Izin akses lokasi belum diaktifkan. Buka setelan peramban atau klik ikon gembok pada bilah alamat untuk mengizinkan akses lokasi kantor."
-          );
+          if (typeof window !== "undefined" && !window.isSecureContext) {
+            setGpsError(
+              "Izin lokasi diblokir oleh peramban karena koneksi HTTP tidak aman. Izinkan origin ini di chrome://flags atau gunakan HTTPS."
+            );
+          } else {
+            setGpsError(
+              "Izin akses lokasi belum diaktifkan. Buka setelan peramban atau klik ikon gembok pada bilah alamat untuk mengizinkan akses lokasi kantor."
+            );
+          }
         } else if (geoErr.code === 2) {
           setGpsError("Sinyal GPS tidak terdeteksi. Pastikan perangkat Anda memiliki sinyal GPS atau koneksi jaringan yang memadai.");
         } else if (geoErr.code === 3) {
@@ -272,7 +287,11 @@ export default function EmployeeScanPage() {
       !navigator.mediaDevices ||
       !navigator.mediaDevices.getUserMedia
     ) {
-      setCameraError("Kamera tidak didukung pada browser ini. Buka situs di Safari atau Chrome.");
+      if (typeof window !== "undefined" && !window.isSecureContext) {
+        setCameraError("Kamera diblokir oleh peramban karena koneksi HTTP tidak aman (bukan HTTPS). Gunakan HTTPS atau izinkan IP ini di chrome://flags.");
+      } else {
+        setCameraError("Kamera tidak didukung pada browser ini. Buka situs di Safari atau Chrome.");
+      }
       setCameraStarting(false);
       return;
     }
@@ -319,6 +338,9 @@ export default function EmployeeScanPage() {
       }
 
       if (!stream) {
+        if (typeof window !== "undefined" && !window.isSecureContext) {
+          throw new Error("Kamera diblokir oleh peramban pada koneksi HTTP non-HTTPS. Izinkan origin ini di chrome://flags atau gunakan HTTPS.");
+        }
         throw lastError || new Error("Kamera tidak dapat diinisialisasi.");
       }
 
@@ -844,7 +866,7 @@ export default function EmployeeScanPage() {
             </div>
 
             {/* Unified Sensor & Diagnostic Status Card */}
-            {!gpsCoords || cameraError || error ? (
+            {!gpsCoords || cameraError || error || (typeof window !== "undefined" && !window.isSecureContext) ? (
               <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/90 dark:bg-neutral-900/90 p-2.5 space-y-2 text-xs text-left divide-y divide-neutral-200 dark:divide-neutral-800">
                 {/* GPS Permission Row */}
                 {!gpsCoords && (
@@ -901,6 +923,36 @@ export default function EmployeeScanPage() {
                     >
                       Tutup
                     </button>
+                  </div>
+                )}
+
+                {/* Insecure Origin QA Diagnostic Helper */}
+                {typeof window !== "undefined" && !window.isSecureContext && (
+                  <div className="pt-2 first:pt-0 space-y-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                        <span className="text-[10px] font-bold text-amber-900 dark:text-amber-200 uppercase tracking-wide">
+                          Peramban Membatasi Sensor (HTTP)
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (typeof navigator !== "undefined" && navigator.clipboard) {
+                            navigator.clipboard.writeText("chrome://flags/#unsafely-treat-insecure-origin-as-secure");
+                            setFlagCopied(true);
+                            setTimeout(() => setFlagCopied(false), 2500);
+                          }
+                        }}
+                        className="hig-button-compact-secondary text-[10px] shrink-0"
+                      >
+                        {flagCopied ? "Tersalin" : "Salin Flag Chrome"}
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-neutral-600 dark:text-neutral-400 leading-normal">
+                      Kamera &amp; lokasi diblokir oleh peramban karena diakses via IP HTTP. Buka flag Chrome di tab baru untuk mengizinkan IP ini atau gunakan HTTPS.
+                    </p>
                   </div>
                 )}
               </div>
