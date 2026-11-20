@@ -116,7 +116,7 @@ async function main() {
     include: { employeeProfile: true },
   });
 
-  // Employee 2: Siti Rahma (Overnight Shift, Rp175,000/day, Unbound)
+  // Employee 2: Siti Rahma (Overnight Shift, Rp175,000/day, Bound to Phone)
   const userSiti = await prisma.user.create({
     data: {
       email: "siti@company.com",
@@ -131,6 +131,14 @@ async function main() {
           dailySalary: 175000, // Rp175,000
           shiftId: shiftOvernight.id,
           employmentStatus: "PERMANENT",
+        },
+      },
+      deviceRegistration: {
+        create: {
+          deviceFingerprint: "fp_siti_pixel_phone_auth",
+          deviceName: "Siti's Authorized Pixel 7",
+          platform: "Android Phone",
+          isActive: true,
         },
       },
     },

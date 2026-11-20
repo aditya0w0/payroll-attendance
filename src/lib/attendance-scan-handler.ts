@@ -192,7 +192,18 @@ export async function handleAttendanceScan(req: Request) {
     }
 
     // 5. Single-Device Security Verification & Cheating Flagging
-    if (user.deviceRegistration) {
+    if (user.role === "EMPLOYEE") {
+      if (!user.deviceRegistration || !user.deviceRegistration.isActive) {
+        return NextResponse.json(
+          {
+            error: "DEVICE_NOT_AUTHORIZED",
+            message:
+              "Presensi ditolak: Akun belum terikat pada perangkat resmi. Silakan login ulang untuk mendaftarkan perangkat Anda.",
+          },
+          { status: 403 }
+        );
+      }
+
       const regFp = user.deviceRegistration.deviceFingerprint;
       if (regFp && deviceFingerprint && regFp !== deviceFingerprint) {
         await recordAuditLog({

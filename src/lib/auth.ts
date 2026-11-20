@@ -127,11 +127,21 @@ export async function getCurrentUser(req?: Request) {
       return null;
     }
 
-    // Strict Employee Security Enforcement:
-    // If user is EMPLOYEE and has a registered device that has been revoked or deactivated by Owner,
-    // terminate the session immediately!
+    // Strict Employee Single-Device & Anti-Multi-Login Enforcement:
+    // 1. Employee must have an active device registration
+    // 2. The session's bound device fingerprint must match the active device registration
     if (session.user.role === "EMPLOYEE") {
-      if (session.user.deviceRegistration && !session.user.deviceRegistration.isActive) {
+      if (!session.user.deviceRegistration || !session.user.deviceRegistration.isActive) {
+        await prisma.session.deleteMany({ where: { sessionToken: token } });
+        return null;
+      }
+
+      if (
+        session.deviceFingerprint &&
+        session.user.deviceRegistration.deviceFingerprint &&
+        session.deviceFingerprint !== session.user.deviceRegistration.deviceFingerprint
+      ) {
+        // Multi-login detected from an old or revoked device terminal. Invalidate session immediately.
         await prisma.session.deleteMany({ where: { sessionToken: token } });
         return null;
       }

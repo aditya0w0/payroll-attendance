@@ -555,10 +555,10 @@ export default function LoginPage() {
             </div>
 
             <h2 className="text-base font-semibold text-[var(--text-primary)] mb-1">
-              Perangkat Belum Diotorisasi
+              Multi-Login Terdeteksi
             </h2>
             <p className="text-xs text-[var(--text-secondary)] mb-4 leading-relaxed">
-              Akun ini terikat pada perangkat resmi lain. Berikan Request ID berikut kepada Pemilik untuk memperoleh Kode Buka Kunci.
+              Akun ini telah terikat pada perangkat resmi lain. Multi-login dilarang. Wajib hubungi Pemilik (Admin) untuk melakukan reset perangkat, atau masukkan 6-digit kode buka kunci di bawah.
             </p>
 
             <div className="bg-neutral-100 dark:bg-neutral-800/60 rounded-xl p-3 text-left text-xs space-y-1.5 mb-4 border border-[var(--separator)]">
