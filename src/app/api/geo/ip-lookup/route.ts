@@ -7,8 +7,12 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const paramIp = searchParams.get("ip")?.trim();
 
+    // Strict IP syntax validation to prevent arbitrary path injection in external API calls
+    const IP_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^[a-fA-F0-9:]+$/;
+    const sanitizedParamIp = paramIp && IP_REGEX.test(paramIp) ? paramIp : null;
+
     const clientIp = (
-      paramIp ||
+      sanitizedParamIp ||
       req.headers.get("x-forwarded-for")?.split(",")[0] ||
       req.headers.get("x-real-ip") ||
       "127.0.0.1"

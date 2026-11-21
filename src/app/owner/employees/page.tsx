@@ -54,7 +54,7 @@ export default function OwnerEmployeesPage() {
     employeeId: "",
     username: "",
     email: "",
-    initialPassword: "employee123",
+    initialPassword: "",
     dailySalary: 150000,
     shiftId: "",
     employmentStatus: "PERMANENT",
@@ -123,7 +123,7 @@ export default function OwnerEmployeesPage() {
         employeeId: "",
         username: "",
         email: "",
-        initialPassword: "employee123",
+        initialPassword: "",
         dailySalary: 150000,
         shiftId: shifts[0]?.id || "",
         employmentStatus: "PERMANENT",
@@ -442,6 +442,7 @@ export default function OwnerEmployeesPage() {
                     required
                     value={newEmp.initialPassword}
                     onChange={(e) => setNewEmp({ ...newEmp, initialPassword: e.target.value })}
+                    placeholder="Minimal 6 karakter"
                     className="hig-input font-mono"
                   />
                 </div>
