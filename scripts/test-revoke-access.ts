@@ -225,8 +225,13 @@ async function runRevokeAccessTests() {
     const empLoginRes = await postLogin(empLoginReq);
     assert(empLoginRes.status === 200, "Employee password login succeeds");
     const empLoginData = await empLoginRes.json();
-    assert(empLoginData.mustBindDevice === true, "Revoked device forces mustBindDevice: true for new passkey enrollment");
-    assert(empLoginData.onboardingState === "MUST_BIND_DEVICE", "Employee onboardingState is MUST_BIND_DEVICE");
+    assert(empLoginData.success === true, "Employee login succeeds with replacement device");
+    assert(empLoginData.redirectUrl === "/employee", "Employee redirected to /employee");
+    const reboundDevice = await prisma.deviceRegistration.findUnique({
+      where: { userId: testEmp.id },
+    });
+    assert(reboundDevice?.isActive === true, "New replacement device is bound and active");
+    assert(reboundDevice?.deviceFingerprint === "fp_new_clean_device", "Fingerprint matches new replacement device");
 
     // -------------------------------------------------------------------------
     // TEST 6: Direct Endpoint /api/owner/devices/revoke

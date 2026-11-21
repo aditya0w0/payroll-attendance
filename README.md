@@ -282,6 +282,13 @@ npm start
 
 ---
 
+## Deployment Guide (Panduan Deployment)
+
+For a step-by-step buyer deployment guide written in plain language (Bahasa Indonesia):
+See [PANDUAN_DEPLOYMENT.md](PANDUAN_DEPLOYMENT.md).
+
+---
+
 ## License
 
 This project is licensed under the MIT License.

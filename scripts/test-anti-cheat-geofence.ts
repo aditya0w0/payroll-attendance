@@ -526,6 +526,8 @@ async function runAntiCheatGeofenceTests() {
         latitude: -6.2088,
         longitude: 106.8456,
         accuracy: 10,
+        forceEarlyCheckout: true,
+        earlyCheckoutReason: "Selesai shift tugas pengujian otomatis",
       }),
     });
 
