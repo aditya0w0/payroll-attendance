@@ -71,12 +71,29 @@ async function runWebAuthnEndpointTests() {
       },
     });
 
+    const testFingerprint = "fp_webauthn_test_terminal";
+    await prisma.deviceRegistration.upsert({
+      where: { userId: testUser.id },
+      update: {
+        deviceFingerprint: testFingerprint,
+        deviceName: "Test Work Terminal",
+        isActive: true,
+      },
+      create: {
+        userId: testUser.id,
+        deviceFingerprint: testFingerprint,
+        deviceName: "Test Work Terminal",
+        isActive: true,
+      },
+    });
+
     // Create session token for test user
     const testSessionToken = `session_webauthn_test_${Date.now()}`;
     await prisma.session.create({
       data: {
         sessionToken: testSessionToken,
         userId: testUser.id,
+        deviceFingerprint: testFingerprint,
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       },
     });
@@ -287,9 +304,13 @@ async function runWebAuthnEndpointTests() {
     const onboardingLoginRes = await postLogin(onboardingLoginReq);
     assert(onboardingLoginRes.status === 200, "First-time employee login returns 200", `Status: ${onboardingLoginRes.status}`);
     const onboardingData = await onboardingLoginRes.json();
-    assert(onboardingData.mustBindDevice === true, "First-time employee login flagged with mustBindDevice: true");
-    assert(onboardingData.onboardingState === "MUST_BIND_DEVICE", "First-time employee login has state MUST_BIND_DEVICE");
-    assert(onboardingData.redirectUrl === "/employee?onboarding=passkey", "First-time employee redirected to /employee?onboarding=passkey");
+    assert(onboardingData.success === true, "First-time employee login succeeds");
+    assert(onboardingData.redirectUrl === "/employee", "First-time employee redirected to /employee");
+    const boundDeviceInDb = await prisma.deviceRegistration.findUnique({
+      where: { userId: unboundUser.id },
+    });
+    assert(boundDeviceInDb?.deviceFingerprint === "fp_onboarding_laptop", "Device bound automatically on first login");
+    assert(boundDeviceInDb?.isActive === true, "Bound device marked active");
 
     // Verify onboarding session was created in DB
     const onboardingSession = await prisma.session.findFirst({

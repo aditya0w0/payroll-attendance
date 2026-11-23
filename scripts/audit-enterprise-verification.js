@@ -1,7 +1,7 @@
 /**
- * Enterprise Audit & Comprehensive Verification Script
- * Validates Zero-Trust Architecture, Daily Salary Wage Engine, Anti-Cheating Hardening,
- * Single-Device Cryptographic Binding, Overnight Shift Logic, and Payroll Snapshots.
+ * System Verification Script
+ * Validates daily wage calculations, session management, device binding,
+ * overnight shift logic, and payslip snapshots.
  */
 
 const { PrismaClient } = require("@prisma/client");

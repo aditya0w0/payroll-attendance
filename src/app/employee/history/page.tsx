@@ -93,19 +93,19 @@ export default function EmployeeHistoryPage() {
 
       {/* Aggregate KPI Summary Cards */}
       <div className="grid grid-cols-3 gap-2 text-center">
-        <div className="apple-card p-3">
+        <div className="liquid-glass p-3.5 rounded-2xl">
           <span className="text-[10px] text-neutral-400 uppercase font-semibold block tracking-wider">Completed</span>
           <span className="text-base font-semibold text-neutral-900 dark:text-neutral-100 tabular-nums">
             {summary.totalCompletedDays}d
           </span>
         </div>
-        <div className="apple-card p-3">
+        <div className="liquid-glass p-3.5 rounded-2xl">
           <span className="text-[10px] text-neutral-400 uppercase font-semibold block tracking-wider">Deductions</span>
           <span className="text-base font-semibold text-red-600 dark:text-red-400 tabular-nums">
             -{formatIDR(summary.totalDeducted)}
           </span>
         </div>
-        <div className="apple-card p-3">
+        <div className="liquid-glass p-3.5 rounded-2xl">
           <span className="text-[10px] text-neutral-400 uppercase font-semibold block tracking-wider">Net Earned</span>
           <span className="text-base font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
             {formatIDR(summary.totalEarned)}
@@ -114,30 +114,30 @@ export default function EmployeeHistoryPage() {
       </div>
 
       {/* Attendance Records List */}
-      <div className="space-y-2.5">
+      <div className="space-y-3">
         {loading ? (
           <div className="text-center py-16 text-xs text-neutral-400">Loading attendance records...</div>
         ) : records.length === 0 ? (
-          <div className="apple-card p-8 text-center text-xs text-neutral-400">
+          <div className="liquid-glass p-8 rounded-3xl text-center text-xs text-neutral-400">
             No completed attendance records found.
           </div>
         ) : (
           records.map((r) => {
             const isCompleted = r.status === "COMPLETED" || r.status === "LATE_COMPLETED";
             return (
-              <div key={r.id} className="apple-card p-4 space-y-2.5 text-xs">
+              <div key={r.id} className="liquid-glass p-4 rounded-3xl space-y-2.5 text-xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 font-semibold text-neutral-900 dark:text-neutral-100">
-                    <Calendar className="w-3.5 h-3.5 text-neutral-400" />
+                    <Calendar className="w-3.5 h-3.5 text-blue-500" />
                     <span>{r.shiftDate}</span>
                   </div>
                   <span
-                    className={`px-2 py-0.5 rounded text-[10px] font-medium ${
+                    className={`liquid-glass-pill px-2.5 py-0.5 text-[10px] font-semibold ${
                       r.status === "COMPLETED"
-                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30"
                         : r.status === "LATE_COMPLETED"
-                        ? "bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800"
-                        : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
+                        ? "bg-red-500/15 text-red-700 dark:text-red-300 border border-red-500/30"
+                        : "bg-neutral-500/15 text-neutral-700 dark:text-neutral-300 border border-neutral-500/20"
                     }`}
                   >
                     {r.status}
@@ -148,7 +148,7 @@ export default function EmployeeHistoryPage() {
                   {r.shift.name} ({r.shift.startTime} – {r.shift.endTime})
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-neutral-100 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 text-[11px]">
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/40 dark:border-white/10 text-neutral-600 dark:text-neutral-400 text-[11px]">
                   <div>
                     Check-In: <span className="font-mono font-medium text-neutral-800 dark:text-neutral-200">{r.checkInTime.split("T")[1]?.substring(0, 5) || "--"}</span>
                   </div>
@@ -157,7 +157,7 @@ export default function EmployeeHistoryPage() {
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center pt-2 border-t border-neutral-100 dark:border-neutral-800">
+                <div className="flex justify-between items-center pt-2 border-t border-white/40 dark:border-white/10">
                   <span className="text-neutral-500 text-[11px]">
                     {r.lateMinutes > 0 ? (
                       <span className="text-red-600 dark:text-red-400 font-medium">{r.lateMinutes}m late (-{formatIDR(r.lateDeduction)})</span>

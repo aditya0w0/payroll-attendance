@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
@@ -97,8 +98,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Validate the 6-digit challenge code
-    if (unlockReq.unlockCode !== unlockCode.trim()) {
+    // 2. Validate the 6-digit challenge code using constant-time comparison
+    const expectedBuf = Buffer.from(unlockReq.unlockCode);
+    const providedBuf = Buffer.from(unlockCode.trim());
+    const codesMatch =
+      expectedBuf.length === providedBuf.length &&
+      crypto.timingSafeEqual(expectedBuf, providedBuf);
+
+    if (!codesMatch) {
       tracker.attempts += 1;
       tracker.lastAttempt = Date.now();
       failedUnlockAttempts.set(normalizedReqCode, tracker);
@@ -134,8 +141,22 @@ export async function POST(req: NextRequest) {
 
     const user = unlockReq.user;
 
-    // 3. Transaction: Re-bind device to user, mark request as USED, and REVOKE ALL PREVIOUS SESSIONS
+    // 3. Transaction: Atomically claim PENDING request, re-bind device, and REVOKE ALL PREVIOUS SESSIONS
     await prisma.$transaction(async (tx) => {
+      // Concurrency Guard: Atomic transition PENDING -> USED
+      const claimRes = await tx.deviceUnlockRequest.updateMany({
+        where: { id: unlockReq.id, status: "PENDING", expiresAt: { gt: now } },
+        data: {
+          status: "USED",
+          resolvedAt: now,
+          resolvedByUserId: user.id,
+        },
+      });
+
+      if (claimRes.count === 0) {
+        throw new Error("UNLOCK_ALREADY_USED");
+      }
+
       // Step A: Invalidate all existing sessions on previous/compromised devices
       await tx.session.deleteMany({
         where: { userId: user.id },
@@ -160,16 +181,6 @@ export async function POST(req: NextRequest) {
           isActive: true,
           status: "ACTIVE",
           lastSeenAt: now,
-        },
-      });
-
-      // Step D: Mark request as USED
-      await tx.deviceUnlockRequest.update({
-        where: { id: unlockReq.id },
-        data: {
-          status: "USED",
-          resolvedAt: now,
-          resolvedByUserId: user.id,
         },
       });
     });
@@ -203,6 +214,12 @@ export async function POST(req: NextRequest) {
       redirectUrl: "/employee",
     });
   } catch (error: any) {
+    if (error?.message === "UNLOCK_ALREADY_USED") {
+      return NextResponse.json(
+        { error: "This unlock request has already been used or expired." },
+        { status: 409 }
+      );
+    }
     console.error("Unlock device API error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

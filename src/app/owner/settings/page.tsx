@@ -19,8 +19,8 @@ import { acquirePrecisionLocation, PrecisionLocationResult } from "@/lib/geo-bro
 const MapLocationPicker = dynamic(() => import("@/components/MapLocationPicker"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-80 rounded-xl bg-neutral-100 dark:bg-neutral-800 animate-pulse flex flex-col items-center justify-center gap-2 text-xs text-neutral-500">
-      <Compass className="w-6 h-6 animate-spin text-blue-500" />
+    <div className="w-full h-80 rounded-xl bg-[var(--system-bg-secondary)] animate-pulse flex flex-col items-center justify-center gap-2 text-xs text-[var(--text-tertiary)]">
+      <Compass className="w-6 h-6 animate-spin text-[var(--accent)]" />
       <span>Memuat Peta Interaktif &amp; Geofence...</span>
     </div>
   ),
@@ -81,7 +81,7 @@ export default function OwnerSettingsPage() {
         });
       }
     } catch (e: any) {
-      setMessage({ text: e.message || "Failed to load office settings", type: "error" });
+      setMessage({ text: e.message || "Gagal memuat pengaturan kantor", type: "error" });
     } finally {
       setLoading(false);
     }
@@ -101,7 +101,7 @@ export default function OwnerSettingsPage() {
 
     if (!isSecure) {
       setMessage({
-        text: "Browser memblokir izin GPS karena aplikasi dibuka melalui HTTP biasa (bukan HTTPS). Buka aplikasi via HTTPS agar pop-up izin lokasi dapat muncul.",
+        text: "Browser memblokir izin GPS karena aplikasi dibuka via HTTP biasa. Buka via HTTPS agar izin lokasi aktif.",
         type: "error",
       });
       return;
@@ -131,7 +131,7 @@ export default function OwnerSettingsPage() {
 
       if (res.accuracy > 80) {
         setMessage({
-          text: `Satelit GPS belum terkunci (akurasi seluler +/- ${res.accuracy}m terlalu kasar). Geser pin manual ke titik kantor pada peta atau cari nama jalan/kelurahan terdekat.`,
+          text: `Sinyal GPS belum akurat (+/- ${res.accuracy}m). Geser pin pada peta ke titik kantor Anda.`,
           type: "error",
         });
         return;
@@ -144,14 +144,12 @@ export default function OwnerSettingsPage() {
       }));
 
       setMessage({
-        text: `Titik GPS berhasil diperbarui (${res.latitude}, ${res.longitude}) dengan akurasi +/- ${res.accuracy}m (${
-          res.isHighPrecision ? "Presisi Satelit Tinggi" : "GPS Hardware"
-        }).`,
+        text: `Koordinat GPS diperbarui (${res.latitude}, ${res.longitude}) dengan akurasi +/- ${res.accuracy}m.`,
         type: "success",
       });
     } catch (err: any) {
       setMessage({
-        text: `Gagal membaca GPS: ${err.message}. Pastikan izin lokasi aktif pada browser Anda.`,
+        text: `Gagal membaca GPS: ${err.message}. Pastikan izin lokasi aktif pada browser.`,
         type: "error",
       });
     } finally {
@@ -167,7 +165,7 @@ export default function OwnerSettingsPage() {
       if (data.ip) {
         setConfig((prev) => ({ ...prev, officePublicIp: data.ip }));
         setMessage({
-          text: `IP Publik WiFi terdeteksi: ${data.ip}`,
+          text: `IP Publik WiFi kantor terdeteksi: ${data.ip}`,
           type: "success",
         });
       }
@@ -195,7 +193,7 @@ export default function OwnerSettingsPage() {
         throw new Error(data.error || "Gagal menyimpan konfigurasi kantor");
       }
 
-      setMessage({ text: data.message, type: "success" });
+      setMessage({ text: data.message || "Pengaturan berhasil disimpan.", type: "success" });
       if (data.config) {
         setConfig({
           ...data.config,
@@ -214,16 +212,16 @@ export default function OwnerSettingsPage() {
       {/* Title */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-50">
-              Office Location &amp; WiFi Verification
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
+              Lokasi Kantor &amp; Verifikasi Jaringan
             </h1>
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
-              Anti-Cheat Geofence
+            <span className="hig-badge hig-badge-neutral text-xs font-semibold px-2.5 py-0.5">
+              Geofence &amp; IP WiFi
             </span>
           </div>
-          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-            Konfigurasi koordinat fisik kantor dan IP WiFi publik untuk mencegah kecurangan absen foto/jastip.
+          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+            Atur titik koordinat fisik kantor dan IP WiFi publik untuk validasi absensi karyawan.
           </p>
         </div>
 
@@ -231,25 +229,25 @@ export default function OwnerSettingsPage() {
           type="button"
           onClick={loadConfig}
           disabled={loading}
-          className="bg-neutral-100 dark:bg-[#2C2C2E] text-neutral-700 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-[#3A3A3C] rounded-lg px-3 py-2 text-xs font-medium inline-flex items-center gap-1.5 transition-colors disabled:opacity-50"
+          className="hig-button-secondary text-xs"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-          <span>Refresh</span>
+          <span>Muat Ulang</span>
         </button>
       </div>
 
       {message && (
         <div
-          className={`p-3.5 rounded-xl text-xs flex items-start gap-2.5 ${
+          className={`p-3 rounded-lg text-xs flex items-center gap-2 ${
             message.type === "success"
-              ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80"
-              : "bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800/80"
+              ? "bg-[var(--system-green-tint)] text-[var(--system-green)]"
+              : "bg-[var(--system-red-tint)] text-[var(--system-red)]"
           }`}
         >
           {message.type === "success" ? (
-            <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-[var(--system-green)]" />
           ) : (
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
+            <AlertCircle className="w-4 h-4 shrink-0 text-[var(--system-red)]" />
           )}
           <span>{message.text}</span>
         </div>
@@ -258,57 +256,60 @@ export default function OwnerSettingsPage() {
       {/* Main Form */}
       <form onSubmit={handleSave} className="space-y-6">
         {/* Section 1: Office GPS Geofence */}
-        <div className="bg-white dark:bg-[#1C1C1E] border border-neutral-200 dark:border-neutral-800 rounded-xl p-6 shadow-sm space-y-5">
-          <div className="flex items-center justify-between pb-3 border-b border-neutral-200 dark:border-neutral-800">
+        <div className="hig-card p-5 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[var(--separator-subtle)]">
             <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              <h2 className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
-                1. GPS Geofence Radius
+              <MapPin className="w-4 h-4 text-[var(--accent)]" />
+              <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+                Area Geofence Kantor
               </h2>
             </div>
             {config.enforceGeofence ? (
-              <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                [GEOFENCE ENFORCED]
+              <span className="hig-badge hig-badge-green text-xs font-medium">
+                Geofence Aktif
               </span>
             ) : (
-              <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-800/50 text-neutral-500 dark:text-neutral-400">
-                [DISABLED]
+              <span className="hig-badge hig-badge-neutral text-xs font-medium">
+                Nonaktif
               </span>
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-              Nama Kantor / Toko
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-[var(--text-secondary)]">
+              Nama Kantor / Cabang
             </label>
             <input
               type="text"
               value={config.officeName}
               onChange={(e) => setConfig({ ...config, officeName: e.target.value })}
               required
-              placeholder="Kantor Utama / Toko Cabang"
-              className="w-full bg-neutral-50 dark:bg-[#2C2C2E] text-neutral-900 dark:text-neutral-100 border border-neutral-300 dark:border-neutral-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
+              placeholder="Kantor Utama"
+              className="hig-input"
             />
           </div>
 
           {/* Interactive Visual Map & Geofence Picker */}
           <div className="space-y-2 pt-1">
-            <div className="flex items-center justify-between">
-              <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">
-                Peta Lokasi &amp; Lingkaran Geofence
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-xs font-medium text-[var(--text-secondary)]">
+                Peta Koordinat &amp; Lingkaran Geofence
               </label>
-              <div className="flex items-center gap-1.5 text-xs flex-wrap">
-                <span className="text-neutral-500 dark:text-neutral-400 text-[11px]">Kota Cepat:</span>
-                {INDONESIA_CITY_PRESETS.map((city) => (
-                  <button
-                    key={city.name}
-                    type="button"
-                    onClick={() => setConfig({ ...config, latitude: city.lat, longitude: city.lon })}
-                    className="text-[11px] px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
-                  >
-                    {city.name}
-                  </button>
-                ))}
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="text-[var(--text-tertiary)]">Pusatkan:</span>
+                <select
+                  onChange={(e) => {
+                    const found = INDONESIA_CITY_PRESETS.find((c) => c.name === e.target.value);
+                    if (found) setConfig((prev) => ({ ...prev, latitude: found.lat, longitude: found.lon }));
+                  }}
+                  defaultValue=""
+                  className="hig-input py-1 px-2 text-xs w-auto"
+                >
+                  <option value="" disabled>Pilih Kota</option>
+                  {INDONESIA_CITY_PRESETS.map((city) => (
+                    <option key={city.name} value={city.name}>{city.name}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -331,18 +332,18 @@ export default function OwnerSettingsPage() {
               type="button"
               onClick={handleGetCurrentLocation}
               disabled={locating}
-              className="bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/60 rounded-lg px-3.5 py-2 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors disabled:opacity-50 shadow-sm"
+              className="hig-button-secondary text-xs flex items-center gap-1.5"
             >
               <Crosshair className={`w-3.5 h-3.5 ${locating ? "animate-spin" : ""}`} />
-              <span>{locating ? "Mengunci Satelit GPS..." : "Gunakan Lokasi GPS Saya (Presisi Tinggi)"}</span>
+              <span>{locating ? "Membaca Satelit GPS..." : "Gunakan Titik GPS Saya"}</span>
             </button>
           </div>
 
           {/* Coordinate Numeric Inputs */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                Latitude (Garis Lintang)
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+            <div className="space-y-1">
+              <label className="block text-xs font-medium text-[var(--text-secondary)]">
+                Latitude (Lintang)
               </label>
               <input
                 type="number"
@@ -350,13 +351,13 @@ export default function OwnerSettingsPage() {
                 value={config.latitude}
                 onChange={(e) => setConfig({ ...config, latitude: parseFloat(e.target.value) || 0 })}
                 required
-                className="w-full font-mono bg-neutral-50 dark:bg-[#2C2C2E] text-neutral-900 dark:text-neutral-100 border border-neutral-300 dark:border-neutral-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
+                className="hig-input font-mono"
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                Longitude (Garis Bujur)
+            <div className="space-y-1">
+              <label className="block text-xs font-medium text-[var(--text-secondary)]">
+                Longitude (Bujur)
               </label>
               <input
                 type="number"
@@ -364,36 +365,36 @@ export default function OwnerSettingsPage() {
                 value={config.longitude}
                 onChange={(e) => setConfig({ ...config, longitude: parseFloat(e.target.value) || 0 })}
                 required
-                className="w-full font-mono bg-neutral-50 dark:bg-[#2C2C2E] text-neutral-900 dark:text-neutral-100 border border-neutral-300 dark:border-neutral-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
+                className="hig-input font-mono"
               />
             </div>
           </div>
 
-          {/* Geofence Radius & Accuracy Settings */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-neutral-200 dark:border-neutral-800">
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                Radius Toleransi Geofence (Meter)
+          {/* Radius & Accuracy */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+            <div className="space-y-1">
+              <label className="block text-xs font-medium text-[var(--text-secondary)]">
+                Radius Geofence (Meter)
               </label>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <input
                   type="number"
                   min="10"
                   max="1000"
                   value={config.radiusMeters}
                   onChange={(e) => setConfig({ ...config, radiusMeters: parseInt(e.target.value) || 50 })}
-                  className="w-28 font-mono bg-neutral-50 dark:bg-[#2C2C2E] text-neutral-900 dark:text-neutral-100 border border-neutral-300 dark:border-neutral-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
+                  className="hig-input font-mono w-28 tabular-numbers"
                 />
-                <div className="flex gap-1.5">
-                  {[20, 50, 100, 200].map((preset) => (
+                <div className="flex gap-1">
+                  {[25, 50, 100, 200].map((preset) => (
                     <button
                       key={preset}
                       type="button"
                       onClick={() => setConfig({ ...config, radiusMeters: preset })}
-                      className={`px-3 py-1.5 text-xs rounded-lg border font-mono transition-colors ${
+                      className={`text-xs px-2 py-1 rounded transition-colors ${
                         config.radiusMeters === preset
-                          ? "bg-blue-600 text-white font-medium border-transparent"
-                          : "bg-neutral-100 dark:bg-[#2C2C2E] text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-[#3A3A3C]"
+                          ? "bg-[var(--accent)] text-white font-medium"
+                          : "hig-button-secondary"
                       }`}
                     >
                       {preset}m
@@ -401,14 +402,11 @@ export default function OwnerSettingsPage() {
                   ))}
                 </div>
               </div>
-              <span className="text-xs text-neutral-500 dark:text-neutral-400 block">
-                Radius maksimum karyawan dapat melakukan absensi dari titik koordinat kantor.
-              </span>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                Maksimal Akurasi GPS Diterima (Meter)
+            <div className="space-y-1">
+              <label className="block text-xs font-medium text-[var(--text-secondary)]">
+                Batas Toleransi Akurasi GPS (Meter)
               </label>
               <input
                 type="number"
@@ -416,22 +414,19 @@ export default function OwnerSettingsPage() {
                 max="500"
                 value={config.maxGpsAccuracy}
                 onChange={(e) => setConfig({ ...config, maxGpsAccuracy: parseInt(e.target.value) || 80 })}
-                className="w-28 font-mono bg-neutral-50 dark:bg-[#2C2C2E] text-neutral-900 dark:text-neutral-100 border border-neutral-300 dark:border-neutral-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
+                className="hig-input font-mono w-28 tabular-numbers"
               />
-              <span className="text-xs text-neutral-500 dark:text-neutral-400 block">
-                Tolak sinyal GPS dengan akurasi buruk (&gt; {config.maxGpsAccuracy}m) untuk mencegah cell-tower spoofing.
-              </span>
             </div>
           </div>
 
           {/* Toggle: Enforce Geofence */}
-          <div className="pt-3 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+          <div className="pt-3 border-t border-[var(--separator-subtle)] flex items-center justify-between">
             <div>
-              <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200 block">
-                Wajibkan Radius GPS (Geofence)
+              <span className="text-xs font-semibold text-[var(--text-primary)] block">
+                Wajibkan Radius GPS
               </span>
-              <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                Karyawan di luar radius {config.radiusMeters}m akan otomatis ditolak dengan kode GEO_OUT_OF_BOUNDS.
+              <span className="text-[11px] text-[var(--text-secondary)]">
+                Presensi di luar radius {config.radiusMeters}m akan otomatis ditolak.
               </span>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
@@ -441,33 +436,33 @@ export default function OwnerSettingsPage() {
                 onChange={(e) => setConfig({ ...config, enforceGeofence: e.target.checked })}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-neutral-300 dark:bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <div className="w-10 h-5 bg-neutral-300 dark:bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--accent)]"></div>
             </label>
           </div>
         </div>
 
         {/* Section 2: Office WiFi Public IP Matching */}
-        <div className="bg-white dark:bg-[#1C1C1E] border border-neutral-200 dark:border-neutral-800 rounded-xl p-6 shadow-sm space-y-5">
-          <div className="flex items-center justify-between pb-3 border-b border-neutral-200 dark:border-neutral-800">
+        <div className="hig-card p-5 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[var(--separator-subtle)]">
             <div className="flex items-center gap-2">
-              <Wifi className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-              <h2 className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
-                2. Office WiFi Public IP Matching
+              <Wifi className="w-4 h-4 text-[var(--accent)]" />
+              <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+                Pencocokan IP WiFi Kantor
               </h2>
             </div>
             {config.enforceWifiIp ? (
-              <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                [WIFI ENFORCED]
+              <span className="hig-badge hig-badge-green text-xs font-medium">
+                Wajib WiFi
               </span>
             ) : (
-              <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-800/50 text-neutral-500 dark:text-neutral-400">
-                [OPTIONAL]
+              <span className="hig-badge hig-badge-neutral text-xs font-medium">
+                Opsional
               </span>
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-[var(--text-secondary)]">
               IP Publik WiFi Kantor (WAN IP)
             </label>
             <div className="flex flex-col sm:flex-row gap-2 max-w-xl">
@@ -475,32 +470,29 @@ export default function OwnerSettingsPage() {
                 type="text"
                 value={config.officePublicIp || ""}
                 onChange={(e) => setConfig({ ...config, officePublicIp: e.target.value })}
-                placeholder="Misal: 180.252.12.34 / 203.0.113.195"
-                className="flex-1 max-w-md font-mono bg-neutral-50 dark:bg-[#2C2C2E] text-neutral-900 dark:text-neutral-100 border border-neutral-300 dark:border-neutral-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
+                placeholder="Misal: 180.252.12.34"
+                className="hig-input font-mono flex-1"
               />
               <button
                 type="button"
                 onClick={handleGetMyIp}
                 disabled={detectingIp}
-                className="bg-neutral-100 dark:bg-[#2C2C2E] text-neutral-700 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-[#3A3A3C] rounded-lg px-3 py-2 text-xs font-medium inline-flex items-center gap-1.5 whitespace-nowrap transition-colors disabled:opacity-50"
+                className="hig-button-secondary text-xs flex items-center gap-1.5 whitespace-nowrap"
               >
                 <Globe className={`w-3.5 h-3.5 ${detectingIp ? "animate-spin" : ""}`} />
-                <span>{detectingIp ? "Mendeteksi..." : "Gunakan IP Saya Saat Ini"}</span>
+                <span>{detectingIp ? "Mendeteksi..." : "Gunakan IP Saat Ini"}</span>
               </button>
             </div>
-            <span className="text-xs text-neutral-500 dark:text-neutral-400 block">
-              IP publik router WiFi kantor (Biznet, IndiHome, CBN, MyRepublic, XL). Buka halaman ini menggunakan WiFi kantor dan klik tombol deteksi.
-            </span>
           </div>
 
           {/* Toggle: Enforce WiFi IP */}
-          <div className="pt-3 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+          <div className="pt-3 border-t border-[var(--separator-subtle)] flex items-center justify-between">
             <div>
-              <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200 block">
+              <span className="text-xs font-semibold text-[var(--text-primary)] block">
                 Wajibkan Terhubung ke WiFi Kantor
               </span>
-              <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                Presensi hanya diizinkan jika perangkat karyawan tersambung ke WiFi kantor (mencegah absen via data seluler dari luar).
+              <span className="text-[11px] text-[var(--text-secondary)]">
+                Presensi hanya diizinkan bila perangkat terhubung ke router WiFi kantor.
               </span>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
@@ -510,7 +502,7 @@ export default function OwnerSettingsPage() {
                 onChange={(e) => setConfig({ ...config, enforceWifiIp: e.target.checked })}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-neutral-300 dark:bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <div className="w-10 h-5 bg-neutral-300 dark:bg-neutral-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--accent)]"></div>
             </label>
           </div>
         </div>
@@ -520,10 +512,10 @@ export default function OwnerSettingsPage() {
           <button
             type="submit"
             disabled={saving}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-xs font-medium flex items-center gap-1.5 shadow-sm transition-colors disabled:opacity-50"
+            className="hig-button-primary text-xs"
           >
             <Save className="w-3.5 h-3.5" />
-            <span>{saving ? "Menyimpan..." : "Simpan Konfigurasi"}</span>
+            <span>{saving ? "Menyimpan..." : "Simpan Pengaturan"}</span>
           </button>
         </div>
       </form>

@@ -114,38 +114,76 @@ export async function POST(req: Request) {
     if (user.role === "EMPLOYEE") {
       const existingDevice = user.deviceRegistration;
 
-      // Strict First-Time Login Onboarding Flow: Employee has no registered device
+      // Strict Single-Device Auto-Binding on First Login or Post-Admin Reset
       if (!existingDevice || !existingDevice.isActive) {
-        // Authenticate credentials and establish onboarding session for passkey registration
-        await createSession(user.id, deviceFingerprint || "onboarding_terminal");
+        const platform = userAgent.includes("iPhone") ? "iOS" : userAgent.includes("Android") ? "Android" : "Web";
+        const cleanDeviceName =
+          deviceName && deviceName !== "Web Browser"
+            ? deviceName
+            : userAgent.includes("iPhone")
+            ? "Apple iPhone"
+            : userAgent.includes("Android")
+            ? "Android Mobile"
+            : "Workstation Browser";
+        const boundFp =
+          deviceFingerprint && deviceFingerprint !== "browser_terminal_default"
+            ? deviceFingerprint
+            : `fp_${user.id.substring(0, 8)}_${Date.now()}`;
+
+        // Bind device immediately as the single authorized terminal
+        await prisma.deviceRegistration.upsert({
+          where: { userId: user.id },
+          create: {
+            userId: user.id,
+            deviceFingerprint: boundFp,
+            deviceName: cleanDeviceName,
+            platform,
+            isActive: true,
+            status: "ACTIVE",
+            lastSeenAt: new Date(),
+          },
+          update: {
+            deviceFingerprint: boundFp,
+            deviceName: cleanDeviceName,
+            platform,
+            isActive: true,
+            status: "ACTIVE",
+            lastSeenAt: new Date(),
+          },
+        });
+
+        // Invalidate any other active sessions
+        await prisma.session.deleteMany({
+          where: { userId: user.id },
+        });
+
+        // Authenticate credentials and establish single session bound to this device
+        await createSession(user.id, boundFp);
 
         await recordAuditLog({
           actorId: user.id,
           actorRole: user.role,
           actorName: user.employeeProfile?.fullName || user.username,
-          action: "AUTH_LOGIN_ONBOARDING_PENDING",
+          action: "DEVICE_BOUND_ON_FIRST_LOGIN",
           targetEntity: "DEVICE_SECURITY",
           targetId: user.id,
-          newValues: { onboardingState: "MUST_BIND_DEVICE" },
+          newValues: { deviceFingerprint: boundFp, deviceName: cleanDeviceName, platform },
           ipAddress: ip,
           userAgent,
-          reason: "First-time employee login authenticated. Onboarding session established for physical passkey enrollment.",
+          reason: "Employee single device registration bound upon login. Multi-login strictly locked to this physical terminal.",
         });
 
         return NextResponse.json({
           success: true,
-          mustBindDevice: true,
-          onboardingState: "MUST_BIND_DEVICE",
           role: user.role,
-          redirectUrl: "/employee?onboarding=passkey",
-          message: "First-time login: Please register your hardware passkey to bind this device.",
+          redirectUrl: "/employee",
+          message: "Login berhasil. Perangkat ini telah terdaftar sebagai satu-satunya perangkat resmi akun Anda.",
           user: {
             id: user.id,
             email: user.email,
             username: user.username,
             role: user.role,
             name: user.employeeProfile?.fullName || user.username,
-            mustBindDevice: true,
           },
         });
       }
@@ -176,7 +214,7 @@ export async function POST(req: Request) {
         return NextResponse.json(
           {
             error: "DEVICE_NOT_AUTHORIZED",
-            message: "Access Denied: This account is locked to a single authorized device.",
+            message: `Akses ditolak: Percobaan multi-login terdeteksi. Akun ini telah terikat pada perangkat resmi lain (${deviceCheck.boundDeviceName || "Perangkat Resmi"}). Multi-login dilarang dan wajib di-reset via Admin.`,
             requestCode: deviceCheck.requestCode,
             boundDeviceName: deviceCheck.boundDeviceName,
             attemptedDeviceName: deviceCheck.attemptedDeviceName,

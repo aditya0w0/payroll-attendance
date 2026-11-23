@@ -1,8 +1,14 @@
+import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { recordAuditLog } from "@/lib/audit";
+
+const failedReplaceAttempts = new Map<string, { attempts: number; lockoutUntil: number }>();
+const MAX_REPLACE_FAILURES = 5;
+const REPLACE_LOCKOUT_MS = 5 * 60 * 1000;
+const MAX_TRACKER_ENTRIES = 1000;
 
 const replaceSchema = z.object({
   identifier: z.string().min(1, "Identifier is required"),
@@ -30,6 +36,27 @@ export async function POST(req: NextRequest) {
     const userAgent = req.headers.get("user-agent") || "Unknown Device";
 
     const cleanId = identifier.trim().toLowerCase();
+    const rateLimitKey = `${ip}:${cleanId}`;
+    const nowMs = Date.now();
+    const failureRec = failedReplaceAttempts.get(rateLimitKey);
+    if (failureRec && failureRec.lockoutUntil > nowMs) {
+      const waitSeconds = Math.ceil((failureRec.lockoutUntil - nowMs) / 1000);
+      return NextResponse.json(
+        { error: `Too many failed attempts. Please retry in ${waitSeconds}s.` },
+        { status: 429 }
+      );
+    }
+
+    const recordFailure = () => {
+      if (failedReplaceAttempts.size >= MAX_TRACKER_ENTRIES) {
+        const oldest = failedReplaceAttempts.keys().next().value;
+        if (oldest !== undefined) failedReplaceAttempts.delete(oldest);
+      }
+      const nextAttempts = (failureRec?.attempts || 0) + 1;
+      const lockoutUntil = nextAttempts >= MAX_REPLACE_FAILURES ? nowMs + REPLACE_LOCKOUT_MS : 0;
+      failedReplaceAttempts.set(rateLimitKey, { attempts: nextAttempts, lockoutUntil });
+    };
+
     const user = await prisma.user.findFirst({
       where: {
         OR: [
@@ -45,21 +72,25 @@ export async function POST(req: NextRequest) {
     });
 
     if (!user) {
+      recordFailure();
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
     // Authenticate password
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
+      recordFailure();
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
+
+    failedReplaceAttempts.delete(rateLimitKey);
 
     // Compute heuristic risk score (0-100)
     let riskScore = 10;
     if (!user.deviceRegistration) riskScore += 20;
     if (userAgent.includes("Linux") && !userAgent.includes("Android")) riskScore += 30;
 
-    const requestCode = `REQ-REP-${Math.floor(10000 + Math.random() * 90000)}`;
+    const requestCode = `REQ-REP-${crypto.randomInt(10000, 100000)}`;
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours for replacement request
 
     const replacementReq = await prisma.deviceUnlockRequest.create({
@@ -107,6 +138,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error("Replacement request error:", error);
-    return NextResponse.json({ error: error.message || "Failed to submit replacement request" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to submit replacement request" }, { status: 500 });
   }
 }

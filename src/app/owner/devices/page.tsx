@@ -148,6 +148,20 @@ export default function OwnerDevicesPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Modal keyboard Escape listener (R-32)
+  useEffect(() => {
+    if (!revokeTarget) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setRevokeTarget(null);
+        setRevokeReason("");
+        setRevokeError(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [revokeTarget]);
+
   const handleApproveUnlock = async (requestId: string) => {
     try {
       const res = await fetch("/api/owner/devices", {
@@ -197,7 +211,7 @@ export default function OwnerDevicesPage() {
   const handleResetDevice = async (userId: string, name: string) => {
     if (
       !confirm(
-        `Reset the authorized device for ${name}? The employee will be forced to register a new device.`
+        `Reset pengikatan perangkat untuk ${name}? Karyawan akan diminta mendaftarkan perangkat baru saat presensi berikutnya.`
       )
     )
       return;
@@ -231,22 +245,19 @@ export default function OwnerDevicesPage() {
       {/* Title */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
-              Device Management & Passkey Binding
+              Keamanan Perangkat
             </h1>
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
-              FIDO2 Passkeys & W3C WebAuthn
+            <span className="hig-badge hig-badge-neutral text-xs font-semibold px-2.5 py-0.5">
+              {devices.length} terdaftar
             </span>
           </div>
-          <p className="text-xs text-neutral-500 mt-1">
-            Employees are cryptographically bound to a single registered passkey credential. Unrecognized terminals require owner authorization or passkey biometric assertion.
-          </p>
         </div>
 
-        <button onClick={loadData} className="apple-btn-secondary text-xs">
+        <button onClick={loadData} className="hig-button-secondary text-xs">
           <RefreshCw className="w-3.5 h-3.5" />
-          Refresh
+          Muat Ulang
         </button>
       </div>
 
@@ -254,8 +265,8 @@ export default function OwnerDevicesPage() {
         <div
           className={`p-3 rounded-lg text-xs flex items-center gap-2.5 ${
             message.type === "success"
-              ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80"
-              : "bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800/80"
+              ? "bg-[var(--system-green-tint)] text-[var(--system-green)]"
+              : "bg-[var(--system-red-tint)] text-[var(--system-red)]"
           }`}
         >
           {message.type === "success" ? (
@@ -267,28 +278,28 @@ export default function OwnerDevicesPage() {
         </div>
       )}
 
-      {/* Pending Unlock & Replacement Requests */}
-      <div className="apple-card overflow-hidden">
-        <div className="p-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+      {/* Permintaan Buka Kunci & Pergantian Perangkat */}
+      <div className="hig-card overflow-hidden">
+        <div className="p-4 border-b border-[var(--separator-subtle)] flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <ShieldAlert className="w-4 h-4 text-amber-600" />
-            <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-              Pending Unlock & Replacement Requests
+            <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+            <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+              Permintaan Buka Kunci &amp; Ganti Perangkat
             </h2>
             {pendingRequests.length > 0 && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500 text-white">
-                {pendingRequests.length} pending
+              <span className="hig-badge hig-badge-orange text-[10px]">
+                {pendingRequests.length} permintaan
               </span>
             )}
           </div>
         </div>
 
         {pendingRequests.length === 0 ? (
-          <div className="text-center py-8 text-xs text-neutral-400">
-            No pending unlock or replacement requests. All active employees are operating from authorized terminals.
+          <div className="text-center py-8 text-xs text-[var(--text-tertiary)]">
+            Tidak ada permintaan buka kunci atau pergantian perangkat yang tertunda.
           </div>
         ) : (
-          <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
+          <div className="divide-y divide-[var(--separator-subtle)]">
             {pendingRequests.map((req) => {
               const isReplacementRequest = Boolean(req.reason);
               const employeeName = req.user.employeeProfile?.fullName || req.user.username;
@@ -296,66 +307,60 @@ export default function OwnerDevicesPage() {
               return (
                 <div
                   key={req.id}
-                  className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-5 bg-amber-50/30 dark:bg-amber-950/10"
+                  className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-5 bg-amber-50/20 dark:bg-amber-950/10"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-neutral-900 dark:text-neutral-100 text-sm">
+                      <span className="font-semibold text-[var(--text-primary)] text-sm">
                         {employeeName}
                       </span>
-                      <span className="font-mono text-[11px] bg-neutral-200 dark:bg-neutral-800 px-2 py-0.5 rounded text-neutral-700 dark:text-neutral-300 font-medium">
-                        Request ID: {req.requestCode}
+                      <span className="font-mono text-[11px] bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded text-[var(--text-secondary)] font-medium">
+                        ID: {req.requestCode}
                       </span>
                       {isReplacementRequest && (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
-                          Replacement Request
+                        <span className="hig-badge hig-badge-neutral text-[10px]">
+                          Ganti Perangkat
                         </span>
                       )}
                     </div>
 
-                    <div className="text-xs text-neutral-500 space-y-0.5 pt-1">
+                    <div className="text-xs text-[var(--text-secondary)] space-y-0.5 pt-1">
                       <div>
-                        Registered Hardware:{" "}
-                        <span className="font-medium text-neutral-700 dark:text-neutral-300">
-                          {req.previousDeviceName || "None"}
+                        Perangkat Terdaftar:{" "}
+                        <span className="font-medium text-[var(--text-primary)]">
+                          {req.previousDeviceName || "Belum ada"}
                         </span>
                       </div>
                       <div>
-                        Attempted Terminal:{" "}
-                        <span className="font-medium text-red-600 dark:text-red-400">
+                        Perangkat Baru yang Dicoba:{" "}
+                        <span className="font-medium text-amber-700 dark:text-amber-400">
                           {req.requestedDeviceName}
                         </span>
                       </div>
                       {req.reason && (
-                        <div className="pt-0.5 text-neutral-800 dark:text-neutral-200 font-medium">
-                          Reason: <span className="italic">{req.reason}</span>
+                        <div className="pt-0.5 text-[var(--text-primary)]">
+                          Alasan: <span className="italic text-[var(--text-secondary)]">{req.reason}</span>
                         </div>
                       )}
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    {/* 6-digit Unlock Code Box */}
-                    <div className="bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-2.5 shadow-sm text-center">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 block mb-1">
-                        Unlock Code
+                    {/* Kode Buka Kunci Badge */}
+                    <div className="hig-card p-3 rounded-xl text-center space-y-1 min-w-[170px]">
+                      <span className="text-[10px] font-medium text-[var(--text-tertiary)] block">
+                        Kode Buka Kunci
                       </span>
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1 font-mono text-xl font-bold tracking-widest text-blue-600 dark:text-blue-400">
-                          {req.unlockCode.split("").map((digit, i) => (
-                            <span
-                              key={i}
-                              className="w-6 h-8 flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 rounded border border-neutral-200 dark:border-neutral-700 text-sm font-semibold"
-                            >
-                              {digit}
-                            </span>
-                          ))}
-                        </div>
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="font-mono text-base font-bold tracking-widest text-blue-600 dark:text-blue-400 bg-neutral-100 dark:bg-neutral-800/80 px-2.5 py-1 rounded-md border border-neutral-200 dark:border-neutral-700/80">
+                          {req.unlockCode}
+                        </span>
 
                         <button
                           onClick={() => copyToClipboard(req.unlockCode)}
-                          className="apple-btn-secondary p-1.5 text-xs ml-1"
-                          title="Copy Unlock Code"
+                          className="hig-button-secondary p-1.5 text-xs"
+                          title="Salin Kode Buka Kunci"
+                          aria-label="Salin Kode Buka Kunci"
                         >
                           {copiedCode === req.unlockCode ? (
                             <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -371,16 +376,16 @@ export default function OwnerDevicesPage() {
                       {isReplacementRequest ? (
                         <button
                           onClick={() => handleApproveReplacement(req.id, employeeName)}
-                          className="apple-btn-primary text-xs px-3.5 py-2 whitespace-nowrap bg-purple-700 hover:bg-purple-800"
+                          className="hig-button-compact-primary whitespace-nowrap bg-purple-700 hover:bg-purple-800 border-purple-800 text-white"
                         >
-                          Approve Replacement
+                          Setujui Perangkat Baru
                         </button>
                       ) : (
                         <button
                           onClick={() => handleApproveUnlock(req.id)}
-                          className="apple-btn-primary text-xs px-3.5 py-2 whitespace-nowrap"
+                          className="hig-button-compact-primary whitespace-nowrap"
                         >
-                          Direct Approve
+                          Setujui Pembukaan
                         </button>
                       )}
                     </div>
@@ -392,32 +397,32 @@ export default function OwnerDevicesPage() {
         )}
       </div>
 
-      {/* Currently Registered Devices & Passkeys */}
-      <div className="apple-card overflow-hidden">
-        <div className="p-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-            Registered Employee Terminals & Passkeys ({devices.length})
+      {/* Perangkat & Passkey Terdaftar */}
+      <div className="hig-card overflow-hidden">
+        <div className="p-4 border-b border-[var(--separator-subtle)] flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+            Perangkat &amp; Passkey Terdaftar ({devices.length})
           </h2>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
             <thead>
-              <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 text-neutral-500">
-                <th className="py-3 px-4 font-semibold uppercase tracking-wider">Employee</th>
-                <th className="py-3 px-4 font-semibold uppercase tracking-wider">Terminal Hardware</th>
-                <th className="py-3 px-4 font-semibold uppercase tracking-wider">Assurance Tier</th>
-                <th className="py-3 px-4 font-semibold uppercase tracking-wider">Status</th>
-                <th className="py-3 px-4 font-semibold uppercase tracking-wider">Credential ID / Hash</th>
-                <th className="py-3 px-4 font-semibold uppercase tracking-wider">Registered</th>
-                <th className="py-3 px-4 font-semibold uppercase tracking-wider text-right">Action</th>
+              <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 text-neutral-500 font-medium">
+                <th className="py-3 px-4">Karyawan</th>
+                <th className="py-3 px-4">Perangkat Keras</th>
+                <th className="py-3 px-4">Tingkat Keamanan</th>
+                <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4">ID Kredensial</th>
+                <th className="py-3 px-4">Terdaftar Pada</th>
+                <th className="py-3 px-4 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
               {devices.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-8 text-neutral-400">
-                    No registered devices or passkeys yet.
+                    Belum ada perangkat atau passkey yang terdaftar.
                   </td>
                 </tr>
               ) : (
@@ -448,37 +453,37 @@ export default function OwnerDevicesPage() {
                         {isHardware ? (
                           <div className="space-y-0.5">
                             <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                              HARDWARE BOUND
+                              Hardware Terikat
                             </span>
-                            <div className="text-[10px] text-neutral-400">Device Bound</div>
+                            <div className="text-[10px] text-neutral-400">Biometrik Perangkat</div>
                           </div>
                         ) : isSynced ? (
                           <div className="space-y-0.5">
                             <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                              PASSKEY SYNCED
+                              Passkey Sinkron
                             </span>
                             <div className="text-[10px] text-neutral-400">
-                              {dev.credentialBackedUp ? "Keychain Synced" : "Platform Passkey"}
+                              {dev.credentialBackedUp ? "Keychain Cloud" : "Passkey Platform"}
                             </div>
                           </div>
                         ) : (
                           <div className="space-y-0.5">
                             <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-                              LEGACY FP
+                              Kripto Web
                             </span>
-                            <div className="text-[10px] text-neutral-400">Web Crypto</div>
+                            <div className="text-[10px] text-neutral-400">Fingerprint Standar</div>
                           </div>
                         )}
                       </td>
 
                       <td className="py-3 px-4">
                         {isRevoked ? (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20">
-                            [REVOKED]
+                          <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20">
+                            Dicabut
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-                            [ACTIVE]
+                          <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                            Aktif
                           </span>
                         )}
                       </td>
@@ -520,7 +525,7 @@ export default function OwnerDevicesPage() {
                                   assuranceTier: dev.assuranceTier || "STANDARD_PASSKEY_SYNCED",
                                 })
                               }
-                              className="apple-btn-secondary text-[11px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 border-red-200 dark:border-red-900/60 px-2.5 py-1 flex items-center gap-1 font-medium transition-colors"
+                              className="hig-button-compact-secondary text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 border-red-200 dark:border-red-900/60 inline-flex items-center gap-1 font-medium transition-colors"
                               title="Cabut Akses Perangkat Ini"
                             >
                               <Slash className="w-3 h-3 stroke-[2.5]" />
@@ -534,8 +539,9 @@ export default function OwnerDevicesPage() {
                                 dev.user.employeeProfile?.fullName || dev.user.username
                               )
                             }
-                            className="apple-btn-secondary text-[11px] text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 px-2 py-1"
-                            title="Reset Device Binding"
+                            className="hig-button-compact-secondary text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 px-2"
+                            title="Reset pengikatan perangkat"
+                            aria-label={`Reset perangkat ${dev.deviceName}`}
                           >
                             <RotateCcw className="w-3 h-3" />
                           </button>
@@ -575,9 +581,13 @@ export default function OwnerDevicesPage() {
                 <span className="font-medium text-neutral-900 dark:text-neutral-100 truncate max-w-[170px]">{revokeTarget.deviceName}</span>
               </div>
               <div className="flex justify-between items-center text-neutral-600 dark:text-neutral-300">
-                <span className="text-[11px]">Assurance Tier:</span>
-                <span className="font-mono text-[10px] uppercase font-bold text-neutral-800 dark:text-neutral-200">
-                  {revokeTarget.assuranceTier}
+                <span className="text-[11px]">Tingkat Keamanan:</span>
+                <span className="text-[11px] font-semibold text-neutral-800 dark:text-neutral-200">
+                  {revokeTarget.assuranceTier === "HIGH_HARDWARE_BOUND"
+                    ? "Hardware Terikat (Biometrik)"
+                    : revokeTarget.assuranceTier === "STANDARD_PASSKEY_SYNCED"
+                    ? "Passkey Sinkron"
+                    : "Kripto Web Standar"}
                 </span>
               </div>
               <div className="flex justify-between items-center text-neutral-600 dark:text-neutral-300 pt-1 border-t border-red-500/10">

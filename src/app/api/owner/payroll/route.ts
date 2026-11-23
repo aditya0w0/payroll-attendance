@@ -15,8 +15,12 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const now = new Date();
-  const year = parseInt(searchParams.get("year") || `${now.getFullYear()}`);
-  const month = parseInt(searchParams.get("month") || `${now.getMonth() + 1}`);
+  const year = parseInt(searchParams.get("year") || `${now.getFullYear()}`, 10);
+  const month = parseInt(searchParams.get("month") || `${now.getMonth() + 1}`, 10);
+
+  if (isNaN(year) || year < 2000 || year > 2100 || isNaN(month) || month < 1 || month > 12) {
+    return NextResponse.json({ error: "Invalid year or month parameter" }, { status: 400 });
+  }
 
   const monthStr = `${year}-${String(month).padStart(2, "0")}`;
 
@@ -111,15 +115,32 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json().catch(() => null);
-    if (!body || !body.year || !body.month) {
+    if (!body || body.year === undefined || body.month === undefined) {
       return NextResponse.json({ error: "Year and month are required" }, { status: 400 });
     }
-    const { year, month } = body;
+    const year = Number(body.year);
+    const month = Number(body.month);
+
+    if (!Number.isInteger(year) || year < 2000 || year > 2100 || !Number.isInteger(month) || month < 1 || month > 12) {
+      return NextResponse.json({ error: "Invalid year or month value" }, { status: 400 });
+    }
 
     const monthStr = `${year}-${String(month).padStart(2, "0")}`;
     const startDate = new Date(Date.UTC(year, month - 1, 1));
     const endDate = new Date(Date.UTC(year, month, 0, 23, 59, 59));
     const now = new Date();
+
+    // Immutability Guard: Prevent overwriting an already FINALIZED payroll period
+    const existingPeriod = await prisma.payrollPeriod.findUnique({
+      where: { year_month: { year, month } },
+    });
+
+    if (existingPeriod?.status === "FINALIZED") {
+      return NextResponse.json(
+        { error: `Payroll periode ${monthStr} sudah difinalisasi dan terkunci permanen.` },
+        { status: 409 }
+      );
+    }
 
     const employees = await prisma.employeeProfile.findMany({
       include: {
@@ -133,6 +154,14 @@ export async function POST(req: NextRequest) {
     });
 
     const finalized = await prisma.$transaction(async (tx) => {
+      // Concurrency Guard inside transaction: ensure period is not already FINALIZED
+      const lockedCheck = await tx.payrollPeriod.findUnique({
+        where: { year_month: { year, month } },
+      });
+      if (lockedCheck?.status === "FINALIZED") {
+        throw new Error("PAYROLL_ALREADY_FINALIZED");
+      }
+
       const period = await tx.payrollPeriod.upsert({
         where: { year_month: { year, month } },
         create: {
@@ -220,6 +249,13 @@ export async function POST(req: NextRequest) {
       period: finalized,
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Failed to finalize payroll" }, { status: 500 });
+    if (error?.message === "PAYROLL_ALREADY_FINALIZED") {
+      return NextResponse.json(
+        { error: "Payroll periode ini sudah difinalisasi dan terkunci permanen." },
+        { status: 409 }
+      );
+    }
+    console.error("Finalize payroll error:", error);
+    return NextResponse.json({ error: "Failed to finalize payroll" }, { status: 500 });
   }
 }

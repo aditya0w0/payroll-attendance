@@ -41,7 +41,7 @@ export async function createSession(userId: string, deviceFingerprint?: string):
   });
 
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     cookieStore.set(SESSION_COOKIE_NAME, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production" && process.env.SECURE_COOKIES !== "false",
@@ -86,7 +86,7 @@ export async function getCurrentUser(req?: Request) {
     // 2. Fall back to Next.js cookies() store
     if (!token) {
       try {
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
       } catch (cookieErr: any) {
         if (cookieErr?.digest === "DYNAMIC_SERVER_USAGE") {
@@ -127,11 +127,21 @@ export async function getCurrentUser(req?: Request) {
       return null;
     }
 
-    // Strict Employee Security Enforcement:
-    // If user is EMPLOYEE and has a registered device that has been revoked or deactivated by Owner,
-    // terminate the session immediately!
+    // Strict Employee Single-Device & Anti-Multi-Login Enforcement:
+    // 1. Employee must have an active device registration
+    // 2. The session's bound device fingerprint must match the active device registration
     if (session.user.role === "EMPLOYEE") {
-      if (session.user.deviceRegistration && !session.user.deviceRegistration.isActive) {
+      if (!session.user.deviceRegistration || !session.user.deviceRegistration.isActive) {
+        await prisma.session.deleteMany({ where: { sessionToken: token } });
+        return null;
+      }
+
+      if (
+        session.deviceFingerprint &&
+        session.user.deviceRegistration.deviceFingerprint &&
+        session.deviceFingerprint !== session.user.deviceRegistration.deviceFingerprint
+      ) {
+        // Multi-login detected from an old or revoked device terminal. Invalidate session immediately.
         await prisma.session.deleteMany({ where: { sessionToken: token } });
         return null;
       }
@@ -154,21 +164,28 @@ export async function getCurrentUser(req?: Request) {
 /**
  * Destroys current session and clears the HTTP-only cookie.
  */
-export async function destroySession(): Promise<boolean> {
+export async function destroySession(req?: Request): Promise<boolean> {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+    const cookieStore = await cookies();
+    let token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+    if (!token && req) {
+      const authHeader = req.headers.get("authorization");
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        token = authHeader.substring(7).trim();
+      }
+    }
     if (token) {
       await prisma.session.deleteMany({
         where: { sessionToken: token },
       });
-      cookieStore.set(SESSION_COOKIE_NAME, "", {
-        path: "/",
-        maxAge: 0,
-        httpOnly: true,
-        sameSite: "lax",
-      });
     }
+    cookieStore.set(SESSION_COOKIE_NAME, "", {
+      path: "/",
+      maxAge: 0,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production" && process.env.SECURE_COOKIES !== "false",
+      sameSite: "lax",
+    });
     return true;
   } catch (error) {
     return false;
@@ -262,8 +279,8 @@ export async function enforceSingleDevicePolicy(
 
   let requestCode = existingReq?.requestCode;
   if (!requestCode) {
-    requestCode = `REQ-${Math.floor(10000 + Math.random() * 90000)}`;
-    const unlockCode = `${Math.floor(100000 + Math.random() * 900000)}`; // 6-digit OTP
+    requestCode = `REQ-${crypto.randomInt(10000, 100000)}`;
+    const unlockCode = `${crypto.randomInt(100000, 1000000)}`; // CSPRNG 6-digit OTP
     const expiresAt = new Date(now.getTime() + 5 * 60 * 1000); // exactly 5 minutes
 
     await prisma.deviceUnlockRequest.create({

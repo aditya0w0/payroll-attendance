@@ -18,12 +18,12 @@ import { getClientDeviceIdentity } from "@/lib/device-client";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { detectInAppWebView, type WebViewDetectionResult } from "@/lib/webview-detect";
 
-type ProfileMode = "owner" | "employee" | "rogue";
+type ProfileMode = "owner" | "employee";
 
 export default function LoginPage() {
-  const [mode, setMode] = useState<ProfileMode>("owner");
-  const [identifier, setIdentifier] = useState("owner@company.com");
-  const [password, setPassword] = useState("admin123");
+  const [mode, setMode] = useState<ProfileMode>("employee");
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,22 +70,38 @@ export default function LoginPage() {
   useEffect(() => {
     getClientDeviceIdentity().then(setDeviceInfo);
     setWebViewInfo(detectInAppWebView());
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const role = params.get("role");
+      if (role === "employee") {
+        handleModeChange("employee");
+      } else if (role === "owner") {
+        handleModeChange("owner");
+      }
+    }
   }, []);
+
+  // Modal keyboard Escape listener (R-32)
+  useEffect(() => {
+    if (!lockoutData && !showReplaceModal && !webAuthnPrompt) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setLockoutData(null);
+        setShowReplaceModal(false);
+        setWebAuthnPrompt(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [lockoutData, showReplaceModal, webAuthnPrompt]);
 
   const handleModeChange = (newMode: ProfileMode) => {
     setMode(newMode);
     setError(null);
     setWebAuthnPrompt(null);
-    if (newMode === "owner") {
-      setIdentifier("owner@company.com");
-      setPassword("admin123");
-    } else if (newMode === "employee") {
-      setIdentifier("siti@company.com");
-      setPassword("employee123");
-    } else if (newMode === "rogue") {
-      setIdentifier("budi@company.com");
-      setPassword("employee123");
-    }
+    setIdentifier("");
+    setPassword("");
   };
 
   const executePasskeyAuth = async (userIdentifier: string) => {
@@ -171,24 +187,14 @@ export default function LoginPage() {
     try {
       const dev = deviceInfo || (await getClientDeviceIdentity());
 
-      // If rogue mode is selected, simulate an unrecognized hardware fingerprint
-      const isRogue = mode === "rogue";
-      const fp = isRogue
-        ? `fp_rogue_unregistered_${Date.now()}`
-        : dev.deviceFingerprint;
-
-      const dName = isRogue
-        ? "Unregistered External Terminal"
-        : dev.deviceName;
-
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           identifier: identifier.trim(),
           password: password.trim(),
-          deviceFingerprint: fp,
-          deviceName: dName,
+          deviceFingerprint: dev.deviceFingerprint,
+          deviceName: dev.deviceName,
           publicKey: dev.publicKey || "demo_key",
         }),
       });
@@ -212,9 +218,9 @@ export default function LoginPage() {
         setLockoutData({
           requestCode: data.requestCode,
           boundDeviceName: data.boundDeviceName || "Authorized Hardware",
-          attemptedDeviceName: data.attemptedDeviceName || dName,
-          deviceFingerprint: fp,
-          deviceName: dName,
+          attemptedDeviceName: data.attemptedDeviceName || dev.deviceName,
+          deviceFingerprint: dev.deviceFingerprint,
+          deviceName: dev.deviceName,
         });
         setLoading(false);
         return;
@@ -299,24 +305,26 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[var(--system-bg)]">
-      <div className="w-full max-w-[340px] space-y-5">
-        {/* Apple Style Monogram Header */}
-        <div className="text-center space-y-1.5">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-transparent relative">
+      <div className="w-full max-w-[360px] space-y-6">
+        {/* Brand Monogram Header */}
+        <div className="text-center space-y-2">
           <div className="w-10 h-10 rounded-xl bg-[var(--text-primary)] text-[var(--system-bg)] flex items-center justify-center mx-auto shadow-sm">
             <Shield className="w-5 h-5 stroke-[2]" />
           </div>
-          <h1 className="text-lg font-semibold tracking-tight text-[var(--text-primary)]">
-            Sign In
+          <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
+            {mode === "owner" ? "Portal Pemilik" : "Portal Karyawan"}
           </h1>
           <p className="text-xs text-[var(--text-secondary)]">
-            Use your Workplace ID to continue
+            {mode === "owner"
+              ? "Masuk ke dasbor manajemen kehadiran dan penggajian"
+              : "Masuk untuk presensi harian dan rincian upah"}
           </p>
         </div>
 
         {/* In-App Browser (WebView) Warning Banner */}
-        {webViewInfo && (webViewInfo.isInApp || !webViewInfo.isWebAuthnSupported) && (
-          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs space-y-2.5 animate-in fade-in duration-200">
+        {webViewInfo && webViewInfo.isInApp && (
+          <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs space-y-2.5 animate-in fade-in duration-200">
             <div className="flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <div className="space-y-1 flex-1">
@@ -324,12 +332,12 @@ export default function LoginPage() {
                   <span className="font-semibold text-neutral-900 dark:text-neutral-100 text-[11px]">
                     Buka di Browser Utama (Safari / Chrome)
                   </span>
-                  <span className="px-1.5 py-0.2 rounded text-[9px] font-bold tracking-wider uppercase bg-amber-500/20 text-amber-800 dark:text-amber-200">
+                  <span className="px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase bg-amber-500/20 text-amber-800 dark:text-amber-200 rounded">
                     {webViewInfo.appName ? `[${webViewInfo.appName.toUpperCase()}]` : "[WEBVIEW]"}
                   </span>
                 </div>
                 <p className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                  Buka di Browser Utama (Safari / Chrome) untuk autentikasi sidik jari atau Face ID. Browser internal aplikasi ini membatasi sensor keamanan biometrik.
+                  Buka di Browser Utama (Safari / Chrome) untuk autentikasi sidik jari atau Face ID. Browser internal {webViewInfo.appName || "aplikasi ini"} membatasi sensor keamanan biometrik.
                 </p>
               </div>
             </div>
@@ -347,7 +355,7 @@ export default function LoginPage() {
                     setTimeout(() => setLinkCopied(false), 2500);
                   }
                 }}
-                className="apple-btn-secondary px-2.5 py-1 text-[11px] font-medium flex items-center gap-1.5"
+                className="hig-button-compact-secondary inline-flex items-center gap-1.5"
               >
                 {linkCopied ? (
                   <>
@@ -365,47 +373,10 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Apple HIG Form Card */}
-        <form onSubmit={handleLogin} className="hig-card p-5 space-y-4">
-          {/* Segmented Control */}
-          <div className="flex bg-neutral-200/60 dark:bg-neutral-800 p-0.5 rounded-lg text-xs font-medium">
-            <button
-              type="button"
-              onClick={() => handleModeChange("owner")}
-              className={`flex-1 py-1 rounded-md transition-all ${
-                mode === "owner"
-                  ? "bg-white dark:bg-neutral-900 shadow-sm text-neutral-900 dark:text-neutral-100 font-semibold"
-                  : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
-              }`}
-            >
-              Owner
-            </button>
-            <button
-              type="button"
-              onClick={() => handleModeChange("employee")}
-              className={`flex-1 py-1 rounded-md transition-all ${
-                mode === "employee"
-                  ? "bg-white dark:bg-neutral-900 shadow-sm text-neutral-900 dark:text-neutral-100 font-semibold"
-                  : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
-              }`}
-            >
-              Employee
-            </button>
-            <button
-              type="button"
-              onClick={() => handleModeChange("rogue")}
-              className={`flex-1 py-1 rounded-md transition-all ${
-                mode === "rogue"
-                  ? "bg-white dark:bg-neutral-900 shadow-sm text-red-600 dark:text-red-400 font-semibold"
-                  : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
-              }`}
-            >
-              Rogue Test
-            </button>
-          </div>
-
+        {/* Clean Apple HIG Form Card */}
+        <form onSubmit={handleLogin} className="hig-card p-6 rounded-2xl space-y-4">
           {error && (
-            <div className="p-2.5 rounded-lg bg-[var(--system-red-tint)] text-[var(--system-red)] text-xs flex items-start gap-2">
+            <div className="p-2.5 rounded-xl bg-[var(--system-red-tint)] text-[var(--system-red)] text-xs flex items-start gap-2 border border-red-500/20">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
@@ -413,13 +384,13 @@ export default function LoginPage() {
 
           <div className="space-y-1">
             <label className="block text-[11px] font-medium text-[var(--text-secondary)]">
-              Account
+              {mode === "owner" ? "Email Pemilik" : "Email / ID Karyawan"}
             </label>
             <input
               type="text"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="Username or email"
+              placeholder={mode === "owner" ? "owner@perusahaan.com" : "nama@perusahaan.com"}
               required
               className="hig-input text-xs"
             />
@@ -427,13 +398,13 @@ export default function LoginPage() {
 
           <div className="space-y-1">
             <label className="block text-[11px] font-medium text-[var(--text-secondary)]">
-              Password
+              Kata Sandi
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
+              placeholder="••••••••"
               required
               className="hig-input text-xs"
             />
@@ -442,34 +413,44 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="hig-button-primary w-full py-2.5 text-xs font-medium"
+            className="hig-button-primary w-full py-2.5 text-xs font-semibold rounded-xl"
           >
             {loading
-              ? "Authenticating..."
-              : mode === "rogue"
-              ? "Test Rogue Login (Lockout)"
-              : "Sign In"}
+              ? "Memverifikasi..."
+              : mode === "owner"
+              ? "Masuk sebagai Pemilik"
+              : "Masuk sebagai Karyawan"}
           </button>
 
-          {/* Replacement Request Trigger */}
-          <div className="text-center pt-1">
+          {/* Role Switcher & Device Re-enrollment */}
+          <div className="text-center pt-2 space-y-2 border-t border-[var(--separator-subtle)]">
             <button
               type="button"
-              onClick={() => {
-                setReplaceIdentifier(identifier);
-                setShowReplaceModal(true);
-              }}
-              className="text-[11px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors underline"
+              onClick={() => handleModeChange(mode === "owner" ? "employee" : "owner")}
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline block mx-auto font-medium"
             >
-              Lost or replaced your device? Request re-enrollment
+              {mode === "owner" ? "Beralih ke Portal Karyawan" : "Beralih ke Portal Pemilik"}
             </button>
+
+            {mode === "employee" && (
+              <button
+                type="button"
+                onClick={() => {
+                  setReplaceIdentifier(identifier);
+                  setShowReplaceModal(true);
+                }}
+                className="text-[11px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors block mx-auto"
+              >
+                Perangkat hilang atau berganti? Ajukan pendaftaran ulang
+              </button>
+            )}
           </div>
 
           {/* Terminal Fingerprint Status */}
           <div className="pt-2 border-t border-[var(--separator-subtle)] flex items-center justify-between text-[11px] text-[var(--text-tertiary)]">
             <span className="flex items-center gap-1.5 truncate max-w-[180px]">
               <Smartphone className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">{deviceInfo?.deviceName || "Detecting hardware..."}</span>
+              <span className="truncate">{deviceInfo?.deviceName || "Mendeteksi perangkat..."}</span>
             </span>
             <span className="font-mono text-[10px] tabular-numbers">
               {deviceInfo?.deviceFingerprint.substring(0, 10)}...
@@ -490,10 +471,10 @@ export default function LoginPage() {
 
             <div className="space-y-1">
               <h2 className="text-base font-semibold text-[var(--text-primary)]">
-                Biometric Passkey Required
+                Verifikasi Passkey Biometrik
               </h2>
               <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                Browser storage was cleared. Verify your identity with Touch ID, Face ID, or your device Passkey to restore your session without manual lockout.
+                Penyimpanan peramban dibersihkan. Verifikasi identitas Anda dengan Touch ID, Face ID, atau Passkey perangkat untuk memulihkan sesi kerja.
               </p>
             </div>
 
@@ -547,7 +528,7 @@ export default function LoginPage() {
                 onClick={() => setWebAuthnPrompt(null)}
                 className="hig-button-secondary flex-1 py-2 text-xs"
               >
-                Cancel
+                Batal
               </button>
               <button
                 type="button"
@@ -556,7 +537,7 @@ export default function LoginPage() {
                 className="hig-button-primary flex-1 py-2 text-xs flex items-center justify-center gap-1.5"
               >
                 <Fingerprint className="w-3.5 h-3.5" />
-                {webAuthnLoading ? "Verifying..." : "Verify Biometric"}
+                {webAuthnLoading ? "Memverifikasi..." : "Verifikasi Biometrik"}
               </button>
             </div>
           </div>
@@ -574,19 +555,19 @@ export default function LoginPage() {
             </div>
 
             <h2 className="text-base font-semibold text-[var(--text-primary)] mb-1">
-              Device Not Authorized
+              Multi-Login Terdeteksi
             </h2>
             <p className="text-xs text-[var(--text-secondary)] mb-4 leading-relaxed">
-              This account is bound to another registered device. Provide your Request ID to the owner to obtain an Unlock Code.
+              Akun ini telah terikat pada perangkat resmi lain. Multi-login dilarang. Wajib hubungi Pemilik (Admin) untuk melakukan reset perangkat, atau masukkan 6-digit kode buka kunci di bawah.
             </p>
 
             <div className="bg-neutral-100 dark:bg-neutral-800/60 rounded-xl p-3 text-left text-xs space-y-1.5 mb-4 border border-[var(--separator)]">
               <div className="flex justify-between items-center">
-                <span className="text-[var(--text-secondary)]">Registered:</span>
+                <span className="text-[var(--text-secondary)]">Terdaftar:</span>
                 <span className="font-medium text-[var(--text-primary)]">{lockoutData.boundDeviceName}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-[var(--text-secondary)]">Attempted:</span>
+                <span className="text-[var(--text-secondary)]">Mencoba:</span>
                 <span className="font-medium text-[var(--system-red)] truncate max-w-[170px]">
                   {lockoutData.attemptedDeviceName}
                 </span>
@@ -608,7 +589,7 @@ export default function LoginPage() {
 
               <div>
                 <label className="block text-[10px] font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-1.5">
-                  Enter 6-Digit Owner Unlock Code
+                  Masukkan 6-Digit Kode Buka Kunci
                 </label>
                 <input
                   type="text"
@@ -628,14 +609,14 @@ export default function LoginPage() {
                   onClick={() => setLockoutData(null)}
                   className="hig-button-secondary flex-1 py-2 text-xs"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
                   disabled={unlockLoading || unlockCodeInput.length !== 6}
                   className="hig-button-primary flex-1 py-2 text-xs"
                 >
-                  {unlockLoading ? "Verifying..." : "Authorize"}
+                  {unlockLoading ? "Memverifikasi..." : "Otorisasi"}
                 </button>
               </div>
             </form>
@@ -653,7 +634,7 @@ export default function LoginPage() {
               <div className="flex items-center gap-2">
                 <KeyRound className="w-4 h-4 text-neutral-700 dark:text-neutral-300" />
                 <h2 className="text-sm font-semibold text-[var(--text-primary)]">
-                  Request Device Replacement
+                  Permohonan Penggantian Perangkat
                 </h2>
               </div>
               <button
@@ -685,13 +666,13 @@ export default function LoginPage() {
                   }}
                   className="hig-button-primary w-full py-2 text-xs"
                 >
-                  Done
+                  Selesai
                 </button>
               </div>
             ) : (
               <form onSubmit={handleReplaceSubmit} className="space-y-3">
                 <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                  Lost or upgraded your phone? Submit a replacement request for owner authorization to enroll your new device.
+                  HP hilang atau berganti perangkat baru? Ajukan permohonan ke Pemilik untuk mengotorisasi pendaftaran perangkat baru Anda.
                 </p>
 
                 {replaceError && (
@@ -702,7 +683,7 @@ export default function LoginPage() {
 
                 <div className="space-y-1">
                   <label className="block text-[11px] font-medium text-[var(--text-secondary)]">
-                    Workplace ID / Email
+                    Email / ID Akun
                   </label>
                   <input
                     type="text"
@@ -710,13 +691,13 @@ export default function LoginPage() {
                     onChange={(e) => setReplaceIdentifier(e.target.value)}
                     required
                     className="hig-input text-xs"
-                    placeholder="siti@company.com"
+                    placeholder="nama@perusahaan.com"
                   />
                 </div>
 
                 <div className="space-y-1">
                   <label className="block text-[11px] font-medium text-[var(--text-secondary)]">
-                    Account Password
+                    Kata Sandi Akun
                   </label>
                   <input
                     type="password"
@@ -730,7 +711,7 @@ export default function LoginPage() {
 
                 <div className="space-y-1">
                   <label className="block text-[11px] font-medium text-[var(--text-secondary)]">
-                    Reason for Replacement
+                    Alasan Penggantian
                   </label>
                   <input
                     type="text"
@@ -738,7 +719,7 @@ export default function LoginPage() {
                     onChange={(e) => setReplaceReason(e.target.value)}
                     required
                     className="hig-input text-xs"
-                    placeholder="e.g. Lost phone, new phone purchase"
+                    placeholder="Misal: HP lama rusak, ganti perangkat"
                   />
                 </div>
 
@@ -748,14 +729,14 @@ export default function LoginPage() {
                     onClick={() => setShowReplaceModal(false)}
                     className="hig-button-secondary flex-1 py-2 text-xs"
                   >
-                    Cancel
+                    Batal
                   </button>
                   <button
                     type="submit"
                     disabled={replaceLoading}
                     className="hig-button-primary flex-1 py-2 text-xs"
                   >
-                    {replaceLoading ? "Submitting..." : "Submit Request"}
+                    {replaceLoading ? "Mengirim..." : "Kirim Permohonan"}
                   </button>
                 </div>
               </form>

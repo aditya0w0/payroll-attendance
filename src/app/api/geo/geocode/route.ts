@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-// Lightweight LRU cache to minimize external Nominatim calls
+// Lightweight bounded cache to minimize external Nominatim calls
 const geocodeCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+const MAX_CACHE_ENTRIES = 500;
 
 export async function GET(req: Request) {
+  const current = await getCurrentUser(req);
+  if (!current) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const { searchParams } = new URL(req.url);
     const query = searchParams.get("q")?.trim();
@@ -51,6 +57,10 @@ export async function GET(req: Request) {
       importance: item.importance,
     }));
 
+    if (geocodeCache.size >= MAX_CACHE_ENTRIES) {
+      const oldestKey = geocodeCache.keys().next().value;
+      if (oldestKey !== undefined) geocodeCache.delete(oldestKey);
+    }
     geocodeCache.set(cacheKey, { data: formatted, timestamp: Date.now() });
 
     return NextResponse.json({ results: formatted });

@@ -9,10 +9,26 @@ export async function GET(req: Request) {
   try {
     const now = new Date();
 
-    // Task 3.1: Dynamic ISP Public IP Auto-Sync via Kiosk Heartbeat
+    // Anti-Cheating & Defense-in-Depth:
+    // Only authenticated OWNER kiosk sessions may retrieve active dynamic QR challenge tokens.
+    // Unauthenticated callers and EMPLOYEE sessions are strictly blocked.
+    const current = await getCurrentUser(req);
+    if (!current) {
+      return NextResponse.json(
+        { error: "Unauthorized. Kiosk requires an active Owner session." },
+        { status: 401 }
+      );
+    }
+    if (current.user.role !== "OWNER") {
+      return NextResponse.json(
+        { error: "Presensi hanya dapat dilakukan dengan memindai kode QR fisik pada monitor kantor." },
+        { status: 403 }
+      );
+    }
+
+    // Dynamic ISP Public IP Auto-Sync via Kiosk Heartbeat
     // When an authenticated OWNER session polls GET /api/qr/active from the workplace WiFi:
     try {
-      const current = await getCurrentUser(req);
       if (current && current.user.role === "OWNER") {
         const kioskIp = (
           req.headers.get("x-forwarded-for")?.split(",")[0] ||

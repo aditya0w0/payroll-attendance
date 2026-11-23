@@ -25,7 +25,7 @@ async function main() {
   // 2. Deduction Policies
   const policyPerMin = await prisma.deductionPolicy.create({
     data: {
-      name: "Per Minute Standard (Rp500/min, 10m Grace)",
+      name: "Standar Per Menit",
       mode: "PER_MINUTE",
       rate: 500, // Rp500 / minute
       hourlyRounding: "EXACT",
@@ -36,7 +36,7 @@ async function main() {
 
   const policyHourly = await prisma.deductionPolicy.create({
     data: {
-      name: "Hourly Deduction (Rp10,000/hr, Round Up, 15m Grace)",
+      name: "Deduksi Per Jam",
       mode: "PER_HOUR",
       rate: 10000, // Rp10,000 / hour
       hourlyRounding: "ROUND_UP",
@@ -49,7 +49,7 @@ async function main() {
   // 3. Work Shifts (Daytime, Evening, Overnight)
   const shiftMorning = await prisma.shift.create({
     data: {
-      name: "Morning Shift (08:00 - 17:00)",
+      name: "Shift Pagi",
       startTime: "08:00",
       endTime: "17:00",
       isOvernight: false,
@@ -61,7 +61,7 @@ async function main() {
 
   const shiftEvening = await prisma.shift.create({
     data: {
-      name: "Evening Shift (16:00 - 00:00)",
+      name: "Shift Sore",
       startTime: "16:00",
       endTime: "00:00",
       isOvernight: true,
@@ -73,7 +73,7 @@ async function main() {
 
   const shiftOvernight = await prisma.shift.create({
     data: {
-      name: "Overnight Shift (22:00 - 06:00)",
+      name: "Shift Malam",
       startTime: "22:00",
       endTime: "06:00",
       isOvernight: true,
@@ -116,7 +116,7 @@ async function main() {
     include: { employeeProfile: true },
   });
 
-  // Employee 2: Siti Rahma (Overnight Shift, Rp175,000/day, Unbound)
+  // Employee 2: Siti Rahma (Overnight Shift, Rp175,000/day, Bound to Phone)
   const userSiti = await prisma.user.create({
     data: {
       email: "siti@company.com",
@@ -131,6 +131,14 @@ async function main() {
           dailySalary: 175000, // Rp175,000
           shiftId: shiftOvernight.id,
           employmentStatus: "PERMANENT",
+        },
+      },
+      deviceRegistration: {
+        create: {
+          deviceFingerprint: "fp_siti_pixel_phone_auth",
+          deviceName: "Siti's Authorized Pixel 7",
+          platform: "Android Phone",
+          isActive: true,
         },
       },
     },

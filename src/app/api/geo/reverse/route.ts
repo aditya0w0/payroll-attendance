@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 const reverseCache = new Map<string, { address: string; timestamp: number }>();
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const MAX_CACHE_ENTRIES = 500;
 
 export async function GET(req: Request) {
+  const current = await getCurrentUser(req);
+  if (!current) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const { searchParams } = new URL(req.url);
     const latStr = searchParams.get("lat");
@@ -50,6 +56,10 @@ export async function GET(req: Request) {
     const data = await res.json();
     const address = data?.display_name || `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
 
+    if (reverseCache.size >= MAX_CACHE_ENTRIES) {
+      const oldestKey = reverseCache.keys().next().value;
+      if (oldestKey !== undefined) reverseCache.delete(oldestKey);
+    }
     reverseCache.set(cacheKey, { address, timestamp: Date.now() });
 
     return NextResponse.json({ address, details: data?.address || null });

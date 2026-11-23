@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { formatIDR } from "@/lib/utils";
-import { getJakartaDateString, formatJakartaDateTime } from "@/lib/timezone";
-import { Users, ClipboardList, AlertCircle, Smartphone, ArrowRight, QrCode, ShieldAlert } from "lucide-react";
+import { getJakartaDateString, formatJakartaDateTime, formatJakartaTime } from "@/lib/timezone";
+import { Users, ClipboardList, AlertCircle, Smartphone, QrCode, ShieldAlert } from "lucide-react";
 import DashboardAnalytics from "@/components/owner/DashboardAnalytics";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +32,7 @@ export default async function OwnerOverviewPage() {
     prisma.auditLog.findMany({
       where: { action: { startsWith: "CHEATING_ALERT_" } },
       orderBy: { timestamp: "desc" },
-      take: 4,
+      take: 2,
     }),
   ]);
 
@@ -44,47 +44,47 @@ export default async function OwnerOverviewPage() {
     <div className="space-y-6">
       {/* Title */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
+        <div className="flex items-center gap-2.5">
           <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
-            Attendance & Payroll
+            Ringkasan Presensi &amp; Penggajian
           </h1>
-          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-            Active shift date: <span className="font-mono tabular-numbers text-[var(--text-primary)]">{todayStr}</span>
-          </p>
+          <span className="hig-badge hig-badge-neutral text-xs font-mono tabular-numbers px-2 py-0.5">
+            {todayStr}
+          </span>
         </div>
 
         <Link href="/owner/qr" className="hig-button-primary text-xs">
           <QrCode className="w-3.5 h-3.5 stroke-[2]" />
-          Open Workplace QR Terminal
+          Terminal Presensi QR
         </Link>
       </div>
 
       {/* High-Priority Cheating & Security Alerts Banner */}
       {recentCheatingAlerts.length > 0 && (
-        <div className="p-4 rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50/60 dark:bg-red-950/20 space-y-2.5">
+        <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5 dark:bg-red-950/20 space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-red-600 dark:text-red-400" />
-              <h2 className="text-xs font-semibold text-red-700 dark:text-red-300 uppercase tracking-wider">
-                Security Incidents & Flagged Cheating Attempts ({recentCheatingAlerts.length})
+              <ShieldAlert className="w-4 h-4 text-[var(--system-red)]" />
+              <h2 className="text-xs font-semibold text-[var(--system-red)]">
+                Peringatan Keamanan ({recentCheatingAlerts.length})
               </h2>
             </div>
             <Link
               href="/owner/audit-logs?action=CHEATING_ALERTS"
-              className="text-xs text-red-700 dark:text-red-300 font-medium hover:underline flex items-center gap-1"
+              className="text-xs text-[var(--system-red)] font-medium hover:underline"
             >
-              Review Incidents <ArrowRight className="w-3 h-3" />
+              Tinjau Insiden
             </Link>
           </div>
 
-          <div className="divide-y divide-red-200/60 dark:divide-red-900/40 text-xs">
-            {recentCheatingAlerts.map((alert) => (
-              <div key={alert.id} className="py-2 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+          <div className="divide-y divide-red-200/40 dark:divide-red-900/30 text-xs">
+            {recentCheatingAlerts.slice(0, 2).map((alert) => (
+              <div key={alert.id} className="py-1.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                 <div>
-                  <span className="font-semibold text-neutral-900 dark:text-neutral-100">{alert.actorName}:</span>{" "}
-                  <span className="text-neutral-700 dark:text-neutral-300">{alert.reason}</span>
+                  <span className="font-semibold text-[var(--text-primary)]">{alert.actorName}:</span>{" "}
+                  <span className="text-[var(--text-secondary)]">{alert.reason}</span>
                 </div>
-                <span className="font-mono text-[10px] text-neutral-500 whitespace-nowrap">
+                <span className="font-mono text-[10px] text-[var(--text-tertiary)] tabular-numbers">
                   {formatJakartaDateTime(alert.timestamp)}
                 </span>
               </div>
@@ -95,54 +95,64 @@ export default async function OwnerOverviewPage() {
 
       {/* Metric Cards (Apple HIG Style) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="hig-card p-4">
-          <div className="flex items-center justify-between text-[var(--text-secondary)] mb-1">
-            <span className="text-[11px] font-medium uppercase tracking-wider">Employees</span>
+        <div className="hig-card p-4 rounded-xl flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[var(--text-secondary)] mb-2">
+            <span className="text-xs font-medium">Total Karyawan</span>
             <Users className="w-3.5 h-3.5 text-[var(--text-tertiary)] stroke-[1.75]" />
           </div>
-          <div className="text-2xl font-semibold text-[var(--text-primary)] tabular-numbers">
-            {totalEmployees}
+          <div className="flex items-baseline justify-between">
+            <div className="text-2xl font-semibold text-[var(--text-primary)] tabular-numbers">
+              {totalEmployees}
+            </div>
+            <span className="text-xs text-[var(--text-tertiary)] font-medium">staf aktif</span>
           </div>
-          <span className="text-[11px] text-[var(--text-tertiary)] mt-1 block">Active staff roster</span>
         </div>
 
-        <div className="hig-card p-4">
-          <div className="flex items-center justify-between text-[var(--text-secondary)] mb-1">
-            <span className="text-[11px] font-medium uppercase tracking-wider">Checked In</span>
+        <div className="hig-card p-4 rounded-xl flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[var(--text-secondary)] mb-2">
+            <span className="text-xs font-medium">Hadir Hari Ini</span>
             <ClipboardList className="w-3.5 h-3.5 text-[var(--system-green)] stroke-[1.75]" />
           </div>
-          <div className="text-2xl font-semibold text-[var(--text-primary)] tabular-numbers">
-            {presentCount}
+          <div className="flex items-baseline justify-between">
+            <div className="text-2xl font-semibold text-[var(--text-primary)] tabular-numbers">
+              {presentCount}
+            </div>
+            <span className="text-xs text-[var(--system-green)] font-medium tabular-numbers">
+              {presentCount - lateCount} tepat
+            </span>
           </div>
-          <span className="text-[11px] text-[var(--system-green)] mt-1 block tabular-numbers">
-            {presentCount - lateCount} on-time arrivals
-          </span>
         </div>
 
-        <div className="hig-card p-4">
-          <div className="flex items-center justify-between text-[var(--text-secondary)] mb-1">
-            <span className="text-[11px] font-medium uppercase tracking-wider">Late Arrivals</span>
+        <div className="hig-card p-4 rounded-xl flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[var(--text-secondary)] mb-2">
+            <span className="text-xs font-medium">Terlambat</span>
             <AlertCircle className="w-3.5 h-3.5 text-[var(--system-red)] stroke-[1.75]" />
           </div>
-          <div className="text-2xl font-semibold text-[var(--system-red)] tabular-numbers">
-            {lateCount}
+          <div className="flex items-baseline justify-between">
+            <div className="text-2xl font-semibold text-[var(--system-red)] tabular-numbers">
+              {lateCount}
+            </div>
+            <span className="text-xs text-[var(--system-red)] font-medium tabular-numbers">
+              {totalLateDeductions > 0 ? formatIDR(totalLateDeductions) : "Rp0"}
+            </span>
           </div>
-          <span className="text-[11px] text-[var(--system-red)] mt-1 block tabular-numbers">
-            {formatIDR(totalLateDeductions)} deducted
-          </span>
         </div>
 
-        <div className="hig-card p-4">
-          <div className="flex items-center justify-between text-[var(--text-secondary)] mb-1">
-            <span className="text-[11px] font-medium uppercase tracking-wider">Unlock Requests</span>
+        <div className="hig-card p-4 rounded-xl flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[var(--text-secondary)] mb-2">
+            <span className="text-xs font-medium">Buka Kunci</span>
             <Smartphone className="w-3.5 h-3.5 text-[var(--system-orange)] stroke-[1.75]" />
           </div>
-          <div className="text-2xl font-semibold text-[var(--text-primary)] tabular-numbers">
-            {pendingUnlockRequests}
+          <div className="flex items-baseline justify-between">
+            <div className="text-2xl font-semibold text-[var(--text-primary)] tabular-numbers">
+              {pendingUnlockRequests}
+            </div>
+            <span className={`text-xs font-medium ${
+              pendingUnlockRequests > 0 ? "text-[var(--system-orange)]" : "text-[var(--text-tertiary)]"
+            }`}>
+              {pendingUnlockRequests > 0 ? "perlu tinjau" : "aman"}
+            </span>
           </div>
-          <span className="text-[11px] text-[var(--text-secondary)] mt-1 block">
-            {pendingUnlockRequests > 0 ? "Pending authorization" : "All devices verified"}
-          </span>
         </div>
       </div>
 
@@ -152,33 +162,33 @@ export default async function OwnerOverviewPage() {
       {/* Two Column Grid */}
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Today's Punches */}
-        <div className="lg:col-span-2 hig-card p-4">
+        <div className="lg:col-span-2 hig-card p-5 rounded-3xl">
           <div className="flex items-center justify-between mb-3 border-b border-[var(--separator-subtle)] pb-2.5">
             <div>
-              <h2 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider">
-                Today&apos;s Live Punches
+              <h2 className="text-xs font-semibold text-[var(--text-primary)]">
+                Presensi Hari Ini
               </h2>
             </div>
-            <Link href="/owner/attendance" className="text-xs text-[var(--accent)] hover:underline flex items-center gap-1">
-              View All <ArrowRight className="w-3 h-3 stroke-[2]" />
+            <Link href="/owner/attendance" className="text-xs text-[var(--accent)] hover:underline flex items-center">
+              Lihat Semua
             </Link>
           </div>
 
           {todayAttendance.length === 0 ? (
             <div className="text-center py-8 text-xs text-[var(--text-tertiary)]">
-              No punch records logged for today.
+              Belum ada catatan presensi untuk hari ini.
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="hig-table">
                 <thead>
                   <tr>
-                    <th>Employee</th>
-                    <th>In</th>
-                    <th>Out</th>
-                    <th>Lateness</th>
-                    <th>Deduction</th>
-                    <th>Net Earned</th>
+                    <th>Karyawan</th>
+                    <th>Masuk</th>
+                    <th>Keluar</th>
+                    <th>Keterlambatan</th>
+                    <th>Potongan Denda</th>
+                    <th>Gaji Bersih</th>
                   </tr>
                 </thead>
                 <tbody className="tabular-numbers">
@@ -189,9 +199,9 @@ export default async function OwnerOverviewPage() {
                       <td>{rec.checkOutTime ? rec.checkOutTime.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }) : "--"}</td>
                       <td>
                         {rec.lateMinutes > 0 ? (
-                          <span className="hig-badge hig-badge-red">{rec.lateMinutes}m late</span>
+                          <span className="hig-badge hig-badge-red">{rec.lateMinutes}m terlambat</span>
                         ) : (
-                          <span className="hig-badge hig-badge-green">On Time</span>
+                          <span className="hig-badge hig-badge-green">Tepat Waktu</span>
                         )}
                       </td>
                       <td className="text-[var(--system-red)] font-medium">
@@ -209,30 +219,59 @@ export default async function OwnerOverviewPage() {
         </div>
 
         {/* Audit Trail Activity */}
-        <div className="hig-card p-4">
+        <div className="hig-card p-5 rounded-2xl">
           <div className="flex items-center justify-between mb-3 border-b border-[var(--separator-subtle)] pb-2.5">
-            <h2 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider">
-              Recent System Events
+            <h2 className="text-xs font-semibold text-[var(--text-primary)]">
+              Aktivitas Sistem Terkini
             </h2>
             <Link href="/owner/audit-logs" className="text-xs text-[var(--accent)] hover:underline">
-              Logs
+              Semua Log
             </Link>
           </div>
 
-          <div className="space-y-3">
-            {recentAuditLogs.map((log) => (
-              <div key={log.id} className="text-xs pb-2 border-b border-[var(--separator-subtle)] last:border-0">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-[var(--text-primary)] font-mono text-[11px]">{log.action}</span>
-                  <span className="text-[10px] text-[var(--text-tertiary)] tabular-numbers">
-                    {new Date(log.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </span>
+          <div className="space-y-2.5">
+            {recentAuditLogs.map((log) => {
+              const actionLabel = (() => {
+                switch (log.action) {
+                  case "AUTH_LOGIN_SUCCESS":
+                    return "Login Berhasil";
+                  case "ATTENDANCE_CHECK_IN":
+                    return "Presensi Masuk";
+                  case "ATTENDANCE_CHECK_OUT":
+                    return "Presensi Pulang";
+                  case "SHIFT_CREATED":
+                    return "Shift Dibuat";
+                  case "SHIFT_UPDATED":
+                    return "Shift Diperbarui";
+                  case "SHIFT_DELETED":
+                    return "Shift Dihapus";
+                  case "DEDUCTION_POLICY_CREATED":
+                    return "Kebijakan Dibuat";
+                  case "DEDUCTION_POLICY_UPDATED":
+                    return "Kebijakan Diperbarui";
+                  case "DEVICE_UNLOCKED":
+                    return "Buka Kunci Perangkat";
+                  case "SALARY_UPDATED":
+                    return "Gaji Diperbarui";
+                  default:
+                    return log.action.replace(/_/g, " ");
+                }
+              })();
+
+              return (
+                <div key={log.id} className="text-xs pb-2 border-b border-[var(--separator-subtle)] last:border-0">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-[var(--text-primary)] text-xs">{actionLabel}</span>
+                    <span className="text-[10px] text-[var(--text-tertiary)] tabular-numbers">
+                      {formatJakartaTime(log.timestamp)}
+                    </span>
+                  </div>
+                  <div className="text-[var(--text-secondary)] text-[11px] mt-0.5 truncate">
+                    {log.actorName} • {log.reason || "Operasi terverifikasi"}
+                  </div>
                 </div>
-                <div className="text-[var(--text-secondary)] text-[11px] mt-0.5">
-                  Actor: {log.actorName} ({log.actorRole})
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

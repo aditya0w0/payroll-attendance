@@ -14,7 +14,8 @@ export async function GET(req: NextRequest) {
   const action = searchParams.get("action");
   const targetEntity = searchParams.get("targetEntity");
   const query = searchParams.get("query");
-  const limit = parseInt(searchParams.get("limit") || "100");
+  const rawLimit = parseInt(searchParams.get("limit") || "100", 10);
+  const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 500) : 100;
 
   const where: any = {};
   if (action === "CHEATING_ALERTS") {

@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { QrCode, Clock, ShieldCheck, RefreshCw } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Clock, ShieldCheck, RefreshCw, Maximize2, Minimize2 } from "lucide-react";
 
 export default function OwnerQRDisplayPage() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [token, setToken] = useState<string>("");
   const [secondsRemaining, setSecondsRemaining] = useState<number>(15);
   const [loading, setLoading] = useState<boolean>(true);
-  const tokenRef = React.useRef<string>("");
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const tokenRef = useRef<string>("");
 
   const fetchActiveQR = async () => {
     try {
@@ -16,7 +17,6 @@ export default function OwnerQRDisplayPage() {
       if (!res.ok) return;
       const data = await res.json();
 
-      // If token rotated (either expired or consumed by employee ahead in queue):
       if (data.token && data.token !== tokenRef.current) {
         tokenRef.current = data.token;
         setToken(data.token);
@@ -33,69 +33,100 @@ export default function OwnerQRDisplayPage() {
   useEffect(() => {
     fetchActiveQR();
 
-    // 1-second countdown display tick
     const timer = setInterval(() => {
       setSecondsRemaining((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
 
-    // Task 2.2: Fast-poll every 1500ms (1.5 seconds) for instant queue rotation on consumption
     const pollInterval = setInterval(() => {
       fetchActiveQR();
     }, 1500);
 
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+
     return () => {
       clearInterval(timer);
       clearInterval(pollInterval);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, []);
 
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+    } else {
+      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+    }
+  };
+
   return (
-    <div className="max-w-md mx-auto text-center space-y-6 py-6">
-      <div>
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 mb-3">
-          <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-          Dynamic Cryptographic Attendance
-        </div>
-        <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
-          Workplace Terminal
+    <div className="max-w-md mx-auto text-center space-y-5 py-6">
+      <div className="flex flex-col items-center gap-1">
+        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
+          Terminal Presensi QR
         </h1>
-        <p className="text-xs text-neutral-500 mt-1 max-w-sm mx-auto">
-          Display this screen at the office entrance. Employees scan using their registered device for Check-in and Check-out.
+        <p className="text-xs text-[var(--text-secondary)] max-w-sm">
+          Tampilkan di pintu masuk kantor untuk pemindaian absensi kehadiran.
         </p>
+
+        {/* Operational Toolbar */}
+        <div className="flex items-center gap-2 mt-2">
+          <button
+            onClick={() => {
+              setLoading(true);
+              fetchActiveQR();
+            }}
+            className="hig-button-secondary text-xs"
+            title="Perbarui token QR sekarang"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            Perbarui
+          </button>
+          <button
+            onClick={toggleFullscreen}
+            className="hig-button-secondary text-xs"
+            title="Beralih ke mode layar penuh"
+          >
+            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+            {isFullscreen ? "Keluar Layar Penuh" : "Layar Penuh"}
+          </button>
+        </div>
       </div>
 
-      {/* QR Code Container */}
-      <div className="bg-white dark:bg-[#1C1C1E] border border-neutral-200 dark:border-neutral-800 rounded-xl p-8 inline-block shadow-sm">
+      {/* QR Code Card */}
+      <div className="hig-card-elevated p-8 rounded-3xl inline-block shadow-md">
         {loading || !qrDataUrl ? (
-          <div className="w-64 h-64 flex items-center justify-center text-xs text-neutral-400">
-            Generating cryptographic challenge...
+          <div className="w-64 h-64 flex items-center justify-center text-xs text-[var(--text-tertiary)]">
+            Membuat kode QR dinamis...
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="p-3 bg-white rounded-2xl border border-neutral-200 shadow-sm inline-block">
+            <div className="p-3 bg-white rounded-2xl border border-[var(--separator)] shadow-sm inline-block">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={qrDataUrl}
-                alt="Workplace Dynamic Attendance QR"
+                alt="Terminal Presensi QR Dinamis"
                 className="w-64 h-64 object-contain rounded-xl"
               />
             </div>
 
             {/* Countdown Timer */}
-            <div className="flex items-center justify-between text-xs text-neutral-500 font-medium px-1">
+            <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] font-medium px-1">
               <span className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-blue-600" />
-                Rotates every 15s
+                <Clock className="w-3.5 h-3.5 text-[var(--accent)]" />
+                Rotasi 15 detik
               </span>
-              <span className="font-mono font-semibold text-sm text-neutral-900 dark:text-neutral-100 tabular-nums">
+              <span className="font-mono font-semibold text-sm text-[var(--text-primary)] tabular-numbers">
                 00:{String(secondsRemaining).padStart(2, "0")}
               </span>
             </div>
 
-            {/* Progress bar */}
-            <div className="w-full bg-neutral-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
+            {/* Progress Bar */}
+            <div className="w-full bg-[var(--separator-subtle)] h-1.5 rounded-full overflow-hidden">
               <div
-                className="bg-blue-600 h-full transition-all duration-1000 ease-linear rounded-full"
+                className="bg-[var(--accent)] h-full transition-all duration-1000 ease-linear rounded-full"
                 style={{ width: `${(secondsRemaining / 15) * 100}%` }}
               />
             </div>
@@ -103,15 +134,10 @@ export default function OwnerQRDisplayPage() {
         )}
       </div>
 
-      {/* Security notice */}
-      <div className="text-[11px] text-neutral-400 max-w-sm mx-auto space-y-1">
-        <p className="flex items-center justify-center gap-1 font-medium text-neutral-600 dark:text-neutral-400">
-          <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-          Single-Use Dynamic Token • Consumes & burns immediately upon scan
-        </p>
-        <p>
-          Re-using or sharing photographed QR codes is blocked and flagged as a security incident to the Owner.
-        </p>
+      {/* Status Notice */}
+      <div className="text-[11px] text-[var(--text-tertiary)] max-w-sm mx-auto flex items-center justify-center gap-1.5 font-medium">
+        <ShieldCheck className="w-3.5 h-3.5 text-[var(--system-green)] shrink-0" />
+        <span>Token sekali pakai. Terproteksi dari kecurangan foto dan duplikasi layar.</span>
       </div>
     </div>
   );

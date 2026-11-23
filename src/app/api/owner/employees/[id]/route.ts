@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const current = await getCurrentUser(req);
   if (!current || current.user.role !== "OWNER") {
@@ -25,7 +25,7 @@ export async function PATCH(
   }
 
   try {
-    const employeeProfileId = params.id;
+    const { id: employeeProfileId } = await params;
     const body = await req.json().catch(() => null);
     if (!body) {
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });

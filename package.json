@@ -8,15 +8,20 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "seed": "tsx prisma/seed.ts",
+    "db:clean": "tsx scripts/reset-clean-seed.ts",
     "audit:verify": "tsx scripts/verify-audit-chain.js",
     "db:triggers": "tsx scripts/apply-pg-triggers.ts",
+    "test:unit": "vitest run",
+    "test:unit:coverage": "vitest run --coverage",
     "test:arch": "tsx scripts/test-hardened-architecture.ts",
     "test:geofence": "tsx scripts/test-anti-cheat-geofence.ts && tsx scripts/test-geo-stream-and-wifi-priority.ts",
-    "test": "tsx scripts/test-runner.js",
-    "test:all": "tsx scripts/test-runner.js && tsx scripts/test-token-ttl.js && tsx scripts/audit-enterprise-verification.js && tsx scripts/qa-security-suite.js && tsx scripts/test-hardened-architecture.ts && tsx scripts/test-pem-sanitization.ts && tsx scripts/test-webview-detect.ts && tsx scripts/test-rp-resolver.ts && tsx scripts/test-webauthn-endpoints.ts && tsx scripts/test-revoke-access.ts && tsx scripts/test-anti-cheat-geofence.ts && tsx scripts/test-analytics-aggregation.ts && tsx scripts/test-geo-stream-and-wifi-priority.ts"
+    "test": "vitest run",
+    "test:integration": "tsx scripts/test-runner.js",
+    "test:all": "tsx scripts/test-runner.js && tsx scripts/test-token-ttl.js && tsx scripts/audit-enterprise-verification.js && tsx scripts/qa-security-suite.js && tsx scripts/test-hardened-architecture.ts && tsx scripts/test-pem-sanitization.ts && tsx scripts/test-webview-detect.ts && tsx scripts/test-rp-resolver.ts && tsx scripts/test-webauthn-endpoints.ts && tsx scripts/test-revoke-access.ts && tsx scripts/test-anti-cheat-geofence.ts && tsx scripts/test-analytics-aggregation.ts && tsx scripts/test-geo-stream-and-wifi-priority.ts && tsx scripts/test-multi-login-prevention.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1163.0",
@@ -29,21 +34,22 @@
     "jsqr": "^1.4.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.460.0",
-    "next": "^14.2.18",
+    "next": "^15.5.29",
     "qrcode": "^1.5.4",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
     "recharts": "^3.10.1",
     "tailwind-merge": "^2.5.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
-    "@types/node": "^20.17.6",
+    "@types/node": "^22.20.5",
     "@types/pg": "^8.23.1",
     "@types/qrcode": "^1.5.5",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitest/coverage-v8": "^5.1.1",
     "autoprefixer": "^10.4.20",
     "pg": "^8.23.1",
     "postcss": "^8.4.49",
@@ -51,6 +57,7 @@
     "tailwindcss": "^3.4.15",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",
-    "vercel": "^65.12.1"
+    "vercel": "^65.12.1",
+    "vitest": "^5.1.1"
   }
 }

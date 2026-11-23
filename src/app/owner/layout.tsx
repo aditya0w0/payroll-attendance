@@ -26,14 +26,14 @@ export default async function OwnerLayout({
   }
 
   const navItems = [
-    { href: "/owner", label: "Overview", icon: LayoutDashboard },
-    { href: "/owner/employees", label: "Employees", icon: Users },
-    { href: "/owner/shifts", label: "Shifts & Policies", icon: Clock },
-    { href: "/owner/attendance", label: "Attendance", icon: ClipboardList },
-    { href: "/owner/payroll", label: "Payroll", icon: Wallet },
-    { href: "/owner/devices", label: "Device Security", icon: Smartphone },
-    { href: "/owner/settings", label: "Location & WiFi", icon: MapPin },
-    { href: "/owner/audit-logs", label: "Audit Logs", icon: Shield },
+    { href: "/owner", label: "Ringkasan", icon: LayoutDashboard },
+    { href: "/owner/employees", label: "Karyawan", icon: Users },
+    { href: "/owner/shifts", label: "Shift & Aturan", icon: Clock },
+    { href: "/owner/attendance", label: "Presensi", icon: ClipboardList },
+    { href: "/owner/payroll", label: "Penggajian", icon: Wallet },
+    { href: "/owner/devices", label: "Keamanan Perangkat", icon: Smartphone },
+    { href: "/owner/settings", label: "Lokasi & Jaringan", icon: MapPin },
+    { href: "/owner/audit-logs", label: "Log Audit", icon: Shield },
     { href: "/owner/qr", label: "Terminal QR", icon: QrCode },
   ];
 
@@ -44,49 +44,49 @@ export default async function OwnerLayout({
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--system-bg)]">
+    <div className="min-h-screen flex flex-col bg-transparent">
       {/* Top Header */}
-      <header className="sticky top-0 z-40 bg-[var(--card-bg)]/85 backdrop-blur-md border-b border-[var(--separator)]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-12 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#0b0f19]/95 border-b border-slate-200 dark:border-slate-800 shadow-xs backdrop-blur-md">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded-md bg-[var(--text-primary)] text-[var(--system-bg)] flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs">
               <Shield className="w-3.5 h-3.5 stroke-[2]" />
             </div>
             <span className="text-xs font-semibold tracking-tight text-[var(--text-primary)]">CyberGuard</span>
             <span className="text-xs text-[var(--text-tertiary)]">/</span>
-            <span className="text-xs text-[var(--text-secondary)]">Management Console</span>
+            <span className="text-xs text-[var(--text-secondary)]">Konsol Pemilik</span>
           </div>
 
           <div className="flex items-center gap-3">
             <span className="text-[11px] text-[var(--text-tertiary)] hidden sm:inline tabular-numbers">
               WIB (UTC+7)
             </span>
-            <span className="hig-badge hig-badge-neutral text-[10px] font-semibold">
-              OWNER
+            <span className="hig-badge text-[10px] font-bold tracking-wider uppercase bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+              PEMILIK
             </span>
             <form action={handleLogout}>
               <button
                 type="submit"
-                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-1 rounded transition-colors flex items-center gap-1 text-xs"
-                title="Sign Out"
+                className="min-h-[44px] px-3 py-2 text-xs rounded-lg flex items-center gap-1.5 transition-colors text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                title="Keluar dari akun"
               >
                 <LogOut className="w-3.5 h-3.5 stroke-[1.75]" />
-                <span className="hidden sm:inline">Sign Out</span>
+                <span className="hidden sm:inline">Keluar</span>
               </button>
             </form>
           </div>
         </div>
 
-        {/* Apple HIG Segmented Bar */}
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 border-t border-[var(--separator-subtle)] overflow-x-auto">
-          <nav className="flex space-x-1 py-1.5">
+        {/* Subheader Navigation Bar (R-03: min 44px tap target height) */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 border-t border-slate-200 dark:border-slate-800 overflow-x-auto">
+          <nav className="flex space-x-1 py-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="px-2.5 py-1 text-xs font-medium rounded-md text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--separator-subtle)] flex items-center gap-1.5 transition-colors whitespace-nowrap"
+                  className="min-h-[44px] px-3.5 py-2 text-xs font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors whitespace-nowrap active:scale-[0.98]"
                 >
                   <Icon className="w-3.5 h-3.5 stroke-[1.75]" />
                   {item.label}

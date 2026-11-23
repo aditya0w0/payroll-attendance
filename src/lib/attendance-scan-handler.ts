@@ -7,6 +7,7 @@ import {
   determineActiveShiftDate,
   computeShiftTimestamps,
   formatJakartaDateTime,
+  formatJakartaTime,
 } from "@/lib/timezone";
 import { calculateLateDeduction } from "@/lib/payroll";
 import { recordAuditLog, recordTransactionalAuditLog } from "@/lib/audit";
@@ -20,6 +21,11 @@ const scanPayloadSchema = z
     latitude: z.number().optional(),
     longitude: z.number().optional(),
     accuracy: z.number().optional(),
+    forceEarlyCheckout: z.boolean().optional(),
+    earlyCheckoutReason: z.string().optional(),
+    earlyCheckoutApproved: z.boolean().optional(),
+    timezoneSource: z.enum(["INTERNET", "LOCAL_FALLBACK"]).optional(),
+    clientTimezone: z.string().optional(),
   })
   .refine((data) => Boolean(data.token || data.qrToken), {
     message: "QR token is required (token or qrToken)",
@@ -110,7 +116,6 @@ export async function handleAttendanceScan(req: Request) {
             error: "Perangkat wajib terhubung ke jaringan WiFi kantor untuk presensi.",
             code: "WIFI_IP_MISMATCH",
             clientIp,
-            expectedIp: activeConfig.officePublicIp.trim(),
           },
           { status: 403 }
         );
@@ -186,7 +191,18 @@ export async function handleAttendanceScan(req: Request) {
     }
 
     // 5. Single-Device Security Verification & Cheating Flagging
-    if (user.deviceRegistration) {
+    if (user.role === "EMPLOYEE") {
+      if (!user.deviceRegistration || !user.deviceRegistration.isActive) {
+        return NextResponse.json(
+          {
+            error: "DEVICE_NOT_AUTHORIZED",
+            message:
+              "Presensi ditolak: Akun belum terikat pada perangkat resmi. Silakan login ulang untuk mendaftarkan perangkat Anda.",
+          },
+          { status: 403 }
+        );
+      }
+
       const regFp = user.deviceRegistration.deviceFingerprint;
       if (regFp && deviceFingerprint && regFp !== deviceFingerprint) {
         await recordAuditLog({
@@ -273,7 +289,9 @@ export async function handleAttendanceScan(req: Request) {
 
     // CASE B Double-Scan Cooldown Guard: Check if less than 60s since Check-In -> Reject without burning QR token
     if (existingRecord && existingRecord.status === "CHECKED_IN") {
-      const bypassCooldown = req.headers.get("x-test-bypass-cooldown") === "true";
+      const bypassCooldown =
+        process.env.NODE_ENV !== "production" &&
+        req.headers.get("x-test-bypass-cooldown") === "true";
       const msSinceCheckIn = now.getTime() - new Date(existingRecord.checkInTime).getTime();
       if (!bypassCooldown && msSinceCheckIn < 60_000) {
         return NextResponse.json(
@@ -284,6 +302,42 @@ export async function handleAttendanceScan(req: Request) {
           },
           { status: 429 }
         );
+      }
+    }
+
+    // Early Clock-Out Guard: Check if employee attempts to check out before shift scheduled end time
+    let isEarlyCheckOut = false;
+    let minutesEarly = 0;
+    if (existingRecord && existingRecord.status === "CHECKED_IN") {
+      isEarlyCheckOut = now.getTime() < existingRecord.scheduledEndTime.getTime();
+      minutesEarly = isEarlyCheckOut
+        ? Math.max(1, Math.round((existingRecord.scheduledEndTime.getTime() - now.getTime()) / 60000))
+        : 0;
+
+      if (isEarlyCheckOut) {
+        if (!parseRes.data.forceEarlyCheckout) {
+          return NextResponse.json(
+            {
+              error: "Shift kerja Anda belum berakhir.",
+              code: "EARLY_CHECKOUT_RESTRICTED",
+              message: `Shift Anda dijadwalkan selesai pukul ${formatJakartaTime(existingRecord.scheduledEndTime)} WIB (${minutesEarly} menit lagi). Pulang lebih awal memerlukan konfirmasi alasan dan izin atasan.`,
+              scheduledEndTime: formatJakartaTime(existingRecord.scheduledEndTime),
+              minutesEarly,
+              checkInTime: existingRecord.checkInTime,
+            },
+            { status: 403 }
+          );
+        }
+
+        if (!parseRes.data.earlyCheckoutReason || !parseRes.data.earlyCheckoutReason.trim()) {
+          return NextResponse.json(
+            {
+              error: "Alasan pulang lebih awal wajib diisi.",
+              code: "EARLY_CHECKOUT_REASON_REQUIRED",
+            },
+            { status: 400 }
+          );
+        }
       }
     }
 
@@ -325,6 +379,35 @@ export async function handleAttendanceScan(req: Request) {
       const finalStatus = existingRecord.lateMinutes > 0 ? "LATE_COMPLETED" : "COMPLETED";
 
       const updatedRecord = await prisma.$transaction(async (tx) => {
+        // Concurrency Guard: Atomic transition CHECKED_IN -> COMPLETED/LATE_COMPLETED
+        const updateRes = await tx.attendanceRecord.updateMany({
+          where: { id: existingRecord.id, status: "CHECKED_IN" },
+          data: {
+            checkOutTime: now,
+            status: finalStatus,
+            checkOutDeviceFingerprint: deviceFingerprint || null,
+            checkOutLatitude: latitude ?? null,
+            checkOutLongitude: longitude ?? null,
+            checkOutDistanceMeters: distanceMeters,
+            checkOutClientIp: clientIp,
+            isEarlyCheckOut,
+            earlyCheckOutMinutes: minutesEarly,
+            earlyCheckOutReason: isEarlyCheckOut ? parseRes.data.earlyCheckoutReason?.trim() : null,
+            // Never trust client-asserted approval; only Owner can approve early checkout
+            earlyCheckOutApproved: false,
+            timezoneSource: parseRes.data.timezoneSource || "INTERNET",
+            clientTimezone: parseRes.data.clientTimezone || null,
+          },
+        });
+
+        if (updateRes.count === 0) {
+          throw new Error("CONCURRENT_CHECKOUT");
+        }
+
+        const updated = (await tx.attendanceRecord.findUnique({
+          where: { id: existingRecord.id },
+        }))!;
+
         // Record scan log to prevent replay
         await tx.qRScanLog.create({
           data: {
@@ -335,26 +418,12 @@ export async function handleAttendanceScan(req: Request) {
           },
         });
 
-        // Update attendance record with checkout telemetry
-        const updated = await tx.attendanceRecord.update({
-          where: { id: existingRecord.id },
-          data: {
-            checkOutTime: now,
-            status: finalStatus,
-            checkOutDeviceFingerprint: deviceFingerprint || null,
-            checkOutLatitude: latitude ?? null,
-            checkOutLongitude: longitude ?? null,
-            checkOutDistanceMeters: distanceMeters,
-            checkOutClientIp: clientIp,
-          },
-        });
-
-        // Transactional Audit Log with ATTENDANCE_CHECKOUT_RECORDED
+        // Transactional Audit Log with ATTENDANCE_CHECKOUT_RECORDED or ATTENDANCE_EARLY_CHECKOUT
         await recordTransactionalAuditLog(tx, {
           actorId: user.id,
           actorRole: "EMPLOYEE",
           actorName: employee.fullName,
-          action: "ATTENDANCE_CHECKOUT_RECORDED",
+          action: isEarlyCheckOut ? "ATTENDANCE_EARLY_CHECKOUT" : "ATTENDANCE_CHECKOUT_RECORDED",
           targetEntity: "ATTENDANCE",
           targetId: updated.id,
           newValues: {
@@ -362,6 +431,10 @@ export async function handleAttendanceScan(req: Request) {
             employee: employee.fullName,
             shiftDate,
             checkOutTime: now.toISOString(),
+            isEarlyCheckOut,
+            earlyCheckOutMinutes: minutesEarly,
+            earlyCheckOutReason: isEarlyCheckOut ? parseRes.data.earlyCheckoutReason?.trim() : null,
+            earlyCheckOutApproved: false,
             lateMinutes: updated.lateMinutes,
             lateDeduction: updated.lateDeduction,
             netDailyEarnings: updated.netDailyEarnings,
@@ -375,10 +448,14 @@ export async function handleAttendanceScan(req: Request) {
             gpsAccuracy: accuracy ?? null,
             wifiMatched: Boolean(activeConfig.enforceWifiIp),
             geofenceMatched: Boolean(activeConfig.enforceGeofence),
+            timezoneSource: parseRes.data.timezoneSource || "INTERNET",
+            clientTimezone: parseRes.data.clientTimezone || null,
           },
           ipAddress: clientIp,
           userAgent,
-          reason: "Employee completed shift checkout with dual geofence and WiFi verification",
+          reason: isEarlyCheckOut
+            ? `Karyawan pulang ${minutesEarly} menit lebih awal: ${parseRes.data.earlyCheckoutReason} (Menunggu verifikasi atasan)`
+            : "Employee completed shift checkout with dual geofence and WiFi verification",
         });
 
         return updated;
@@ -482,6 +559,8 @@ export async function handleAttendanceScan(req: Request) {
           checkInLongitude: longitude ?? null,
           checkInDistanceMeters: distanceMeters,
           checkInClientIp: clientIp,
+          timezoneSource: parseRes.data.timezoneSource || "INTERNET",
+          clientTimezone: parseRes.data.clientTimezone || null,
         },
       });
 
@@ -546,9 +625,18 @@ export async function handleAttendanceScan(req: Request) {
       },
     });
   } catch (error: any) {
+    if (error?.message === "CONCURRENT_CHECKOUT" || error?.code === "P2002") {
+      return NextResponse.json(
+        {
+          error: "Presensi untuk shift ini sudah tercatat. Permintaan ganda ditolak.",
+          code: "CONCURRENT_ATTENDANCE_CONFLICT",
+        },
+        { status: 409 }
+      );
+    }
     console.error("Attendance scan handler error:", error);
     return NextResponse.json(
-      { error: "Failed to process attendance scan: " + (error.message || "Server error") },
+      { error: "Gagal memproses presensi. Silakan coba lagi." },
       { status: 500 }
     );
   }

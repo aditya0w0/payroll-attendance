@@ -139,6 +139,18 @@ export default function OwnerAuditLogsPage() {
     checkHealth();
   }, [actionFilter]);
 
+  // Modal keyboard Escape listener (R-32)
+  useEffect(() => {
+    if (!selectedLog) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelectedLog(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedLog]);
+
   const isChainValid = health?.chainIntegrity.valid ?? true;
 
   return (
@@ -146,17 +158,14 @@ export default function OwnerAuditLogsPage() {
       {/* Title */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
-              Audit Activity Log & Integrity Ledger
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
+              Log Audit &amp; Integritas Data
             </h1>
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-              SHA-256 Chain • Ed25519 Signed
+            <span className="hig-badge hig-badge-neutral text-xs font-semibold px-2.5 py-0.5">
+              Append-Only
             </span>
           </div>
-          <p className="text-xs text-neutral-500 mt-1">
-            Authoritative append-only ledger tracking all administrative actions, wage revisions, and security events with cryptographic tamper detection.
-          </p>
         </div>
 
         {/* Action Controls */}
@@ -164,57 +173,57 @@ export default function OwnerAuditLogsPage() {
           <a
             href="/api/owner/audit-logs/export-signed"
             download
-            className="apple-btn-secondary text-xs flex items-center gap-1.5"
-            title="Download signed JSONL ledger"
+            className="hig-button-secondary text-xs flex items-center gap-1.5"
+            title="Unduh log audit bertanda tangan digital"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Export Signed (.jsonl)</span>
+            <span>Ekspor Log Audit</span>
           </a>
 
           <button
             onClick={checkHealth}
             disabled={verifying}
-            className="apple-btn-secondary text-xs flex items-center gap-1.5"
-            title="Re-verify entire hash-chain and check outbox"
+            className="hig-button-secondary text-xs flex items-center gap-1.5"
+            title="Verifikasi ulang rantai hash dan integritas data"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${verifying ? "animate-spin" : ""}`} />
-            <span>{verifying ? "Verifying..." : "Verify Chain"}</span>
+            <span>{verifying ? "Memverifikasi..." : "Verifikasi Integritas"}</span>
           </button>
         </div>
       </div>
 
       {/* Audit & Security Health Status Panel */}
-      <div className="apple-card p-5 space-y-4 border border-neutral-200 dark:border-neutral-800">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-neutral-100 dark:border-neutral-800">
+      <div className="hig-card p-5 space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-[var(--separator-subtle)]">
           <div className="flex items-center gap-2.5">
             {isChainValid ? (
-              <div className="w-7 h-7 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-full bg-[var(--system-green-tint)] text-[var(--system-green)] flex items-center justify-center">
                 <CheckCircle2 className="w-4 h-4 stroke-[2]" />
               </div>
             ) : (
-              <div className="w-7 h-7 rounded-full bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-full bg-[var(--system-red-tint)] text-[var(--system-red)] flex items-center justify-center">
                 <AlertTriangle className="w-4 h-4 stroke-[2]" />
               </div>
             )}
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                  Cryptographic Ledger Integrity:
+                <h2 className="text-sm font-semibold text-[var(--text-primary)]">
+                  Integritas Rantai Audit:
                 </h2>
                 <span
-                  className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase ${
+                  className={`px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide ${
                     isChainValid
-                      ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
-                      : "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 border border-red-300 dark:border-red-800"
+                      ? "bg-[var(--system-green-tint)] text-[var(--system-green)] border border-emerald-500/20"
+                      : "bg-[var(--system-red-tint)] text-[var(--system-red)] border border-red-500/20"
                   }`}
                 >
-                  {isChainValid ? "VERIFIED INTACT" : "CHAIN BROKEN / TAMPERED"}
+                  {isChainValid ? "Rantai Valid" : "Rantai Terganggu"}
                 </span>
               </div>
-              <p className="text-[11px] text-neutral-500">
+              <p className="text-[11px] text-[var(--text-secondary)]">
                 {health?.chainIntegrity
-                  ? `${health.chainIntegrity.totalRecordsChecked} records verified (Sequence #${health.chainIntegrity.genesisSequence} to #${health.chainIntegrity.latestSequence})`
-                  : "Checking ledger continuity..."}
+                  ? `${health.chainIntegrity.totalRecordsChecked} rekaman terverifikasi (Urutan #${health.chainIntegrity.genesisSequence} s/d #${health.chainIntegrity.latestSequence})`
+                  : "Memeriksa kelanjutan rantai audit..."}
               </p>
             </div>
           </div>
@@ -223,16 +232,16 @@ export default function OwnerAuditLogsPage() {
             <button
               onClick={handleManualFlush}
               disabled={flushing || (health?.outbox.pendingCount ?? 0) === 0}
-              className="apple-btn-primary text-xs flex items-center gap-1.5"
+              className="hig-button-primary text-xs flex items-center gap-1.5"
             >
               <Send className="w-3.5 h-3.5" />
-              <span>{flushing ? "Flushing..." : "Flush Outbox Now"}</span>
+              <span>{flushing ? "Mengirim..." : "Kirim Antrean Outbox"}</span>
             </button>
           </div>
         </div>
 
         {flushMessage && (
-          <div className="p-2.5 rounded text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200">
+          <div className="p-2.5 rounded-lg text-xs bg-neutral-100 dark:bg-neutral-800 text-[var(--text-primary)]">
             {flushMessage}
           </div>
         )}
@@ -240,52 +249,52 @@ export default function OwnerAuditLogsPage() {
         {/* 3-Column Health Metrics */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
           {/* Col 1: Hash Chain Continuity */}
-          <div className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 space-y-1">
-            <div className="text-[10px] uppercase font-semibold text-neutral-400 tracking-wider">
-              Ledger Cryptography
+          <div className="p-3 rounded-xl bg-[var(--system-bg-secondary)] border border-[var(--separator-subtle)] space-y-1">
+            <div className="text-[10px] uppercase font-semibold text-[var(--text-tertiary)] tracking-wider">
+              Kriptografi Hash
             </div>
-            <div className="font-medium text-neutral-800 dark:text-neutral-200">
+            <div className="font-medium text-[var(--text-primary)]">
               Ed25519 Signatures + SHA-256
             </div>
-            <div className="text-[10px] text-neutral-500 font-mono truncate">
-              Public Key: {health?.security.publicKey ? `${health.security.publicKey.slice(0, 24)}...` : "Loading..."}
+            <div className="text-[10px] text-[var(--text-secondary)] font-mono truncate">
+              Kunci: {health?.security.publicKey ? `${health.security.publicKey.slice(0, 24)}...` : "Memuat..."}
             </div>
           </div>
 
           {/* Col 2: Transactional Outbox */}
-          <div className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 space-y-1">
-            <div className="text-[10px] uppercase font-semibold text-neutral-400 tracking-wider">
-              Outbox Dispatch Queue
+          <div className="p-3 rounded-xl bg-[var(--system-bg-secondary)] border border-[var(--separator-subtle)] space-y-1">
+            <div className="text-[10px] uppercase font-semibold text-[var(--text-tertiary)] tracking-wider">
+              Antrean Pengiriman Outbox
             </div>
-            <div className="flex items-center gap-2 font-medium text-neutral-800 dark:text-neutral-200">
-              <span>{health?.outbox.pendingCount ?? 0} Pending</span>
-              <span className="text-neutral-400">•</span>
-              <span className="text-emerald-600 dark:text-emerald-400">
-                {health?.outbox.deliveredCount ?? 0} Delivered
+            <div className="flex items-center gap-2 font-medium text-[var(--text-primary)]">
+              <span>{health?.outbox.pendingCount ?? 0} Tertunda</span>
+              <span className="text-[var(--text-tertiary)]">•</span>
+              <span className="text-[var(--system-green)]">
+                {health?.outbox.deliveredCount ?? 0} Terkirim
               </span>
             </div>
-            <div className="text-[10px] text-neutral-500">
-              Scheduled via Vercel Cron (`*/10 * * * *`)
+            <div className="text-[10px] text-[var(--text-secondary)]">
+              Sinkronisasi otomatis berkala tiap 10 menit
             </div>
           </div>
 
           {/* Col 3: External WORM Storage */}
-          <div className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 space-y-1">
-            <div className="text-[10px] uppercase font-semibold text-neutral-400 tracking-wider">
-              Archive Storage Sink
+          <div className="p-3 rounded-xl bg-[var(--system-bg-secondary)] border border-[var(--separator-subtle)] space-y-1">
+            <div className="text-[10px] uppercase font-semibold text-[var(--text-tertiary)] tracking-wider">
+              Penyimpanan Arsip
             </div>
-            <div className="font-medium text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5">
-              <Database className="w-3.5 h-3.5 text-neutral-500" />
+            <div className="font-medium text-[var(--text-primary)] flex items-center gap-1.5">
+              <Database className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
               <span>
                 {health?.sink.providerType === "S3_R2_WORM"
                   ? "Cloudflare R2 / AWS S3"
-                  : "Local Outbox Archive"}
+                  : "Arsip Lokal Sistem"}
               </span>
             </div>
-            <div className="text-[10px] text-neutral-500">
+            <div className="text-[10px] text-[var(--text-secondary)]">
               {health?.sink.isWormConfigured
-                ? `WORM Lock: ${health.sink.objectLockEnabled ? "COMPLIANCE" : "Standard"}`
-                : "Zero-cost local directory storage"}
+                ? `Kepatuhan WORM: ${health.sink.objectLockEnabled ? "Aktif" : "Standar"}`
+                : "Penyimpanan arsip lokal direktori terenkripsi"}
             </div>
           </div>
         </div>
@@ -321,33 +330,33 @@ export default function OwnerAuditLogsPage() {
           </select>
         </div>
 
-        <button onClick={loadLogs} className="apple-btn-secondary text-xs py-1.5" title="Reload logs">
+        <button onClick={loadLogs} className="apple-btn-secondary text-xs py-1.5" title="Muat ulang log audit">
           <RefreshCw className="w-3.5 h-3.5" />
-          <span>Refresh</span>
+          <span>Muat Ulang</span>
         </button>
       </div>
 
       {/* Logs Table */}
       <div className="apple-card overflow-hidden">
         {loading ? (
-          <div className="text-center py-12 text-xs text-neutral-400">Loading audit ledger...</div>
+          <div className="text-center py-12 text-xs text-neutral-400">Memuat log audit...</div>
         ) : logs.length === 0 ? (
           <div className="text-center py-12 text-xs text-neutral-400">
-            No audit records found matching criteria.
+            Tidak ada catatan audit yang sesuai dengan kriteria pencarian.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
               <thead>
-                <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 text-neutral-500">
-                  <th className="py-3 px-3 font-semibold uppercase tracking-wider">Seq</th>
-                  <th className="py-3 px-4 font-semibold uppercase tracking-wider">Timestamp (WIB)</th>
-                  <th className="py-3 px-4 font-semibold uppercase tracking-wider">Actor</th>
-                  <th className="py-3 px-4 font-semibold uppercase tracking-wider">Action</th>
-                  <th className="py-3 px-4 font-semibold uppercase tracking-wider">Target Entity</th>
-                  <th className="py-3 px-4 font-semibold uppercase tracking-wider">Ledger Hash</th>
-                  <th className="py-3 px-4 font-semibold uppercase tracking-wider">Reason / Details</th>
-                  <th className="py-3 px-3 font-semibold uppercase tracking-wider text-right">View</th>
+                <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 text-neutral-500 font-medium">
+                  <th className="py-3 px-3">No. Urut</th>
+                  <th className="py-3 px-4">Waktu (WIB)</th>
+                  <th className="py-3 px-4">Aktor</th>
+                  <th className="py-3 px-4">Tindakan</th>
+                  <th className="py-3 px-4">Target Entitas</th>
+                  <th className="py-3 px-4">Hash Buku Besar</th>
+                  <th className="py-3 px-4">Alasan / Rincian</th>
+                  <th className="py-3 px-3 text-right">Detail</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">

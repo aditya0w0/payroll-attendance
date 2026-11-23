@@ -107,9 +107,7 @@ export function getWebAuthnConfig(hostHeader?: string | null): WebAuthnConfig {
 
   if (envOrigin && envOrigin.trim()) {
     origins.push(normalizeOrigin(envOrigin));
-  }
-
-  if (hostHeader && hostHeader.trim()) {
+  } else if (hostHeader && hostHeader.trim()) {
     const isLocal = hostHeader.includes("localhost") || hostHeader.includes("127.0.0.1");
     const isHttps = process.env.NODE_ENV === "production" || !isLocal;
     const derivedOrigin = `${isHttps ? "https" : "http"}://${hostHeader.replace(/\/+$/, "")}`;
@@ -120,9 +118,11 @@ export function getWebAuthnConfig(hostHeader?: string | null): WebAuthnConfig {
     origins.push(`https://${vercelUrl.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`);
   }
 
-  // Always support localhost during local development & testing
-  origins.push("http://localhost:3000");
-  origins.push("http://127.0.0.1:3000");
+  // Only allow localhost origins in non-production environments
+  if (process.env.NODE_ENV !== "production") {
+    origins.push("http://localhost:3000");
+    origins.push("http://127.0.0.1:3000");
+  }
 
   // Deduplicate origins
   const uniqueOrigins = Array.from(new Set(origins));
@@ -291,8 +291,11 @@ export async function verifyPasskeyRegistration(
     }
   }
 
-  // Delete consumed challenge safely without throwing on concurrent requests
-  await prisma.webAuthnChallenge.deleteMany({ where: { id: challengeRecord.id } });
+  // Atomically consume challenge and reject concurrent replays
+  const consumed = await prisma.webAuthnChallenge.deleteMany({ where: { id: challengeRecord.id } });
+  if (consumed.count === 0) {
+    throw new Error("WebAuthn registration challenge already consumed. Please try again.");
+  }
 
   // 2. Verify response
   const verification: VerifiedRegistrationResponse = await verifyRegistrationResponse({
@@ -551,8 +554,11 @@ export async function verifyPasskeyAuthentication(
     throw new Error("Authentication challenge expired or not found. Please try again.");
   }
 
-  // Delete consumed challenge safely without throwing on concurrent requests
-  await prisma.webAuthnChallenge.deleteMany({ where: { id: challengeRecord.id } });
+  // Atomically consume challenge and reject concurrent replays
+  const consumed = await prisma.webAuthnChallenge.deleteMany({ where: { id: challengeRecord.id } });
+  if (consumed.count === 0) {
+    throw new Error("WebAuthn registration challenge already consumed. Please try again.");
+  }
 
   // 2. Fetch device registration
   const device = await prisma.deviceRegistration.findUnique({

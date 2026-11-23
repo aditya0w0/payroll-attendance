@@ -6,14 +6,11 @@ import {
   Camera,
   CheckCircle2,
   AlertCircle,
-  ArrowLeft,
   Zap,
   SwitchCamera,
   RotateCcw,
   MapPin,
   Clock,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import Link from "next/link";
 import { formatIDR } from "@/lib/utils";
@@ -67,11 +64,6 @@ export default function EmployeeScanPage() {
   const [error, setError] = useState<string | null>(null);
   const [scanResult, setScanResult] = useState<any | null>(null);
 
-  // Manual / Dev Fallback State (Collapsed by default)
-  const [showManualSection, setShowManualSection] = useState(false);
-  const [tokenInput, setTokenInput] = useState("");
-  const [isDev, setIsDev] = useState(false);
-
   // Geolocation Anti-Cheat Verification State
   const [gpsCoords, setGpsCoords] = useState<{
     latitude: number;
@@ -80,6 +72,58 @@ export default function EmployeeScanPage() {
   } | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
+
+  // Early Clock-Out Warning Popup State & Mandatory Countdown
+  const [earlyModalOpen, setEarlyModalOpen] = useState(false);
+  const [earlyToken, setEarlyToken] = useState<string>("");
+  const [earlyScheduledEnd, setEarlyScheduledEnd] = useState<string>("");
+  const [earlyMinutes, setEarlyMinutes] = useState<number>(0);
+  const [earlyReason, setEarlyReason] = useState<string>("");
+  const [earlyApproved, setEarlyApproved] = useState<boolean>(false);
+  const [earlyCountdown, setEarlyCountdown] = useState<number>(5);
+  const [earlySubmitting, setEarlySubmitting] = useState(false);
+
+  // Timezone Synchronization Metadata
+  const getTimezoneMetadata = async (): Promise<{
+    timezoneSource: "INTERNET" | "LOCAL_FALLBACK";
+    clientTimezone: string;
+  }> => {
+    const localTz =
+      typeof Intl !== "undefined" && Intl.DateTimeFormat
+        ? Intl.DateTimeFormat().resolvedOptions().timeZone
+        : "Asia/Jakarta";
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const res = await fetch("/api/time", { signal: controller.signal, cache: "no-store" });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        return {
+          timezoneSource: "INTERNET",
+          clientTimezone: localTz,
+        };
+      }
+    } catch {
+      // Network timeout or offline fallback
+    }
+    return {
+      timezoneSource: "LOCAL_FALLBACK",
+      clientTimezone: localTz,
+    };
+  };
+
+  // 5-second mandatory countdown lock for early checkout
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (earlyModalOpen && earlyCountdown > 0) {
+      timer = setTimeout(() => {
+        setEarlyCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [earlyModalOpen, earlyCountdown]);
 
   // Active Refs to prevent React Stale Closure bugs inside requestAnimationFrame
   const gpsCoordsRef = useRef<{
@@ -105,6 +149,7 @@ export default function EmployeeScanPage() {
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [torchSupported, setTorchSupported] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
+  const [flagCopied, setFlagCopied] = useState(false);
 
   // 1. Fetch current employee shift & attendance state
   const loadShiftStatus = async () => {
@@ -149,7 +194,15 @@ export default function EmployeeScanPage() {
   // 2. Direct Native Geolocation Trigger (Synchronous browser call)
   const triggerNativeGpsPrompt = () => {
     if (typeof window === "undefined" || !("geolocation" in window.navigator)) {
-      setGpsError("API Geolocation tidak ditemukan di browser ini.");
+      setGpsError("Fitur lokasi tidak didukung pada peramban ini.");
+      return;
+    }
+
+    if (typeof window !== "undefined" && !window.isSecureContext) {
+      setGpsError(
+        "Izin lokasi dibatasi oleh peramban karena koneksi HTTP tidak aman (bukan HTTPS). Gunakan HTTPS atau izinkan IP ini di chrome://flags."
+      );
+      setGpsLoading(false);
       return;
     }
 
@@ -166,17 +219,22 @@ export default function EmployeeScanPage() {
       },
       (geoErr) => {
         setGpsLoading(false);
-        const rawReason = `[CODE ${geoErr.code}] ${geoErr.message || "Unknown geolocation error"}`;
         if (geoErr.code === 1) {
-          setGpsError(
-            `${rawReason} — Izin lokasi belum aktif. Klik ikon Gembok di kiri URL bar browser -> Izinkan Lokasi (Precise Location).`
-          );
+          if (typeof window !== "undefined" && !window.isSecureContext) {
+            setGpsError(
+              "Izin lokasi diblokir oleh peramban karena koneksi HTTP tidak aman. Izinkan origin ini di chrome://flags atau gunakan HTTPS."
+            );
+          } else {
+            setGpsError(
+              "Izin akses lokasi belum diaktifkan. Buka setelan peramban atau klik ikon gembok pada bilah alamat untuk mengizinkan akses lokasi kantor."
+            );
+          }
         } else if (geoErr.code === 2) {
-          setGpsError(`${rawReason} — Sinyal GPS satelit tidak terdeteksi.`);
+          setGpsError("Sinyal GPS tidak terdeteksi. Pastikan perangkat Anda memiliki sinyal GPS atau koneksi jaringan yang memadai.");
         } else if (geoErr.code === 3) {
-          setGpsError(`${rawReason} — Timeout mencari koordinat GPS.`);
+          setGpsError("Waktu pencarian koordinat lokasi habis. Silakan coba kembali.");
         } else {
-          setGpsError(rawReason);
+          setGpsError("Gagal memperoleh koordinat lokasi perangkat.");
         }
       },
       {
@@ -187,37 +245,8 @@ export default function EmployeeScanPage() {
     );
   };
 
-  // Local Testing Fallback
-  const handleUseOfficeGpsLocal = async () => {
-    try {
-      const res = await fetch("/api/owner/office-config");
-      const data = await res.json();
-      if (data.config && data.config.latitude && data.config.longitude) {
-        commitGpsCoordinates({
-          latitude: data.config.latitude,
-          longitude: data.config.longitude,
-          accuracy: 10,
-        });
-        return;
-      }
-    } catch {}
-
-    commitGpsCoordinates({
-      latitude: -6.928715,
-      longitude: 109.655502,
-      accuracy: 10,
-    });
-  };
-
   // Mount initialization: Load Shift Status, GPS, and Start Camera
   useEffect(() => {
-    const isDevelopment =
-      process.env.NODE_ENV === "development" ||
-      (typeof window !== "undefined" &&
-        (window.location.hostname === "localhost" ||
-          window.location.hostname === "127.0.0.1"));
-    setIsDev(isDevelopment);
-
     loadShiftStatus();
     triggerNativeGpsPrompt();
     startCamera("environment");
@@ -258,27 +287,61 @@ export default function EmployeeScanPage() {
       !navigator.mediaDevices ||
       !navigator.mediaDevices.getUserMedia
     ) {
-      setCameraError("Kamera tidak didukung pada browser ini. Buka situs di Safari atau Chrome.");
+      if (typeof window !== "undefined" && !window.isSecureContext) {
+        setCameraError("Kamera diblokir oleh peramban karena koneksi HTTP tidak aman (bukan HTTPS). Gunakan HTTPS atau izinkan IP ini di chrome://flags.");
+      } else {
+        setCameraError("Kamera tidak didukung pada browser ini. Buka situs di Safari atau Chrome.");
+      }
       setCameraStarting(false);
       return;
     }
 
     try {
-      const constraints: MediaStreamConstraints = {
-        video: {
-          facingMode: { ideal: targetFacing },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-        audio: false,
-      };
+      let stream: MediaStream | null = null;
+      let lastError: any = null;
 
-      let stream: MediaStream;
+      // Strategy 1: Ideal facingMode and 720p resolution
       try {
-        stream = await navigator.mediaDevices.getUserMedia(constraints);
-      } catch (constraintErr: any) {
-        console.warn("Retrying with generic video constraints:", constraintErr);
-        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: targetFacing },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+          audio: false,
+        });
+      } catch (err1) {
+        lastError = err1;
+      }
+
+      // Strategy 2: Relaxed resolution with ideal facingMode
+      if (!stream) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: { ideal: targetFacing },
+            },
+            audio: false,
+          });
+        } catch (err2) {
+          lastError = err2;
+        }
+      }
+
+      // Strategy 3: Minimal generic video stream (desktop webcams, virtual cams)
+      if (!stream) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        } catch (err3) {
+          lastError = err3;
+        }
+      }
+
+      if (!stream) {
+        if (typeof window !== "undefined" && !window.isSecureContext) {
+          throw new Error("Kamera diblokir oleh peramban pada koneksi HTTP non-HTTPS. Izinkan origin ini di chrome://flags atau gunakan HTTPS.");
+        }
+        throw lastError || new Error("Kamera tidak dapat diinisialisasi.");
       }
 
       streamRef.current = stream;
@@ -320,12 +383,16 @@ export default function EmployeeScanPage() {
       console.error("Camera access error:", err);
       if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
         setCameraError(
-          "Izin kamera belum diberikan. Klik ikon Gembok di address bar browser untuk mengizinkan kamera."
+          "Izin akses kamera belum diberikan. Buka setelan peramban untuk mengizinkan akses kamera pada situs ini."
         );
       } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
-        setCameraError("Kamera tidak ditemukan pada perangkat ini.");
+        setCameraError("Kamera tidak terdeteksi pada perangkat ini.");
+      } else if (err.name === "NotReadableError" || err.name === "TrackStartError") {
+        setCameraError("Kamera sedang digunakan oleh aplikasi lain.");
+      } else if (err.name === "OverconstrainedError") {
+        setCameraError("Spesifikasi sensor kamera tidak didukung pada peramban ini.");
       } else {
-        setCameraError(err.message || "Gagal membuka kamera.");
+        setCameraError("Kamera tidak dapat dibuka saat ini. Silakan coba kembali.");
       }
       setCameraActive(false);
     } finally {
@@ -491,7 +558,14 @@ export default function EmployeeScanPage() {
     return trimmed;
   };
 
-  const submitToken = async (tokenToSubmit: string) => {
+  const submitToken = async (
+    tokenToSubmit: string,
+    earlyOptions?: {
+      forceEarlyCheckout: boolean;
+      earlyCheckoutReason: string;
+      earlyCheckoutApproved: boolean;
+    }
+  ) => {
     const cleanToken = extractCleanToken(tokenToSubmit);
 
     // Read LIVE GPS from ref to guarantee freshness and prevent stale closure
@@ -501,15 +575,11 @@ export default function EmployeeScanPage() {
       // If GPS is currently acquiring, store token as pending and display soft hint
       if (gpsLoading) {
         pendingTokenRef.current = cleanToken;
-        setScanStatusHint("QR terbaca! Menunggu sinyal GPS satelit mengunci...");
+        setScanStatusHint("QR terbaca. Menunggu sinyal GPS satelit mengunci...");
         return;
       }
 
-      setGpsError(
-        isDev
-          ? "Koordinat GPS belum terkunci. Klik tombol 'Gunakan Lokasi Kantor (Mode Tes Lokal)' di bawah."
-          : "Koordinat GPS diperlukan untuk presensi. Klik 'Minta Izin Lokasi' di bawah."
-      );
+      setGpsError("Koordinat GPS belum terkunci. Klik tombol 'Izinkan Akses Lokasi' di bawah.");
       isSubmittingRef.current = false;
       setLoading(false);
       setScanningPulse(false);
@@ -522,21 +592,51 @@ export default function EmployeeScanPage() {
     setError(null);
 
     try {
-      const dev = await getClientDeviceIdentity();
+      const [dev, tzMeta] = await Promise.all([
+        getClientDeviceIdentity(),
+        getTimezoneMetadata(),
+      ]);
+
+      const payload: Record<string, any> = {
+        token: cleanToken,
+        deviceFingerprint: dev.deviceFingerprint,
+        latitude: currentGps.latitude,
+        longitude: currentGps.longitude,
+        accuracy: currentGps.accuracy,
+        timezoneSource: tzMeta.timezoneSource,
+        clientTimezone: tzMeta.clientTimezone,
+      };
+
+      if (earlyOptions?.forceEarlyCheckout) {
+        payload.forceEarlyCheckout = true;
+        payload.earlyCheckoutReason = earlyOptions.earlyCheckoutReason;
+        payload.earlyCheckoutApproved = earlyOptions.earlyCheckoutApproved;
+      }
+
       const res = await fetch("/api/qr/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token: cleanToken,
-          deviceFingerprint: dev.deviceFingerprint,
-          latitude: currentGps.latitude,
-          longitude: currentGps.longitude,
-          accuracy: currentGps.accuracy,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
       if (!res.ok) {
+        // Intercept early clock-out restriction before shift ends
+        if (data.code === "EARLY_CHECKOUT_RESTRICTED") {
+          setEarlyToken(cleanToken);
+          setEarlyScheduledEnd(data.scheduledEndTime || "17:00:00");
+          setEarlyMinutes(data.minutesEarly || 0);
+          setEarlyReason("");
+          setEarlyApproved(false);
+          setEarlyCountdown(5);
+          setEarlyModalOpen(true);
+          isSubmittingRef.current = false;
+          setLoading(false);
+          setScanningPulse(false);
+          setScanStatusHint(null);
+          return;
+        }
+
         let errorMsg = data.error || data.message || "Attendance scan failed";
         if (data.code === "SCAN_COOLDOWN_ACTIVE") {
           errorMsg = "Anda baru saja melakukan Check-In. Tunggu minimal 1 menit sebelum Check-Out.";
@@ -548,6 +648,8 @@ export default function EmployeeScanPage() {
           errorMsg = "QR code sudah berganti atau kedaluwarsa. Arahkan kamera ke QR baru di layar.";
         } else if (data.code === "QR_QUEUE_ROTATING") {
           errorMsg = "QR baru saja digunakan karyawan lain. Arahkan kamera ke QR berikutnya di layar.";
+        } else if (data.code === "EARLY_CHECKOUT_REASON_REQUIRED") {
+          errorMsg = "Alasan kepulangan lebih awal wajib diisi.";
         }
         throw new Error(errorMsg);
       }
@@ -594,92 +696,68 @@ export default function EmployeeScanPage() {
     }
   };
 
-  const handleQuickScanActiveQR = async () => {
-    setError(null);
-    setLoading(true);
-
-    try {
-      const qrRes = await fetch("/api/qr/active");
-      const qrData = await qrRes.json();
-      if (!qrData.token) {
-        throw new Error("Tidak dapat mengambil QR aktif dari terminal.");
-      }
-      await submitToken(qrData.token);
-    } catch (err: any) {
-      setError(err.message || "Failed to scan QR");
-      setLoading(false);
-    }
-  };
-
   // Determine current contextual workflow
   const isCheckedIn = shiftInfo?.today?.state === "CHECKED_IN";
   const isCompleted = shiftInfo?.today?.state === "COMPLETED";
 
   return (
-    <div className="space-y-4">
-      {/* Top Navigation */}
-      <div className="flex items-center justify-between">
-        <Link
-          href="/employee"
-          className="text-xs text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 flex items-center gap-1.5 font-medium"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Dashboard</span>
-        </Link>
-        <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded font-semibold bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
-            {isCheckedIn ? "MODE: ABSEN PULANG" : isCompleted ? "SHIFT SELESAI" : "MODE: ABSEN MASUK"}
-          </span>
-        </div>
-      </div>
-
+    <div className="space-y-3.5">
       {!scanResult ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Shift State Header Banner */}
-          <div className="p-3.5 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
+          <div className="p-3.5 px-4 rounded-2xl hig-card flex items-center justify-between">
+            <div className="flex items-center gap-3">
               <div
-                className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                   isCheckedIn
-                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                    ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
                     : isCompleted
-                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                    : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                    : "bg-blue-500/15 text-blue-600 dark:text-blue-400"
                 }`}
               >
                 <Clock className="w-4 h-4" />
               </div>
               <div>
-                <span className="text-[10px] uppercase tracking-wider font-semibold text-neutral-400 block">
-                  {isCheckedIn ? "Status: Sedang Bekerja" : isCompleted ? "Status: Selesai" : "Status: Siap Masuk"}
-                </span>
-                <h3 className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xs font-semibold text-[var(--text-primary)]">
+                    {isCheckedIn
+                      ? "Absen Pulang"
+                      : isCompleted
+                      ? "Presensi Selesai"
+                      : "Absen Masuk"}
+                  </h3>
+                  <span className="hig-badge text-[10px] font-mono px-2 py-0.5">
+                    {isCheckedIn ? "Check-Out" : isCompleted ? "Lengkap" : "Check-In"}
+                  </span>
+                </div>
+                <span className="text-[11px] text-[var(--text-secondary)] block">
                   {isCheckedIn
-                    ? "Arahkan ke QR untuk Absen Pulang (Check-Out)"
+                    ? "Arahkan kamera ke layar terminal QR"
                     : isCompleted
-                    ? "Presensi hari ini sudah selesai"
-                    : "Arahkan ke QR untuk Absen Masuk (Check-In)"}
-                </h3>
+                    ? "Presensi hari ini sudah lengkap"
+                    : "Arahkan kamera ke layar terminal QR"}
+                </span>
               </div>
             </div>
 
             {isCheckedIn && shiftInfo?.today?.activeRecord && (
-              <span className="text-[11px] font-mono text-neutral-500 font-medium shrink-0">
-                In: {shiftInfo.today.activeRecord.checkInTime.split(", ")[1] || shiftInfo.today.activeRecord.checkInTime}
+              <span className="text-[11px] font-mono text-[var(--text-secondary)] font-medium shrink-0">
+                Masuk: {shiftInfo.today.activeRecord.checkInTime.split(", ")[1] || shiftInfo.today.activeRecord.checkInTime}
               </span>
             )}
           </div>
 
-          {/* Apple Style Seamless Viewfinder Card */}
-          <div className="apple-card p-5 text-center space-y-4">
+          {/* Viewfinder Card */}
+          <div className="hig-card p-4 rounded-2xl text-center space-y-3">
             {/* Viewfinder Viewport */}
             <div
-              className={`relative w-full max-w-[300px] aspect-square mx-auto rounded-3xl overflow-hidden bg-neutral-950 border transition-all duration-300 shadow-inner flex items-center justify-center ${
+              className={`relative w-full max-w-[280px] aspect-square mx-auto rounded-2xl overflow-hidden bg-neutral-950 border transition-all duration-300 shadow-inner flex items-center justify-center ${
                 scanningPulse
-                  ? "border-emerald-500 ring-4 ring-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+                  ? "border-emerald-500 ring-4 ring-emerald-500/30 shadow-[0_0_25px_rgba(16,185,129,0.4)]"
                   : error
                   ? "border-red-500/80 ring-2 ring-red-500/20"
-                  : "border-neutral-200 dark:border-neutral-800"
+                  : "border-white/20 dark:border-white/10"
               }`}
             >
               {/* Live Video Feed & Offscreen Canvas */}
@@ -705,15 +783,12 @@ export default function EmployeeScanPage() {
                       <div className="absolute -top-1 -right-1 w-6 h-6 border-t-[3.5px] border-r-[3.5px] border-blue-500 rounded-tr-sm pointer-events-none" />
                       <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-[3.5px] border-l-[3.5px] border-blue-500 rounded-bl-sm pointer-events-none" />
                       <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-[3.5px] border-r-[3.5px] border-blue-500 rounded-tr-sm pointer-events-none" />
-
-                      {/* Animated Laser Scanning Line */}
-                      <div className="absolute left-2 right-2 top-1/2 h-0.5 bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.9)] animate-pulse pointer-events-none" />
                     </div>
                   </div>
 
                   {/* Processing Status Overlay */}
                   {loading && (
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-30 flex flex-col items-center justify-center gap-2 text-white">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-md z-30 flex flex-col items-center justify-center gap-2 text-white">
                       <div className="w-9 h-9 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       <span className="text-xs font-medium tracking-wide">
                         {scanStatusHint || "Memverifikasi QR..."}
@@ -727,10 +802,10 @@ export default function EmployeeScanPage() {
                       <button
                         type="button"
                         onClick={toggleTorch}
-                        className={`p-2 rounded-full backdrop-blur-md transition-colors ${
+                        className={`p-2.5 rounded-full backdrop-blur-xl border border-white/30 transition-all ${
                           torchOn
-                            ? "bg-amber-400 text-black shadow-md"
-                            : "bg-black/50 hover:bg-black/70 text-white"
+                            ? "bg-amber-400 text-black shadow-lg scale-105"
+                            : "bg-black/40 hover:bg-black/60 text-white"
                         }`}
                         title={torchOn ? "Matikan Flash" : "Nyalakan Flash"}
                       >
@@ -744,7 +819,7 @@ export default function EmployeeScanPage() {
                       <button
                         type="button"
                         onClick={switchCamera}
-                        className="p-2 rounded-full bg-black/50 hover:bg-black/70 text-white backdrop-blur-md transition-colors"
+                        className="p-2.5 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-xl border border-white/30 transition-all hover:scale-105"
                         title="Ganti Kamera Depan/Belakang"
                       >
                         <SwitchCamera className="w-3.5 h-3.5" />
@@ -755,14 +830,14 @@ export default function EmployeeScanPage() {
               ) : (
                 /* Camera Inactive / Permission Prompt */
                 <div className="flex flex-col items-center justify-center p-6 text-center space-y-3 z-20 pointer-events-auto">
-                  <div className="w-14 h-14 rounded-2xl bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 flex items-center justify-center shadow-sm">
+                  <div className="w-14 h-14 rounded-2xl bg-white/10 text-white flex items-center justify-center shadow-inner border border-white/10">
                     <Camera className="w-7 h-7 stroke-[1.5]" />
                   </div>
                   <button
                     type="button"
                     onClick={() => startCamera("environment")}
                     disabled={cameraStarting}
-                    className="apple-btn-primary text-xs px-4 py-2 font-medium flex items-center gap-1.5 z-20 pointer-events-auto"
+                    className="liquid-glass-btn-primary text-xs px-4 py-2 font-medium flex items-center gap-1.5 z-20 pointer-events-auto rounded-xl"
                   >
                     <Camera className="w-3.5 h-3.5" />
                     <span>{cameraStarting ? "Menghubungkan Kamera..." : "Aktifkan Kamera"}</span>
@@ -775,167 +850,230 @@ export default function EmployeeScanPage() {
             </div>
 
             {/* Viewfinder Caption */}
-            <div className="space-y-1">
-              <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 block">
+            <div className="space-y-0.5">
+              <span className="text-xs font-semibold text-[var(--text-primary)] block">
                 {isCompleted
                   ? "Presensi Hari Ini Selesai"
                   : isCheckedIn
-                  ? "Absen Pulang (Check-Out)"
-                  : "Absen Masuk (Check-In)"}
+                  ? "Absen Pulang"
+                  : "Absen Masuk"}
               </span>
-              <p className="text-[11px] text-neutral-500 max-w-xs mx-auto">
+              <p className="text-[11px] text-[var(--text-secondary)]">
                 {isCompleted
-                  ? "Presensi masuk dan pulang untuk shift hari ini sudah lengkap."
-                  : "Dekatkan kamera ke layar terminal QR di kantor. Pemindaian akan berjalan otomatis tanpa perlu menekan tombol."}
+                  ? "Presensi masuk dan pulang sudah lengkap."
+                  : "Arahkan kamera ke layar terminal QR di kantor."}
               </p>
             </div>
 
-            {/* GPS Diagnostic & Status */}
-            <div className="flex items-center justify-between p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-xs">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5 text-neutral-500" />
-                <span className="text-neutral-500 text-[11px]">GPS Location:</span>
-              </div>
+            {/* Unified Sensor & Diagnostic Status Card */}
+            {!gpsCoords || cameraError || error || (typeof window !== "undefined" && !window.isSecureContext) ? (
+              <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/90 dark:bg-neutral-900/90 p-2.5 space-y-2 text-xs text-left divide-y divide-neutral-200 dark:divide-neutral-800">
+                {/* GPS Permission Row */}
+                {!gpsCoords && (
+                  <div className="flex items-center justify-between gap-2 pt-1.5 first:pt-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <MapPin className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                      <span className="text-[11px] text-[var(--text-primary)] truncate">
+                        {gpsLoading ? "Mengunci koordinat..." : "Izin lokasi diperlukan"}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => triggerNativeGpsPrompt()}
+                      disabled={gpsLoading}
+                      className="hig-button-compact-primary shrink-0"
+                    >
+                      {gpsLoading ? "Mencari..." : "Aktifkan"}
+                    </button>
+                  </div>
+                )}
 
-              {gpsCoords ? (
-                <div className="flex items-center gap-1.5">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                    <span>LOKASI DIDAPAT: +/-{gpsCoords.accuracy}m</span>
+                {/* Camera Error Row */}
+                {cameraError && (
+                  <div className="flex items-center justify-between gap-2 pt-2 first:pt-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <AlertCircle className="w-3.5 h-3.5 text-[var(--system-red)] shrink-0" />
+                      <span className="text-[11px] text-[var(--text-primary)] truncate" title={cameraError}>
+                        Kamera: {cameraError}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => startCamera("environment")}
+                      className="hig-button-compact-secondary shrink-0"
+                    >
+                      Buka Ulang
+                    </button>
+                  </div>
+                )}
+
+                {/* Live Scan Error Row */}
+                {error && (
+                  <div className="flex items-center justify-between gap-2 pt-2 first:pt-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <AlertCircle className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                      <span className="text-[11px] text-red-700 dark:text-red-300 truncate" title={error}>
+                        {error}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setError("")}
+                      className="text-[10px] text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 px-1 shrink-0"
+                    >
+                      Tutup
+                    </button>
+                  </div>
+                )}
+
+                {/* Insecure Origin QA Diagnostic Helper */}
+                {typeof window !== "undefined" && !window.isSecureContext && (
+                  <div className="pt-2 first:pt-0 space-y-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                        <span className="text-[10px] font-bold text-amber-900 dark:text-amber-200 uppercase tracking-wide">
+                          Peramban Membatasi Sensor (HTTP)
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (typeof navigator !== "undefined" && navigator.clipboard) {
+                            navigator.clipboard.writeText("chrome://flags/#unsafely-treat-insecure-origin-as-secure");
+                            setFlagCopied(true);
+                            setTimeout(() => setFlagCopied(false), 2500);
+                          }
+                        }}
+                        className="hig-button-compact-secondary text-[10px] shrink-0"
+                      >
+                        {flagCopied ? "Tersalin" : "Salin Flag Chrome"}
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-neutral-600 dark:text-neutral-400 leading-normal">
+                      Kamera &amp; lokasi diblokir oleh peramban karena diakses via IP HTTP. Buka flag Chrome di tab baru untuk mengizinkan IP ini atau gunakan HTTPS.
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* GPS Locked Bar (Normal State) */
+              <div className="flex items-center justify-between px-3 py-1.5 rounded-xl hig-card text-xs">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span className="text-[11px] text-[var(--text-secondary)]">
+                    GPS Terkunci (+/-{gpsCoords.accuracy}m)
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => triggerNativeGpsPrompt()}
-                    title="Refresh GPS"
-                    className="p-1 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded transition-colors"
-                  >
-                    <RotateCcw className="w-3 h-3 text-neutral-400" />
-                  </button>
                 </div>
-              ) : (
                 <button
                   type="button"
                   onClick={() => triggerNativeGpsPrompt()}
-                  disabled={gpsLoading}
-                  className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-medium inline-flex items-center gap-1 shadow-sm transition-all"
+                  title="Perbarui Koordinat GPS"
+                  className="p-1 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 rounded transition-colors"
                 >
-                  <span>{gpsLoading ? "Mengunci GPS..." : "Aktifkan Izin GPS"}</span>
+                  <RotateCcw className="w-3 h-3 text-neutral-400" />
                 </button>
-              )}
-            </div>
-
-            {/* GPS Error Alert */}
-            {gpsError && (
-              <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 text-amber-900 dark:text-amber-200 text-xs space-y-2 text-left">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                  <p className="leading-relaxed text-[11px]">{gpsError}</p>
-                </div>
-                <div className="flex items-center gap-2 pt-1 border-t border-amber-200/60 dark:border-amber-800/60">
-                  <button
-                    type="button"
-                    onClick={() => triggerNativeGpsPrompt()}
-                    className="apple-btn-secondary text-[11px] px-3 py-1 font-medium bg-white dark:bg-neutral-800"
-                  >
-                    Coba Lagi
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleUseOfficeGpsLocal}
-                    className="apple-btn-secondary text-[11px] px-2.5 py-1 font-medium bg-white dark:bg-neutral-800 text-neutral-600"
-                  >
-                    Gunakan Lokasi Kantor (Mode Tes)
-                  </button>
-                </div>
               </div>
             )}
+          </div>
 
-            {/* Camera Error Alert */}
-            {cameraError && (
-              <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 text-xs text-left flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
-                <div className="space-y-1">
-                  <p className="text-[11px] leading-relaxed">{cameraError}</p>
-                  <button
-                    type="button"
-                    onClick={() => startCamera("environment")}
-                    className="apple-btn-secondary text-[11px] px-2.5 py-1 font-medium bg-white dark:bg-neutral-800"
-                  >
-                    Buka Kamera Ulang
-                  </button>
+          {/* Early Clock-Out Warning Modal with 5s Mandatory Countdown */}
+          {earlyModalOpen && (
+            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+              <div className="hig-card-elevated max-w-sm w-full p-5 space-y-4 shadow-xl border border-[var(--separator-subtle)] text-left">
+                <div className="flex items-center gap-2.5 pb-2 border-b border-[var(--separator-subtle)]">
+                  <div className="w-8 h-8 rounded-full bg-amber-500/15 text-amber-600 flex items-center justify-center shrink-0">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-semibold text-[var(--text-primary)]">
+                      Konfirmasi Pulang Lebih Awal
+                    </h3>
+                    <span className="text-[10px] text-[var(--text-secondary)] block">
+                      Jadwal shift selesai pukul {earlyScheduledEnd} WIB
+                    </span>
+                  </div>
                 </div>
-              </div>
-            )}
 
-            {/* Live Scan Error Alert */}
-            {error && (
-              <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 text-xs text-left flex items-start gap-2.5 animate-in fade-in">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
-                <div className="space-y-1 flex-1">
-                  <span className="font-semibold text-xs block text-red-900 dark:text-red-200">
-                    Gagal Melakukan Presensi
-                  </span>
-                  <p className="text-[11px] text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                    {error}
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 space-y-1">
+                  <div className="font-medium text-[11px]">
+                    Anda mencoba check-out {earlyMinutes} menit lebih awal dari jadwal resmi.
+                  </div>
+                  <p className="text-[10px] leading-relaxed text-[var(--text-secondary)]">
+                    Kepulangan sebelum shift selesai wajib mencantumkan alasan yang valid dan persetujuan atasan/pemilik.
                   </p>
-                  <span className="text-[10px] text-neutral-400 block pt-0.5">
-                    Kamera tetap aktif. Silakan arahkan kembali ke QR yang valid di layar.
-                  </span>
                 </div>
-              </div>
-            )}
-          </div>
 
-          {/* Collapsible Manual Testing / Dev Section */}
-          <div className="border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden bg-white dark:bg-neutral-900">
-            <button
-              type="button"
-              onClick={() => setShowManualSection(!showManualSection)}
-              className="w-full p-3 text-xs text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 flex items-center justify-between transition-colors"
-            >
-              <span className="text-[11px] font-medium">Opsi Pengujian / Manual Token (Khusus Demo)</span>
-              {showManualSection ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-            </button>
-
-            {showManualSection && (
-              <div className="p-4 pt-1 border-t border-neutral-100 dark:border-neutral-800 space-y-3">
-                <button
-                  type="button"
-                  onClick={handleQuickScanActiveQR}
-                  disabled={loading || !gpsCoords}
-                  className="apple-btn-secondary w-full py-2.5 text-xs font-medium flex items-center justify-center gap-2"
-                >
-                  <Zap className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Ambil QR Aktif Terminal Otomatis (1-Tap Test)</span>
-                </button>
-
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={tokenInput}
-                    onChange={(e) => setTokenInput(e.target.value)}
-                    placeholder="Masukkan token manual..."
-                    className="flex-1 apple-input text-xs font-mono py-2"
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-medium text-[var(--text-primary)] block">
+                    Alasan Pulang Awal <span className="text-[var(--system-red)]">*</span>
+                  </label>
+                  <textarea
+                    value={earlyReason}
+                    onChange={(e) => setEarlyReason(e.target.value)}
+                    placeholder="Tuliskan alasan jelas (misal: keperluan mendesak keluarga, sakit, dll.)"
+                    rows={3}
+                    className="w-full text-xs p-2.5 rounded-xl border border-[var(--separator-subtle)] bg-[var(--surface-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
                   />
+                </div>
+
+                <label className="flex items-start gap-2 cursor-pointer select-none text-xs text-[var(--text-secondary)]">
+                  <input
+                    type="checkbox"
+                    checked={earlyApproved}
+                    onChange={(e) => setEarlyApproved(e.target.checked)}
+                    className="mt-0.5 rounded border-[var(--separator-subtle)] text-blue-600 focus:ring-0"
+                  />
+                  <span className="text-[11px] leading-tight">
+                    Saya memahami kepulangan awal ini akan dicatat sebagai <strong>Menunggu Verifikasi Owner</strong> pada log audit.
+                  </span>
+                </label>
+
+                <div className="pt-2 border-t border-[var(--separator-subtle)] flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => submitToken(tokenInput)}
-                    disabled={loading || !tokenInput.trim() || !gpsCoords}
-                    className="apple-btn-primary text-xs px-4 py-2 font-medium"
+                    onClick={() => {
+                      setEarlyModalOpen(false);
+                      setEarlyToken("");
+                      isSubmittingRef.current = false;
+                      setLoading(false);
+                    }}
+                    disabled={earlySubmitting}
+                    className="hig-button-secondary flex-1 py-2 text-xs"
                   >
-                    Submit
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (earlyCountdown > 0 || !earlyReason.trim()) return;
+                      setEarlySubmitting(true);
+                      setEarlyModalOpen(false);
+                      await submitToken(earlyToken, {
+                        forceEarlyCheckout: true,
+                        earlyCheckoutReason: earlyReason.trim(),
+                        earlyCheckoutApproved: earlyApproved,
+                      });
+                      setEarlySubmitting(false);
+                    }}
+                    disabled={earlyCountdown > 0 || !earlyReason.trim() || earlySubmitting}
+                    className="hig-button-primary flex-1 py-2 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {earlyCountdown > 0
+                      ? `Jeda verifikasi (${earlyCountdown}d)`
+                      : "Konfirmasi Pulang"}
                   </button>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       ) : (
         /* Result Screen */
         <div className="space-y-4 animate-in fade-in zoom-in-95">
           {scanResult.action === "CHECK_IN" ? (
             /* Check-in Confirmation */
-            <div className="apple-card p-6 text-center space-y-4">
+            <div className="hig-card p-6 text-center space-y-4">
               <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-6 h-6 stroke-[2]" />
               </div>
@@ -983,7 +1121,7 @@ export default function EmployeeScanPage() {
               <button
                 type="button"
                 onClick={() => router.push("/employee")}
-                className="apple-btn-primary w-full py-2.5 text-xs font-medium"
+                className="hig-button-primary w-full py-2.5 text-xs font-medium"
               >
                 Kembali ke Dashboard
               </button>
@@ -991,7 +1129,7 @@ export default function EmployeeScanPage() {
           ) : (
             /* Check-Out Confirmation: Transparent Apple Pay Style Payslip Receipt */
             <div className="space-y-4">
-              <div className="apple-card p-5 space-y-3.5 shadow-sm border border-neutral-200 dark:border-neutral-800">
+              <div className="hig-card p-5 space-y-3.5 shadow-sm border border-neutral-200 dark:border-neutral-800">
                 <div className="text-center pb-3 border-b border-neutral-200 dark:border-neutral-800">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 block">
                     Shift Selesai • Slip Gaji Harian
@@ -1077,7 +1215,7 @@ export default function EmployeeScanPage() {
               <button
                 type="button"
                 onClick={() => router.push("/employee")}
-                className="apple-btn-primary w-full py-2.5 text-xs font-medium"
+                className="hig-button-primary w-full py-2.5 text-xs font-medium"
               >
                 Kembali ke Dashboard
               </button>

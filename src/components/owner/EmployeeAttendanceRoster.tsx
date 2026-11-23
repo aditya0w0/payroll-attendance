@@ -17,7 +17,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { formatIDR } from "@/lib/utils";
-import { formatJakartaDateTime } from "@/lib/timezone";
+import { formatJakartaDateTime, formatJakartaTime } from "@/lib/timezone";
 import type {
   AttendanceAnalyticsResult,
   EmployeeRosterItem,
@@ -54,6 +54,18 @@ export default function EmployeeAttendanceRoster() {
     fetchRoster();
   }, [range]);
 
+  // Modal keyboard Escape listener (R-32)
+  useEffect(() => {
+    if (!selectedEmployee) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelectedEmployee(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedEmployee]);
+
   const roster = data?.employeeRoster || [];
 
   // Filtered Roster
@@ -81,7 +93,7 @@ export default function EmployeeAttendanceRoster() {
   return (
     <div className="space-y-4">
       {/* Controls Bar */}
-      <div className="bg-white dark:bg-[#1C1C1E] border border-neutral-200 dark:border-neutral-800 rounded-xl p-4 shadow-sm space-y-3">
+      <div className="liquid-glass p-4 rounded-2xl shadow-sm space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
@@ -96,13 +108,13 @@ export default function EmployeeAttendanceRoster() {
           </div>
 
           {/* Range Selector */}
-          <div className="inline-flex bg-neutral-100 dark:bg-[#2C2C2E] p-1 rounded-lg border border-neutral-200 dark:border-neutral-700 text-xs shrink-0 self-start sm:self-auto">
+          <div className="inline-flex liquid-glass-pill p-1 text-xs shrink-0 self-start sm:self-auto border border-white/30 dark:border-white/10">
             <button
               type="button"
               onClick={() => setRange("7d")}
               className={`px-2.5 py-1 rounded-md font-medium transition-all ${
                 range === "7d"
-                  ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 shadow-sm"
+                  ? "bg-white/90 dark:bg-white/15 text-neutral-900 dark:text-neutral-50 shadow-sm border border-white/50 dark:border-white/15 font-semibold"
                   : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
               }`}
             >
@@ -113,7 +125,7 @@ export default function EmployeeAttendanceRoster() {
               onClick={() => setRange("14d")}
               className={`px-2.5 py-1 rounded-md font-medium transition-all ${
                 range === "14d"
-                  ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 shadow-sm"
+                  ? "bg-white/90 dark:bg-white/15 text-neutral-900 dark:text-neutral-50 shadow-sm border border-white/50 dark:border-white/15 font-semibold"
                   : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
               }`}
             >
@@ -124,7 +136,7 @@ export default function EmployeeAttendanceRoster() {
               onClick={() => setRange("current_period")}
               className={`px-2.5 py-1 rounded-md font-medium transition-all ${
                 range === "current_period"
-                  ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-50 shadow-sm"
+                  ? "bg-white/90 dark:bg-white/15 text-neutral-900 dark:text-neutral-50 shadow-sm border border-white/50 dark:border-white/15 font-semibold"
                   : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
               }`}
             >
@@ -171,7 +183,7 @@ export default function EmployeeAttendanceRoster() {
       </div>
 
       {/* Roster Table Card */}
-      <div className="bg-white dark:bg-[#1C1C1E] border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden shadow-sm">
+      <div className="liquid-glass rounded-2xl overflow-hidden shadow-sm">
         {loading ? (
           <div className="text-center py-12 text-xs text-neutral-400 flex items-center justify-center gap-2">
             <RefreshCw className="w-4 h-4 animate-spin text-blue-600" />
@@ -185,31 +197,34 @@ export default function EmployeeAttendanceRoster() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
               <thead>
-                <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/75 dark:bg-neutral-800/40 text-neutral-500 dark:text-neutral-400 text-[11px] uppercase font-semibold">
+                <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/75 dark:bg-neutral-800/40 text-neutral-600 dark:text-neutral-400 font-medium">
                   <th className="py-3 px-4">Karyawan</th>
                   <th className="py-3 px-4">Hadir</th>
                   <th className="py-3 px-4">Terlambat</th>
-                  <th className="py-3 px-4">Alpa / Tidak Masuk</th>
-                  <th className="py-3 px-4">Tingkat Kehadiran</th>
-                  <th className="py-3 px-4">Estimasi Gaji Berjalan</th>
+                  <th className="py-3 px-4">Alpa</th>
+                  <th className="py-3 px-4">Kehadiran</th>
+                  <th className="py-3 px-4">Estimasi Gaji</th>
                   <th className="py-3 px-4 text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800/80 tabular-numbers">
                 {filteredRoster.map((emp) => {
-                  const rateColor =
-                    emp.attendanceRate >= 90
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : emp.attendanceRate >= 75
-                      ? "text-amber-600 dark:text-amber-400"
-                      : "text-rose-600 dark:text-rose-400";
+                  const hasSchedule = emp.assignedShiftCount > 0;
+                  const rateColor = !hasSchedule
+                    ? "text-neutral-400 dark:text-neutral-500"
+                    : emp.attendanceRate >= 90
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : emp.attendanceRate >= 75
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-rose-600 dark:text-rose-400";
 
-                  const barBgColor =
-                    emp.attendanceRate >= 90
-                      ? "bg-emerald-500"
-                      : emp.attendanceRate >= 75
-                      ? "bg-amber-500"
-                      : "bg-rose-500";
+                  const barBgColor = !hasSchedule
+                    ? "bg-neutral-200 dark:bg-neutral-700"
+                    : emp.attendanceRate >= 90
+                    ? "bg-emerald-500"
+                    : emp.attendanceRate >= 75
+                    ? "bg-amber-500"
+                    : "bg-rose-500";
 
                   return (
                     <tr
@@ -227,41 +242,27 @@ export default function EmployeeAttendanceRoster() {
                           </span>
                           <span className="text-neutral-300 dark:text-neutral-600">•</span>
                           <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
-                            {emp.shiftName}
+                            {emp.shiftName.replace(/\s*\(\d{2}:\d{2}\s*-\s*\d{2}:\d{2}\)/, "")}
                           </span>
                         </div>
                       </td>
 
                       {/* 2. Hadir (Tepat Waktu) */}
                       <td className="py-3 px-4">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-neutral-900 dark:text-neutral-100">
-                            {emp.onTimeCount}
-                          </span>
-                          <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                            [ON-TIME]
-                          </span>
+                        <div className="flex items-center gap-1.5 tabular-numbers text-xs">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                          <span className="font-semibold text-neutral-900 dark:text-neutral-100">{emp.onTimeCount}</span>
+                          <span className="text-neutral-400 text-[11px]">/ {emp.assignedShiftCount}</span>
                         </div>
-                        <span className="text-[10px] text-neutral-400 block mt-0.5">
-                          dari {emp.assignedShiftCount} shift
-                        </span>
                       </td>
 
                       {/* 3. Terlambat */}
                       <td className="py-3 px-4">
                         {emp.lateCount > 0 ? (
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-amber-600 dark:text-amber-400">
-                                {emp.lateCount}x
-                              </span>
-                              <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                                [LATE]
-                              </span>
-                            </div>
-                            <span className="text-[10px] text-neutral-400 block mt-0.5">
-                              Total {emp.totalLateMinutes}m telat
-                            </span>
+                          <div className="flex items-center gap-1.5 tabular-numbers text-xs">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                            <span className="font-semibold text-amber-600 dark:text-amber-400">{emp.lateCount}x</span>
+                            <span className="text-neutral-400 text-[11px]">({emp.totalLateMinutes}m)</span>
                           </div>
                         ) : (
                           <span className="text-neutral-400 text-xs font-mono">0</span>
@@ -271,50 +272,39 @@ export default function EmployeeAttendanceRoster() {
                       {/* 4. Alpa / Tidak Masuk */}
                       <td className="py-3 px-4">
                         {emp.absentCount > 0 ? (
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-rose-600 dark:text-rose-400">
-                                {emp.absentCount}
-                              </span>
-                              <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
-                                [ALPA]
-                              </span>
-                            </div>
-                            <span className="text-[10px] text-rose-500/80 block mt-0.5">
-                              Shift dilewati
-                            </span>
+                          <div className="flex items-center gap-1.5 tabular-numbers text-xs">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
+                            <span className="font-semibold text-rose-600 dark:text-rose-400">{emp.absentCount} hari</span>
                           </div>
                         ) : (
-                          <span className="text-emerald-600 dark:text-emerald-400 text-xs font-medium">
-                            Nihil (0)
-                          </span>
+                          <span className="text-neutral-400 text-xs font-mono">0</span>
                         )}
                       </td>
 
                       {/* 5. Tingkat Kehadiran */}
-                      <td className="py-3 px-4 min-w-[130px]">
-                        <div className="flex items-center justify-between text-xs font-semibold mb-1">
-                          <span className={rateColor}>{emp.attendanceRate}%</span>
-                          <span className="text-[10px] text-neutral-400">
-                            {emp.presentCount}/{emp.assignedShiftCount}
-                          </span>
-                        </div>
-                        <div className="w-full bg-neutral-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-300 ${barBgColor}`}
-                            style={{ width: `${Math.min(100, emp.attendanceRate)}%` }}
-                          />
-                        </div>
+                      <td className="py-3 px-4 min-w-[110px]">
+                        {hasSchedule ? (
+                          <div className="space-y-1">
+                            <div className="text-xs font-semibold tabular-numbers text-neutral-800 dark:text-neutral-200">
+                              <span className={rateColor}>{emp.attendanceRate}%</span>
+                            </div>
+                            <div className="w-full max-w-[80px] bg-neutral-100 dark:bg-neutral-800 h-1.5 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-300 ${barBgColor}`}
+                                style={{ width: `${Math.min(100, emp.attendanceRate)}%` }}
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-neutral-400 dark:text-neutral-500 text-xs">-</span>
+                        )}
                       </td>
 
                       {/* 6. Estimasi Gaji Berjalan */}
                       <td className="py-3 px-4">
-                        <div className="font-bold font-mono text-neutral-900 dark:text-neutral-100">
+                        <div className="font-semibold font-mono text-xs text-neutral-900 dark:text-neutral-100">
                           {formatIDR(emp.accumulatedWage)}
                         </div>
-                        <span className="text-[10px] text-neutral-400 block mt-0.5">
-                          Tarif: {formatIDR(emp.dailySalary)}/hari
-                        </span>
                       </td>
 
                       {/* 7. Aksi */}
@@ -322,10 +312,10 @@ export default function EmployeeAttendanceRoster() {
                         <button
                           type="button"
                           onClick={() => setSelectedEmployee(emp)}
-                          className="bg-neutral-100 dark:bg-[#2C2C2E] text-neutral-700 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-[#3A3A3C] rounded-lg px-2.5 py-1 text-xs font-medium inline-flex items-center gap-1 transition-colors"
+                          className="hig-button-compact-secondary inline-flex items-center gap-1"
                         >
-                          <Eye className="w-3 h-3 text-neutral-500" />
-                          <span>Lihat Detail</span>
+                          <Eye className="w-3.5 h-3.5 text-neutral-500" />
+                          <span>Detail</span>
                         </button>
                       </td>
                     </tr>
@@ -340,7 +330,7 @@ export default function EmployeeAttendanceRoster() {
       {/* Employee Detail Modal */}
       {selectedEmployee && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#1C1C1E] border border-neutral-200 dark:border-neutral-800 rounded-2xl max-w-2xl w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+          <div className="liquid-glass-elevated max-w-2xl w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto shadow-2xl animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Header */}
             <div className="flex items-start justify-between pb-3 border-b border-neutral-200 dark:border-neutral-800">
               <div>
@@ -353,7 +343,7 @@ export default function EmployeeAttendanceRoster() {
                   </span>
                 </div>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-                  Shift: <strong className="text-neutral-800 dark:text-neutral-200">{selectedEmployee.shiftName}</strong> • Gaji Pokok Harian:{" "}
+                  Shift: <strong className="text-neutral-800 dark:text-neutral-200">{selectedEmployee.shiftName.replace(/\s*\(\d{2}:\d{2}\s*-\s*\d{2}:\d{2}\)/, "")}</strong> • Gaji Pokok Harian:{" "}
                   <strong className="text-neutral-800 dark:text-neutral-200 font-mono">{formatIDR(selectedEmployee.dailySalary)}</strong>
                 </p>
               </div>
@@ -457,12 +447,12 @@ export default function EmployeeAttendanceRoster() {
                         <div className="flex items-center gap-1.5">
                           <Clock className="w-3.5 h-3.5 text-neutral-400" />
                           <span>
-                            Masuk: <strong>{formatJakartaDateTime(rec.checkInTime).split(", ")[1] || formatJakartaDateTime(rec.checkInTime)}</strong>
+                            Masuk: <strong>{formatJakartaTime(rec.checkInTime)}</strong>
                             {" • "}
                             Pulang:{" "}
                             <strong>
                               {rec.checkOutTime
-                                ? formatJakartaDateTime(rec.checkOutTime).split(", ")[1] || formatJakartaDateTime(rec.checkOutTime)
+                                ? formatJakartaTime(rec.checkOutTime)
                                 : "Belum Check-Out"}
                             </strong>
                           </span>

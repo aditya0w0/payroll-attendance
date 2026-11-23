@@ -41,7 +41,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased selection:bg-blue-500/20 bg-neutral-50 dark:bg-black text-neutral-900 dark:text-neutral-50 min-h-screen">
+      <body className="antialiased selection:bg-blue-600/10 bg-slate-50 dark:bg-[#0b0f19] text-neutral-900 dark:text-neutral-100 min-h-screen relative">
         {children}
       </body>
     </html>

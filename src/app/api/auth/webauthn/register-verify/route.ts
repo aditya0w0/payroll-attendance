@@ -57,7 +57,7 @@ export async function POST(req: Request) {
 
     // Set or refresh authoritative HTTP-only session cookie
     try {
-      const cookieStore = cookies();
+      const cookieStore = await cookies();
       const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000);
       cookieStore.set(SESSION_COOKIE_NAME, activeToken, {
         httpOnly: true,

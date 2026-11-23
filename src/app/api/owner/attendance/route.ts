@@ -10,6 +10,7 @@ const correctionSchema = z.object({
   checkInTime: z.string().optional(),
   checkOutTime: z.string().optional(),
   status: z.enum(["CHECKED_IN", "COMPLETED", "LATE_COMPLETED", "EXCEPTION"]).optional(),
+  earlyCheckOutApproved: z.boolean().optional(),
   correctionReason: z.string().min(5, "Mandatory correction reason of at least 5 characters is required"),
 });
 
@@ -74,7 +75,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Validation error", details: result.error.flatten() }, { status: 400 });
     }
 
-    const { recordId, checkInTime, checkOutTime, status, correctionReason } = result.data;
+    const { recordId, checkInTime, checkOutTime, status, earlyCheckOutApproved, correctionReason } = result.data;
 
     const existing = await prisma.attendanceRecord.findUnique({
       where: { id: recordId },
@@ -88,8 +89,28 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Attendance record not found" }, { status: 404 });
     }
 
+    // Immutability Guard: Prevent editing attendance records belonging to a FINALIZED payroll period
+    const [shiftYearStr, shiftMonthStr] = existing.shiftDate.split("-");
+    const shiftYear = parseInt(shiftYearStr, 10);
+    const shiftMonth = parseInt(shiftMonthStr, 10);
+    if (!isNaN(shiftYear) && !isNaN(shiftMonth)) {
+      const finalizedPeriod = await prisma.payrollPeriod.findUnique({
+        where: { year_month: { year: shiftYear, month: shiftMonth } },
+      });
+      if (finalizedPeriod?.status === "FINALIZED") {
+        return NextResponse.json(
+          { error: `Tidak dapat mengoreksi presensi pada periode ${shiftYearStr}-${shiftMonthStr} yang payroll-nya sudah difinalisasi.` },
+          { status: 409 }
+        );
+      }
+    }
+
     const newCheckIn = checkInTime ? new Date(checkInTime) : existing.checkInTime;
     const newCheckOut = checkOutTime ? new Date(checkOutTime) : existing.checkOutTime;
+
+    if (isNaN(newCheckIn.getTime()) || (newCheckOut && isNaN(newCheckOut.getTime()))) {
+      return NextResponse.json({ error: "Invalid checkInTime or checkOutTime date format" }, { status: 400 });
+    }
 
     const policyConfig = JSON.parse(existing.deductionPolicySnapshot);
     const lateCalc = calculateLateDeduction(
@@ -107,7 +128,11 @@ export async function PATCH(req: NextRequest) {
       lateMinutes: existing.lateMinutes,
       lateDeduction: existing.lateDeduction,
       netDailyEarnings: existing.netDailyEarnings,
+      earlyCheckOutApproved: existing.earlyCheckOutApproved,
     };
+
+    const resolvedEarlyApproved =
+      earlyCheckOutApproved !== undefined ? earlyCheckOutApproved : existing.earlyCheckOutApproved;
 
     const updated = await prisma.attendanceRecord.update({
       where: { id: recordId },
@@ -118,6 +143,7 @@ export async function PATCH(req: NextRequest) {
         lateMinutes: lateCalc.lateMinutes,
         lateDeduction: lateCalc.lateDeduction,
         netDailyEarnings: lateCalc.netDailyEarnings,
+        earlyCheckOutApproved: resolvedEarlyApproved,
         manualCorrectionNote: correctionReason,
         correctedByUserId: current.user.id,
       },
@@ -135,9 +161,11 @@ export async function PATCH(req: NextRequest) {
       newValues: {
         checkInTime: newCheckIn,
         checkOutTime: newCheckOut,
+        status: updated.status,
         lateMinutes: lateCalc.lateMinutes,
         lateDeduction: lateCalc.lateDeduction,
         netDailyEarnings: lateCalc.netDailyEarnings,
+        earlyCheckOutApproved: resolvedEarlyApproved,
         reason: correctionReason,
       },
       reason: correctionReason,
@@ -149,6 +177,7 @@ export async function PATCH(req: NextRequest) {
       record: updated,
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Failed to correct attendance" }, { status: 500 });
+    console.error("Correct attendance error:", error);
+    return NextResponse.json({ error: "Failed to correct attendance" }, { status: 500 });
   }
 }

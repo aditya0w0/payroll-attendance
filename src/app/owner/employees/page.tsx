@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { formatIDR } from "@/lib/utils";
-import { Plus, Smartphone, DollarSign, RotateCcw, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Plus, Smartphone, RotateCcw, AlertCircle, CheckCircle2, Search } from "lucide-react";
 
 interface ShiftItem {
   id: string;
@@ -54,7 +54,7 @@ export default function OwnerEmployeesPage() {
     employeeId: "",
     username: "",
     email: "",
-    initialPassword: "employee123",
+    initialPassword: "",
     dailySalary: 150000,
     shiftId: "",
     employmentStatus: "PERMANENT",
@@ -62,6 +62,10 @@ export default function OwnerEmployeesPage() {
 
   const [editSalaryVal, setEditSalaryVal] = useState<number>(0);
   const [editSalaryReason, setEditSalaryReason] = useState("");
+
+  // Search & Filter
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
 
   const loadData = async () => {
     try {
@@ -85,6 +89,19 @@ export default function OwnerEmployeesPage() {
     loadData();
   }, []);
 
+  // Modal keyboard Escape listener (R-32)
+  useEffect(() => {
+    if (!showAddModal && !editingEmployee) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setShowAddModal(false);
+        setEditingEmployee(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showAddModal, editingEmployee]);
+
   const handleCreateEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
@@ -97,16 +114,16 @@ export default function OwnerEmployeesPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to create employee");
+      if (!res.ok) throw new Error(data.error || "Gagal membuat karyawan baru");
 
-      setMessage({ text: data.message || "Employee created successfully.", type: "success" });
+      setMessage({ text: data.message || "Karyawan baru berhasil ditambahkan.", type: "success" });
       setShowAddModal(false);
       setNewEmp({
         fullName: "",
         employeeId: "",
         username: "",
         email: "",
-        initialPassword: "employee123",
+        initialPassword: "",
         dailySalary: 150000,
         shiftId: shifts[0]?.id || "",
         employmentStatus: "PERMANENT",
@@ -127,12 +144,12 @@ export default function OwnerEmployeesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           dailySalary: editSalaryVal,
-          salaryChangeReason: editSalaryReason || "Owner wage revision",
+          salaryChangeReason: editSalaryReason || "Penyesuaian tarif oleh owner",
         }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to update salary");
+      if (!res.ok) throw new Error(data.error || "Gagal memperbarui gaji");
 
       setMessage({ text: data.message, type: "success" });
       setEditingEmployee(null);
@@ -143,7 +160,7 @@ export default function OwnerEmployeesPage() {
   };
 
   const handleResetDevice = async (userId: string, name: string) => {
-    if (!confirm(`Reset device registration for ${name}? The employee will be able to bind a new device on next login.`)) {
+    if (!confirm(`Reset pendaftaran perangkat untuk ${name}? Karyawan dapat mendaftarkan perangkat baru saat login berikutnya.`)) {
       return;
     }
 
@@ -154,12 +171,12 @@ export default function OwnerEmployeesPage() {
         body: JSON.stringify({
           action: "RESET_DEVICE",
           userId,
-          reason: "Owner manual reset",
+          reason: "Reset manual oleh owner",
         }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) throw new Error(data.error || "Gagal mereset perangkat");
 
       setMessage({ text: data.message, type: "success" });
       loadData();
@@ -168,26 +185,69 @@ export default function OwnerEmployeesPage() {
     }
   };
 
+  const filteredEmployees = employees.filter((emp) => {
+    const query = searchQuery.trim().toLowerCase();
+    const matchesSearch =
+      query === "" ||
+      emp.fullName.toLowerCase().includes(query) ||
+      emp.employeeId.toLowerCase().includes(query) ||
+      emp.user.email.toLowerCase().includes(query) ||
+      emp.shift.name.toLowerCase().includes(query);
+
+    const matchesStatus =
+      statusFilter === "ALL" ||
+      (statusFilter === "PERMANENT" && emp.employmentStatus === "PERMANENT") ||
+      (statusFilter === "CONTRACT" && emp.employmentStatus === "CONTRACT") ||
+      (statusFilter === "UNBOUND" && !emp.user.deviceRegistration);
+
+    return matchesSearch && matchesStatus;
+  });
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-2.5">
           <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)]">
-            Employee Directory & Daily Salaries
+            Karyawan
           </h1>
-          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-            Configure employee profiles, assign daily salaries, and manage single-device authorizations.
-          </p>
+          <span className="hig-badge hig-badge-neutral text-xs font-semibold px-2.5 py-0.5">
+            {employees.length} terdaftar
+          </span>
         </div>
 
         <button
           onClick={() => setShowAddModal(true)}
-          className="hig-button-primary text-xs"
+          className="hig-button-primary text-xs self-start sm:self-auto"
         >
           <Plus className="w-3.5 h-3.5 stroke-[2]" />
-          Add Employee
+          Tambah Karyawan
         </button>
+      </div>
+
+      {/* Search & Quick Filter Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+        <div className="relative flex-1">
+          <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Cari nama, ID karyawan, atau shift..."
+            className="hig-input pl-8 py-1.5 text-xs w-full"
+          />
+        </div>
+
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="hig-input py-1.5 px-3 text-xs w-auto self-start sm:self-auto"
+        >
+          <option value="ALL">Semua Status ({employees.length})</option>
+          <option value="PERMANENT">Karyawan Tetap</option>
+          <option value="CONTRACT">Kontrak</option>
+          <option value="UNBOUND">Belum Terhubung</option>
+        </select>
       </div>
 
       {message && (
@@ -210,23 +270,38 @@ export default function OwnerEmployeesPage() {
       {/* Employee Table */}
       <div className="hig-card overflow-hidden">
         {loading ? (
-          <div className="text-center py-12 text-xs text-[var(--text-tertiary)]">Loading workforce directory...</div>
+          <div className="text-center py-12 text-xs text-[var(--text-tertiary)]">Memuat data karyawan...</div>
+        ) : filteredEmployees.length === 0 ? (
+          <div className="text-center py-12 text-xs text-[var(--text-tertiary)]">
+            Tidak ada karyawan yang sesuai dengan filter.
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="hig-table">
               <thead>
                 <tr>
-                  <th>Employee</th>
-                  <th>Daily Salary</th>
-                  <th>Work Shift</th>
+                  <th>Karyawan</th>
+                  <th>Gaji Harian</th>
+                  <th>Shift Kerja</th>
                   <th>Status</th>
-                  <th>Authorized Device</th>
-                  <th className="text-right">Actions</th>
+                  <th>Perangkat</th>
+                  <th className="text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="tabular-numbers">
-                {employees.map((emp) => {
+                {filteredEmployees.map((emp) => {
                   const dev = emp.user.deviceRegistration;
+                  const statusLabel =
+                    emp.employmentStatus === "PERMANENT" || emp.employmentStatus === "ACTIVE"
+                      ? "Tetap"
+                      : emp.employmentStatus === "CONTRACT"
+                      ? "Kontrak"
+                      : emp.employmentStatus === "PROBATION"
+                      ? "Probasi"
+                      : "Tetap";
+
+                  const cleanShiftName = emp.shift.name.replace(/\s*\(\d{2}:\d{2}\s*-\s*\d{2}:\d{2}\)/, "");
+
                   return (
                     <tr key={emp.id}>
                       <td>
@@ -240,57 +315,55 @@ export default function OwnerEmployeesPage() {
                         <div className="font-semibold text-sm text-[var(--text-primary)]">
                           {formatIDR(emp.dailySalary)}
                         </div>
-                        <div className="text-[10px] text-[var(--text-secondary)]">base daily rate</div>
                       </td>
 
                       <td>
-                        <div className="font-medium text-[var(--text-primary)]">{emp.shift.name}</div>
+                        <div className="font-medium text-[var(--text-primary)]">{cleanShiftName}</div>
                         <div className="text-[11px] text-[var(--text-secondary)] font-mono">
-                          {emp.shift.startTime} - {emp.shift.endTime} {emp.shift.isOvernight && "(Overnight)"}
+                          {emp.shift.startTime} – {emp.shift.endTime} WIB
                         </div>
                       </td>
 
                       <td>
                         <span className="hig-badge hig-badge-neutral text-[10px]">
-                          {emp.employmentStatus}
+                          {statusLabel}
                         </span>
                       </td>
 
                       <td>
                         {dev ? (
-                          <div className="flex items-center gap-1.5 text-[var(--system-green)]">
+                          <div className="flex items-center gap-1.5 text-[var(--system-green)] text-xs">
                             <Smartphone className="w-3.5 h-3.5 stroke-[1.75]" />
-                            <span className="font-medium">{dev.deviceName}</span>
+                            <span className="font-medium truncate max-w-[220px] sm:max-w-none">{dev.deviceName}</span>
                           </div>
                         ) : (
-                          <span className="text-[var(--system-orange)] font-medium">
-                            Unbound (First login binds)
+                          <span className="text-amber-600 dark:text-amber-400 font-medium text-xs">
+                            Belum Terhubung
                           </span>
                         )}
                       </td>
 
                       <td className="text-right">
-                        <div className="inline-flex items-center gap-1.5">
+                        <div className="inline-flex items-center justify-end gap-2">
                           <button
                             onClick={() => {
                               setEditingEmployee(emp);
                               setEditSalaryVal(emp.dailySalary);
                               setEditSalaryReason("");
                             }}
-                            className="hig-button-secondary text-[11px] py-1 px-2.5"
+                            className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline py-1 px-1.5 transition-colors"
                           >
-                            <DollarSign className="w-3 h-3 stroke-[2]" />
-                            Set Salary
+                            Atur Gaji
                           </button>
 
                           {dev && (
                             <button
                               onClick={() => handleResetDevice(emp.user.id, emp.fullName)}
-                              className="hig-button-destructive text-[11px] py-1 px-2"
-                              title="Reset device binding"
+                              className="p-1 rounded-md text-neutral-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                              title="Reset pengikatan perangkat"
+                              aria-label={`Reset perangkat ${emp.fullName}`}
                             >
-                              <RotateCcw className="w-3 h-3 stroke-[2]" />
-                              Reset
+                              <RotateCcw className="w-3.5 h-3.5 stroke-[1.75]" />
                             </button>
                           )}
                         </div>
@@ -308,29 +381,26 @@ export default function OwnerEmployeesPage() {
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="hig-card-elevated max-w-md w-full p-6 animate-in fade-in zoom-in-95">
-            <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-1">
-              Add Employee
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4">
+              Tambah Karyawan Baru
             </h2>
-            <p className="text-xs text-[var(--text-secondary)] mb-4">
-              Enter employee credentials, base daily wage, and assigned shift schedule.
-            </p>
 
             <form onSubmit={handleCreateEmployee} className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Full Name</label>
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Nama Lengkap</label>
                 <input
                   type="text"
                   required
                   value={newEmp.fullName}
                   onChange={(e) => setNewEmp({ ...newEmp, fullName: e.target.value })}
-                  placeholder="Employee full name"
+                  placeholder="Nama lengkap karyawan"
                   className="hig-input"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Employee ID</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">ID Karyawan</label>
                   <input
                     type="text"
                     required
@@ -341,7 +411,7 @@ export default function OwnerEmployeesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Username</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Nama Pengguna</label>
                   <input
                     type="text"
                     required
@@ -361,17 +431,18 @@ export default function OwnerEmployeesPage() {
                     required
                     value={newEmp.email}
                     onChange={(e) => setNewEmp({ ...newEmp, email: e.target.value })}
-                    placeholder="email@company.com"
+                    placeholder="email@perusahaan.com"
                     className="hig-input"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Password</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Kata Sandi Awal</label>
                   <input
                     type="text"
                     required
                     value={newEmp.initialPassword}
                     onChange={(e) => setNewEmp({ ...newEmp, initialPassword: e.target.value })}
+                    placeholder="Minimal 6 karakter"
                     className="hig-input font-mono"
                   />
                 </div>
@@ -379,7 +450,7 @@ export default function OwnerEmployeesPage() {
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Daily Salary (IDR)</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Gaji Pokok Harian (IDR)</label>
                   <input
                     type="number"
                     step="1000"
@@ -391,17 +462,20 @@ export default function OwnerEmployeesPage() {
                   <span className="text-[11px] text-[var(--text-secondary)] mt-0.5 block tabular-numbers">{formatIDR(newEmp.dailySalary)}</span>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Work Shift</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Shift Kerja</label>
                   <select
                     value={newEmp.shiftId}
                     onChange={(e) => setNewEmp({ ...newEmp, shiftId: e.target.value })}
                     className="hig-input"
                   >
-                    {shifts.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name} ({s.startTime}-{s.endTime})
-                      </option>
-                    ))}
+                    {shifts.map((s) => {
+                      const cleanName = s.name.replace(/\s*\(\d{2}:\d{2}\s*-\s*\d{2}:\d{2}\)/, "");
+                      return (
+                        <option key={s.id} value={s.id}>
+                          {cleanName} ({s.startTime} – {s.endTime})
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
               </div>
@@ -412,13 +486,13 @@ export default function OwnerEmployeesPage() {
                   onClick={() => setShowAddModal(false)}
                   className="hig-button-secondary text-xs"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
                   className="hig-button-primary text-xs"
                 >
-                  Create
+                  Simpan Karyawan
                 </button>
               </div>
             </form>
@@ -430,27 +504,24 @@ export default function OwnerEmployeesPage() {
       {editingEmployee && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="hig-card-elevated max-w-sm w-full p-6 animate-in fade-in zoom-in-95">
-            <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-1">
-              Adjust Daily Salary
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-3">
+              Ubah Gaji Pokok Harian
             </h2>
-            <p className="text-xs text-[var(--text-secondary)] mb-4">
-              Historical values and effective dates are preserved in the employee salary ledger.
-            </p>
 
             <form onSubmit={handleUpdateSalary} className="space-y-3">
               <div className="bg-[var(--separator-subtle)] p-2.5 rounded-lg text-xs">
-                <div className="text-[var(--text-secondary)]">Employee:</div>
+                <div className="text-[var(--text-secondary)]">Karyawan:</div>
                 <div className="font-semibold text-[var(--text-primary)]">
                   {editingEmployee.fullName} ({editingEmployee.employeeId})
                 </div>
                 <div className="text-[11px] text-[var(--text-secondary)] mt-0.5 tabular-numbers">
-                  Current: {formatIDR(editingEmployee.dailySalary)} / day
+                  Tarif Saat Ini: {formatIDR(editingEmployee.dailySalary)} / hari
                 </div>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
-                  New Daily Salary (IDR)
+                  Tarif Baru per Hari (IDR)
                 </label>
                 <input
                   type="number"
@@ -460,21 +531,18 @@ export default function OwnerEmployeesPage() {
                   onChange={(e) => setEditSalaryVal(parseInt(e.target.value) || 0)}
                   className="hig-input font-semibold tabular-numbers text-sm"
                 />
-                <span className="text-xs text-[var(--accent)] font-medium mt-1 block tabular-numbers">
-                  {formatIDR(editSalaryVal)} per completed day
-                </span>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
-                  Reason for Adjustment
+                  Alasan Penyesuaian Gaji
                 </label>
                 <input
                   type="text"
                   required
                   value={editSalaryReason}
                   onChange={(e) => setEditSalaryReason(e.target.value)}
-                  placeholder="e.g. Annual compensation revision"
+                  placeholder="Misal: Penyesuaian tahunan atau kenaikan tingkat"
                   className="hig-input"
                 />
               </div>
@@ -485,13 +553,13 @@ export default function OwnerEmployeesPage() {
                   onClick={() => setEditingEmployee(null)}
                   className="hig-button-secondary text-xs"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
                   className="hig-button-primary text-xs"
                 >
-                  Save Salary
+                  Perbarui Gaji
                 </button>
               </div>
             </form>
