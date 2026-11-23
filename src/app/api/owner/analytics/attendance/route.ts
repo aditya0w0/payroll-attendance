@@ -59,7 +59,7 @@ export async function GET(req: Request) {
   } catch (error: any) {
     console.error("Attendance analytics API error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to compute attendance analytics" },
+      { error: "Failed to compute attendance analytics" },
       { status: 500 }
     );
   }

@@ -17,6 +17,6 @@ export async function POST(req: Request) {
       reason: "User logged out safely",
     });
   }
-  await destroySession();
+  await destroySession(req);
   return NextResponse.json({ success: true, message: "Logged out successfully" });
 }

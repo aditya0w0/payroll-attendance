@@ -116,7 +116,6 @@ export async function handleAttendanceScan(req: Request) {
             error: "Perangkat wajib terhubung ke jaringan WiFi kantor untuk presensi.",
             code: "WIFI_IP_MISMATCH",
             clientIp,
-            expectedIp: activeConfig.officePublicIp.trim(),
           },
           { status: 403 }
         );
@@ -290,7 +289,9 @@ export async function handleAttendanceScan(req: Request) {
 
     // CASE B Double-Scan Cooldown Guard: Check if less than 60s since Check-In -> Reject without burning QR token
     if (existingRecord && existingRecord.status === "CHECKED_IN") {
-      const bypassCooldown = req.headers.get("x-test-bypass-cooldown") === "true";
+      const bypassCooldown =
+        process.env.NODE_ENV !== "production" &&
+        req.headers.get("x-test-bypass-cooldown") === "true";
       const msSinceCheckIn = now.getTime() - new Date(existingRecord.checkInTime).getTime();
       if (!bypassCooldown && msSinceCheckIn < 60_000) {
         return NextResponse.json(
@@ -378,19 +379,9 @@ export async function handleAttendanceScan(req: Request) {
       const finalStatus = existingRecord.lateMinutes > 0 ? "LATE_COMPLETED" : "COMPLETED";
 
       const updatedRecord = await prisma.$transaction(async (tx) => {
-        // Record scan log to prevent replay
-        await tx.qRScanLog.create({
-          data: {
-            challengeId: qrValidation.challengeId!,
-            userId: user.id,
-            action: "CHECK_OUT",
-            scannedAt: now,
-          },
-        });
-
-        // Update attendance record with checkout telemetry
-        const updated = await tx.attendanceRecord.update({
-          where: { id: existingRecord.id },
+        // Concurrency Guard: Atomic transition CHECKED_IN -> COMPLETED/LATE_COMPLETED
+        const updateRes = await tx.attendanceRecord.updateMany({
+          where: { id: existingRecord.id, status: "CHECKED_IN" },
           data: {
             checkOutTime: now,
             status: finalStatus,
@@ -402,9 +393,28 @@ export async function handleAttendanceScan(req: Request) {
             isEarlyCheckOut,
             earlyCheckOutMinutes: minutesEarly,
             earlyCheckOutReason: isEarlyCheckOut ? parseRes.data.earlyCheckoutReason?.trim() : null,
-            earlyCheckOutApproved: isEarlyCheckOut ? Boolean(parseRes.data.earlyCheckoutApproved) : false,
+            // Never trust client-asserted approval; only Owner can approve early checkout
+            earlyCheckOutApproved: false,
             timezoneSource: parseRes.data.timezoneSource || "INTERNET",
             clientTimezone: parseRes.data.clientTimezone || null,
+          },
+        });
+
+        if (updateRes.count === 0) {
+          throw new Error("CONCURRENT_CHECKOUT");
+        }
+
+        const updated = (await tx.attendanceRecord.findUnique({
+          where: { id: existingRecord.id },
+        }))!;
+
+        // Record scan log to prevent replay
+        await tx.qRScanLog.create({
+          data: {
+            challengeId: qrValidation.challengeId!,
+            userId: user.id,
+            action: "CHECK_OUT",
+            scannedAt: now,
           },
         });
 
@@ -424,7 +434,7 @@ export async function handleAttendanceScan(req: Request) {
             isEarlyCheckOut,
             earlyCheckOutMinutes: minutesEarly,
             earlyCheckOutReason: isEarlyCheckOut ? parseRes.data.earlyCheckoutReason?.trim() : null,
-            earlyCheckOutApproved: isEarlyCheckOut ? Boolean(parseRes.data.earlyCheckoutApproved) : false,
+            earlyCheckOutApproved: false,
             lateMinutes: updated.lateMinutes,
             lateDeduction: updated.lateDeduction,
             netDailyEarnings: updated.netDailyEarnings,
@@ -444,7 +454,7 @@ export async function handleAttendanceScan(req: Request) {
           ipAddress: clientIp,
           userAgent,
           reason: isEarlyCheckOut
-            ? `Karyawan pulang ${minutesEarly} menit lebih awal: ${parseRes.data.earlyCheckoutReason}${parseRes.data.earlyCheckoutApproved ? " (Disetujui atasan)" : " (Tanpa persetujuan)"}`
+            ? `Karyawan pulang ${minutesEarly} menit lebih awal: ${parseRes.data.earlyCheckoutReason} (Menunggu verifikasi atasan)`
             : "Employee completed shift checkout with dual geofence and WiFi verification",
         });
 
@@ -615,9 +625,18 @@ export async function handleAttendanceScan(req: Request) {
       },
     });
   } catch (error: any) {
+    if (error?.message === "CONCURRENT_CHECKOUT" || error?.code === "P2002") {
+      return NextResponse.json(
+        {
+          error: "Presensi untuk shift ini sudah tercatat. Permintaan ganda ditolak.",
+          code: "CONCURRENT_ATTENDANCE_CONFLICT",
+        },
+        { status: 409 }
+      );
+    }
     console.error("Attendance scan handler error:", error);
     return NextResponse.json(
-      { error: "Failed to process attendance scan: " + (error.message || "Server error") },
+      { error: "Gagal memproses presensi. Silakan coba lagi." },
       { status: 500 }
     );
   }

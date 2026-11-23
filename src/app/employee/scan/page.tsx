@@ -1025,7 +1025,7 @@ export default function EmployeeScanPage() {
                     className="mt-0.5 rounded border-[var(--separator-subtle)] text-blue-600 focus:ring-0"
                   />
                   <span className="text-[11px] leading-tight">
-                    Saya menyatakan sudah memperoleh izin langsung dari Owner atau Supervisor.
+                    Saya memahami kepulangan awal ini akan dicatat sebagai <strong>Menunggu Verifikasi Owner</strong> pada log audit.
                   </span>
                 </label>
 

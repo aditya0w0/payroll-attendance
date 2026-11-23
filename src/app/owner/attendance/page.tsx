@@ -52,6 +52,7 @@ export default function OwnerAttendancePage() {
   const [correctingRecord, setCorrectingRecord] = useState<AttendanceItem | null>(null);
   const [correctionReason, setCorrectionReason] = useState("");
   const [correctedStatus, setCorrectedStatus] = useState("COMPLETED");
+  const [correctedEarlyApproved, setCorrectedEarlyApproved] = useState(false);
 
   const loadAttendance = async () => {
     try {
@@ -95,6 +96,9 @@ export default function OwnerAttendancePage() {
         body: JSON.stringify({
           recordId: correctingRecord.id,
           status: correctedStatus,
+          ...(correctingRecord.isEarlyCheckOut
+            ? { earlyCheckOutApproved: correctedEarlyApproved }
+            : {}),
           correctionReason: correctionReason.trim(),
         }),
       });
@@ -277,7 +281,7 @@ export default function OwnerAttendancePage() {
                             {r.isEarlyCheckOut && (
                               <div className="text-[10px] text-[var(--text-secondary)] max-w-[220px] leading-tight">
                                 <span className="font-medium text-[var(--text-primary)]">
-                                  {r.earlyCheckOutApproved ? "Izin Disetujui" : "Tanpa Izin"}:
+                                  {r.earlyCheckOutApproved ? "Izin Disetujui" : "Menunggu Izin"}:
                                 </span>{" "}
                                 {r.earlyCheckOutReason || "Tidak ada keterangan"}
                               </div>
@@ -297,6 +301,7 @@ export default function OwnerAttendancePage() {
                           onClick={() => {
                             setCorrectingRecord(r);
                             setCorrectedStatus(r.status);
+                            setCorrectedEarlyApproved(Boolean(r.earlyCheckOutApproved));
                             setCorrectionReason("");
                           }}
                           className="hig-button-compact-secondary inline-flex items-center gap-1"
@@ -346,6 +351,23 @@ export default function OwnerAttendancePage() {
                   <option value="EXCEPTION">Pengecualian Khusus</option>
                 </select>
               </div>
+
+              {correctingRecord.isEarlyCheckOut && (
+                <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 space-y-2">
+                  <div className="text-[11px] font-medium text-amber-800 dark:text-amber-300">
+                    Pulang Awal (-{correctingRecord.earlyCheckOutMinutes}m): {correctingRecord.earlyCheckOutReason || "Tanpa keterangan"}
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer text-xs text-[var(--text-primary)]">
+                    <input
+                      type="checkbox"
+                      checked={correctedEarlyApproved}
+                      onChange={(e) => setCorrectedEarlyApproved(e.target.checked)}
+                      className="rounded border-[var(--separator-subtle)] text-blue-600 focus:ring-0"
+                    />
+                    <span>Setujui izin pulang awal ini</span>
+                  </label>
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">

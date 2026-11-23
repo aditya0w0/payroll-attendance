@@ -67,7 +67,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, policy: newPolicy });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Failed to create policy" }, { status: 500 });
+    console.error("Create policy error:", error);
+    return NextResponse.json({ error: "Failed to create policy" }, { status: 500 });
   }
 }
 
@@ -114,7 +115,8 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json({ success: true, policy: updated });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Failed to update policy" }, { status: 500 });
+    console.error("Update policy error:", error);
+    return NextResponse.json({ error: "Failed to update policy" }, { status: 500 });
   }
 }
 
@@ -164,6 +166,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Failed to delete policy" }, { status: 500 });
+    console.error("Delete policy error:", error);
+    return NextResponse.json({ error: "Failed to delete policy" }, { status: 500 });
   }
 }

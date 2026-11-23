@@ -34,8 +34,9 @@ export function getJakartaTimeString(date: Date = new Date()): string {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
+    hourCycle: "h23",
   });
-  return formatter.format(date); // outputs "HH:mm"
+  return formatter.format(date); // outputs "HH:mm" (00:00 - 23:59)
 }
 
 /**
@@ -53,6 +54,7 @@ export function formatJakartaDateTime(date: Date | string | null | undefined): s
     minute: "2-digit",
     second: "2-digit",
     hour12: false,
+    hourCycle: "h23",
   }).formatToParts(d);
 
   const p: Record<string, string> = {};
@@ -74,6 +76,7 @@ export function formatJakartaTime(date: Date | string | null | undefined, includ
     minute: "2-digit",
     second: includeSeconds ? "2-digit" : undefined,
     hour12: false,
+    hourCycle: "h23",
   }).format(d);
 }
 
@@ -128,12 +131,15 @@ export function determineActiveShiftDate(
   }
 
   // Overnight shift logic:
-  // e.g. Start 22:00, End 06:00
-  // If current time is early morning (e.g. < 12:00), this check-out or late check-in belongs to previous calendar day's shift instance!
+  // e.g. Start 22:00, End 06:00 -> cutoff is 10:00 WIB (endH + 4h buffer, capped at startH - 2h)
+  // e.g. Start 16:00, End 00:00 -> cutoff is 04:00 WIB
   const [startH] = startTimeStr.split(":").map(Number);
-  const [currentH] = jakartaTime.split(":").map(Number);
+  const [endH] = endTimeStr.split(":").map(Number);
+  const [rawCurrentH] = jakartaTime.split(":").map(Number);
+  const currentH = rawCurrentH === 24 ? 0 : rawCurrentH;
+  const overnightCutoffH = Math.max(1, Math.min(startH - 2, endH + 4));
 
-  if (currentH < startH && currentH <= 12) {
+  if (currentH < startH && currentH < overnightCutoffH) {
     // Belongs to yesterday's shift!
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     return getJakartaDateString(yesterday);

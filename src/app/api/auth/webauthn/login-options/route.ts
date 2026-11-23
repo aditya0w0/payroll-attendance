@@ -29,11 +29,7 @@ async function handleLoginOptions(identifier: string | null | undefined, hostHea
     },
   });
 
-  if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  }
-
-  if (!user.deviceRegistration?.credentialId || !user.deviceRegistration?.isActive) {
+  if (!user || !user.deviceRegistration?.credentialId || !user.deviceRegistration?.isActive) {
     return NextResponse.json(
       {
         error: "NO_WEBAUTHN_CREDENTIAL",
@@ -45,13 +41,11 @@ async function handleLoginOptions(identifier: string | null | undefined, hostHea
 
   const options = await createPasskeyAuthenticationOptions(user, hostHeader);
 
-  // Return both direct options spread and nested fields for backwards and standard compatibility
+  // Return WebAuthn challenge without leaking private device metadata to unauthenticated callers
   return NextResponse.json({
     ...options,
     options,
     userId: user.id,
-    deviceName: user.deviceRegistration.deviceName,
-    assuranceTier: user.deviceRegistration.assuranceTier,
   });
 }
 

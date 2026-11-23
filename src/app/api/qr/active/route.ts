@@ -10,10 +10,16 @@ export async function GET(req: Request) {
     const now = new Date();
 
     // Anti-Cheating & Defense-in-Depth:
-    // Registered employee accounts must scan the physical kiosk terminal screen.
-    // Direct programmatic retrieval of challenge tokens by employee sessions is blocked.
+    // Only authenticated OWNER kiosk sessions may retrieve active dynamic QR challenge tokens.
+    // Unauthenticated callers and EMPLOYEE sessions are strictly blocked.
     const current = await getCurrentUser(req);
-    if (current && current.user.role === "EMPLOYEE") {
+    if (!current) {
+      return NextResponse.json(
+        { error: "Unauthorized. Kiosk requires an active Owner session." },
+        { status: 401 }
+      );
+    }
+    if (current.user.role !== "OWNER") {
       return NextResponse.json(
         { error: "Presensi hanya dapat dilakukan dengan memindai kode QR fisik pada monitor kantor." },
         { status: 403 }

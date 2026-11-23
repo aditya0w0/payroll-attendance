@@ -70,7 +70,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, shift: newShift });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Failed to create shift" }, { status: 500 });
+    console.error("Create shift error:", error);
+    return NextResponse.json({ error: "Failed to create shift" }, { status: 500 });
   }
 }
 
@@ -118,7 +119,8 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json({ success: true, shift: updated });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Failed to update shift" }, { status: 500 });
+    console.error("Update shift error:", error);
+    return NextResponse.json({ error: "Failed to update shift" }, { status: 500 });
   }
 }
 
@@ -168,6 +170,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Failed to delete shift" }, { status: 500 });
+    console.error("Delete shift error:", error);
+    return NextResponse.json({ error: "Failed to delete shift" }, { status: 500 });
   }
 }
